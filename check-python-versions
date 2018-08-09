@@ -27,7 +27,7 @@ except ImportError:
 
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
-__version__ = '0.2.1.dev0'
+__version__ = '0.3.0.dev0'
 
 
 log = logging.getLogger('check-python-versions')
@@ -138,33 +138,72 @@ def appveyor_normalize_py_version(ver):
 
 
 def important(versions):
-    return {v for v in versions if not v.startswith(('PyPy', 'Jython')) and v != 'nightly'}
+    return {
+        v for v in versions
+        if not v.startswith(('PyPy', 'Jython')) and v != 'nightly'
+    }
 
 
-def check(where='.', print=print):
+def parse_expect(v):
+    versions = set()
+
+    for part in v.split(','):
+        if '-' in part:
+            lo, hi = part.split('-', 1)
+        else:
+            lo = hi = part
+
+        lo_major, lo_minor = map(int, lo.split('.', 1))
+        hi_major, hi_minor = map(int, hi.split('.', 1))
+
+        if lo_major != hi_major:
+            raise ValueError(f'bad range: {part} ({lo_major} != {hi_major})')
+
+        for v in range(lo_minor, hi_minor + 1):
+            versions.add(f'{lo_major}.{v}')
+
+    return sorted(versions)
+
+
+def check(where='.', *, print=print, expect=None):
     py_versions = get_supported_python_versions(where)
     print(f"setup.py says:     {', '.join(py_versions)}")
     tox_versions = get_tox_ini_python_versions(os.path.join(where, TOX_INI))
     print(f"tox.ini says:      {', '.join(tox_versions)}")
-    travis_versions = get_travis_yml_python_versions(os.path.join(where, TRAVIS_YML))
+    travis_versions = get_travis_yml_python_versions(
+        os.path.join(where, TRAVIS_YML))
     print(f".travis.yml says:  {', '.join(travis_versions)}")
-    appveyor_versions = get_appveyor_yml_python_versions(os.path.join(where, APPVEYOR_YML))
+    appveyor_versions = get_appveyor_yml_python_versions(
+        os.path.join(where, APPVEYOR_YML))
     print(f"appveyor.yml says: {', '.join(appveyor_versions)}")
 
-    return all(important(py_versions) == important(v)
-               for v in (tox_versions, travis_versions, appveyor_versions))
+    if not expect:
+        expect = py_versions
+    else:
+        print(f"expected:          {', '.join(expect)}")
+
+    expect = important(expect)
+    return all(
+        expect == important(v) for v in [
+            py_versions, tox_versions, travis_versions, appveyor_versions]
+    )
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="verify that supported Python versions are the same in setup.py, tox.ini,"
-                    " .travis.yml and appveyor.yml")
+        description="verify that supported Python versions are the same"
+                    " in setup.py, tox.ini, .travis.yml and appveyor.yml")
     parser.add_argument('--version', action='version',
                         version="%(prog)s version " + __version__)
+    parser.add_argument('--expect', metavar='VERSIONS',
+                        help='expect these versions to be supported, e.g.'
+                             ' --expect 2.7,3.4-3.7')
     parser.add_argument('where', nargs='*',
                         help='directory where a Python package with a setup.py'
                              ' and other files is located')
     args = parser.parse_args()
+
+    expect = args.expect and parse_expect(args.expect)
 
     multiple = len(args.where) > 1
     mismatches = []
@@ -173,7 +212,7 @@ def main():
             if n:
                 print("\n")
             print(f"{where}:\n")
-        if not check(where):
+        if not check(where, expect=expect):
             mismatches.append(where)
 
     if mismatches:
