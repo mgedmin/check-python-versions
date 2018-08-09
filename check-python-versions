@@ -27,7 +27,7 @@ except ImportError:
 
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
-__version__ = '0.2.0.dev0'
+__version__ = '0.2.1.dev0'
 
 
 log = logging.getLogger('check-python-versions')
@@ -85,8 +85,8 @@ def tox_env_to_py_version(env):
     if env.startswith('pypy'):
         return 'PyPy' + env[4:]
     else:
-        if env.endswith('-pure'):
-            env = env[:-len('-pure')]
+        if '-' in env:
+            env = env.partition('-')[0]
         assert env.startswith('py') and len(env) >= 4
         return f'{env[2]}.{env[3:]}'
 
@@ -138,7 +138,7 @@ def appveyor_normalize_py_version(ver):
 
 
 def important(versions):
-    return {v for v in versions if not v.startswith('PyPy') and v != 'nightly'}
+    return {v for v in versions if not v.startswith(('PyPy', 'Jython')) and v != 'nightly'}
 
 
 def check(where='.', print=print):
