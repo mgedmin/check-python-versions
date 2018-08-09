@@ -46,15 +46,20 @@ def get_supported_python_versions(repo_path='.'):
     prefix = 'Programming Language :: Python :: '
     impl_prefix = 'Programming Language :: Python :: Implementation :: '
     cpython = impl_prefix + 'CPython'
-    return [
+    versions = {
         s[len(prefix):]
         for s in classifiers
         if s.startswith(prefix) and s[len(prefix):len(prefix) + 1].isdigit()
-    ] + [
+    } | {
         s[len(impl_prefix):]
         for s in classifiers
         if s.startswith(impl_prefix) and s != cpython
-    ]
+    }
+    for major in '2', '3':
+        if major in versions and any(
+                v.startswith(f'{major}.') for v in versions):
+            versions.remove(major)
+    return sorted(versions)
 
 
 def get_tox_ini_python_versions(filename='tox.ini'):
@@ -63,13 +68,16 @@ def get_tox_ini_python_versions(filename='tox.ini'):
         # no tox.ini
         return []
     envlist = [s.strip() for s in conf.get('tox', 'envlist').split(',')]
-    return [tox_env_to_py_version(e) for e in envlist if e.startswith('py')]
+    return sorted(set(
+        tox_env_to_py_version(e) for e in envlist if e.startswith('py')))
 
 
 def tox_env_to_py_version(env):
     if env.startswith('pypy'):
         return 'PyPy' + env[4:]
     else:
+        if env.endswith('-pure'):
+            env = env[:-len('-pure')]
         assert env.startswith('py') and len(env) >= 4
         return f'{env[2]}.{env[3:]}'
 
@@ -77,12 +85,14 @@ def tox_env_to_py_version(env):
 def get_travis_yml_python_versions(filename='.travis.yml'):
     with open(filename) as fp:
         conf = yaml.safe_load(fp)
-    versions = [travis_normalize_py_version(v) for v in conf['python']]
+    versions = []
+    if 'python' in conf:
+        versions += map(travis_normalize_py_version, conf['python'])
     if 'matrix' in conf and 'include' in conf['matrix']:
         for job in conf['matrix']['include']:
             if 'python' in job:
                 versions.append(travis_normalize_py_version(job['python']))
-    return sorted(versions)
+    return sorted(set(versions))
 
 
 def travis_normalize_py_version(v):
@@ -100,16 +110,20 @@ def get_appveyor_yml_python_versions(filename='appveyor.yml'):
     # the directory that has a Python interpreter (C:\PythonXY)
     versions = []
     for env in conf['environment']['matrix']:
-        if 'PYTHON' in env:
-            versions.append(appveyor_normalize_py_version(env['PYTHON']))
-    return versions
+        for var in 'PYTHON', 'python':
+            if var in env:
+                versions.append(appveyor_normalize_py_version(env[var]))
+    return sorted(set(versions))
 
 
 def appveyor_normalize_py_version(ver):
+    ver = str(ver)
     if ver.startswith('C:\\Python'):
         ver = ver[len('C:\\Python'):]
     if ver.endswith('\\'):
         ver = ver[:-1]
+    if ver.endswith('-x64'):
+        ver = ver[:-len('-x64')]
     assert len(ver) >= 2 and ver[:2].isdigit()
     return f'{ver[0]}.{ver[1:]}'
 
