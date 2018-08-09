@@ -8,6 +8,7 @@ Makes sure the set of supported Python versions is consistent between
 - tox.ini default env list
 - .travis-ci.yml
 - appveyor.yml
+- (optionally) .manylinux-install.sh as used by various ZopeFoundation projects
 
 """
 
@@ -15,6 +16,7 @@ import argparse
 import configparser
 import logging
 import os
+import re
 import subprocess
 import sys
 
@@ -27,7 +29,7 @@ except ImportError:
 
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
-__version__ = '0.3.0.dev0'
+__version__ = '0.4.0.dev0'
 
 
 log = logging.getLogger('check-python-versions')
@@ -36,6 +38,7 @@ log = logging.getLogger('check-python-versions')
 TOX_INI = 'tox.ini'
 TRAVIS_YML = '.travis.yml'
 APPVEYOR_YML = 'appveyor.yml'
+MANYLINUX_INSTALL_SH = '.manylinux-install.sh'
 
 
 def pipe(*cmd, **kwargs):
@@ -48,7 +51,7 @@ def pipe(*cmd, **kwargs):
 
 
 def get_supported_python_versions(repo_path='.'):
-    # Borrowed from
+    # Based on
     # https://github.com/mgedmin/project-summary/blob/master/summary.py#L221-L234
     classifiers = pipe(
         "python", "setup.py", "--classifiers", cwd=repo_path).splitlines()
@@ -137,6 +140,17 @@ def appveyor_normalize_py_version(ver):
     return f'{ver[0]}.{ver[1:]}'
 
 
+def get_manylinux_python_versions(filename=MANYLINUX_INSTALL_SH):
+    magic = re.compile(r'.*\[\[ "\$\{PYBIN\}" == \*"cp(\d)(\d)"\* \]\]')
+    versions = []
+    with open(filename) as fp:
+        for line in fp:
+            m = magic.match(line)
+            if m:
+                versions.append('{}.{}'.format(*m.groups()))
+    return sorted(set(versions))
+
+
 def important(versions):
     return {
         v for v in versions
@@ -166,26 +180,36 @@ def parse_expect(v):
 
 
 def check(where='.', *, print=print, expect=None):
-    py_versions = get_supported_python_versions(where)
-    print(f"setup.py says:     {', '.join(py_versions)}")
-    tox_versions = get_tox_ini_python_versions(os.path.join(where, TOX_INI))
-    print(f"tox.ini says:      {', '.join(tox_versions)}")
-    travis_versions = get_travis_yml_python_versions(
-        os.path.join(where, TRAVIS_YML))
-    print(f".travis.yml says:  {', '.join(travis_versions)}")
-    appveyor_versions = get_appveyor_yml_python_versions(
-        os.path.join(where, APPVEYOR_YML))
-    print(f"appveyor.yml says: {', '.join(appveyor_versions)}")
+
+    sources = [
+        ('setup.py', get_supported_python_versions, None),
+        (TOX_INI, get_tox_ini_python_versions, TOX_INI),
+        (TRAVIS_YML, get_travis_yml_python_versions, TRAVIS_YML),
+        (APPVEYOR_YML, get_appveyor_yml_python_versions, APPVEYOR_YML),
+        (MANYLINUX_INSTALL_SH, get_manylinux_python_versions,
+         MANYLINUX_INSTALL_SH),
+    ]
+
+    width = max(len(title) for title, *etc in sources) + len(" says:")
+
+    version_sets = []
+
+    for (title, extractor, filename) in sources:
+        arg = os.path.join(where, filename) if filename else where
+        if not os.path.exists(arg):
+            continue
+        versions = extractor(arg)
+        print(f"{title} says:".ljust(width), ", ".join(versions))
+        version_sets.append(important(versions))
 
     if not expect:
-        expect = py_versions
+        expect = version_sets[0]
     else:
-        print(f"expected:          {', '.join(expect)}")
+        print("expected:".ljust(width), ', '.join(expect))
 
     expect = important(expect)
     return all(
-        expect == important(v) for v in [
-            py_versions, tox_versions, travis_versions, appveyor_versions]
+        expect == v for v in version_sets
     )
 
 
