@@ -119,7 +119,6 @@ def tox_env_to_py_version(env):
         return env
 
 
-
 def get_travis_yml_python_versions(filename=TRAVIS_YML):
     with open(filename) as fp:
         conf = yaml.safe_load(fp)
@@ -130,6 +129,13 @@ def get_travis_yml_python_versions(filename=TRAVIS_YML):
         for job in conf['matrix']['include']:
             if 'python' in job:
                 versions.append(travis_normalize_py_version(job['python']))
+    if 'env' in conf:
+        toxenvs = []
+        for env in conf['env']:
+            if env.startswith('TOXENV='):
+                toxenvs.extend(parse_envlist(env.partition('=')[-1]))
+        versions.extend(
+            tox_env_to_py_version(e) for e in toxenvs if e.startswith('py'))
     return sorted(set(versions))
 
 
