@@ -86,7 +86,7 @@ def get_tox_ini_python_versions(filename=TOX_INI):
 
 def parse_envlist(envlist):
     envs = []
-    for part in re.split('((?:[{][^}]*[}]|[^,{])+)|,', envlist):
+    for part in re.split(r'((?:[{][^}]*[}]|[^,{\s])+)|,|\s+', envlist):
         # NB: part can be None
         part = (part or '').strip()
         if not part:
