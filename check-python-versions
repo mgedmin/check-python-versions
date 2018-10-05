@@ -29,7 +29,7 @@ except ImportError:
 
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
-__version__ = '0.5.0.dev0'
+__version__ = '0.5.1.dev0'
 
 
 log = logging.getLogger('check-python-versions')
@@ -267,7 +267,7 @@ def main():
 
     if mismatches:
         if multiple:
-            sys.exit(f"\nmismatch in {', '.join(mismatches)}!")
+            sys.exit(f"\nmismatch in {' '.join(mismatches)}!")
         else:
             sys.exit("\nmismatch!")
     elif multiple:
