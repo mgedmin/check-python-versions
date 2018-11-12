@@ -13,6 +13,7 @@ Makes sure the set of supported Python versions is consistent between
 """
 
 import argparse
+import ast
 import configparser
 import logging
 import os
@@ -29,7 +30,7 @@ except ImportError:
 
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
-__version__ = '0.5.1.dev0'
+__version__ = '0.6.0.dev0'
 
 
 log = logging.getLogger('check-python-versions')
@@ -39,6 +40,13 @@ TOX_INI = 'tox.ini'
 TRAVIS_YML = '.travis.yml'
 APPVEYOR_YML = 'appveyor.yml'
 MANYLINUX_INSTALL_SH = '.manylinux-install.sh'
+
+
+CURRENT_PYTHON_3_VERSION = 7  # i.e. 3.7
+
+
+def warn(msg):
+    print(msg)
 
 
 def pipe(*cmd, **kwargs):
@@ -72,6 +80,77 @@ def get_supported_python_versions(repo_path='.'):
                 v.startswith(f'{major}.') for v in versions):
             versions.remove(major)
     return sorted(versions)
+
+
+def get_python_requires(setup_py='setup.py'):
+    with open(setup_py) as f:
+        tree = ast.parse(f.read(), setup_py)
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == 'setup'):
+            for kwarg in node.keywords:
+                if kwarg.arg == 'python_requires':
+                    python_requires = eval_python_requires(kwarg.value)
+                    if python_requires is None:
+                        return None
+                    else:
+                        return parse_python_requires(python_requires)
+            break
+    else:
+        warn('Could not find setup() call in setup.py')
+    return None
+
+
+def eval_python_requires(node):
+    if isinstance(node, ast.Str):
+        return node.s
+    if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Str)
+            and node.func.attr == 'join'):
+        return node.func.value.s.join(ast.literal_eval(node.args[0]))
+    warn('Non-literal python_requires= passed to setup()')
+    return None
+
+
+def parse_python_requires(s):
+    rx = re.compile(r'^(~=|==|!=|<=|>=|<|>|===)\s*(\d+(?:\.\d+)*(?:\.\*)?$)')
+    specifiers = []
+    min_ver = None
+    forbidden = set()
+    for specifier in map(str.strip, s.split(',')):
+        m = rx.match(specifier)
+        if not m:
+            warn('Bad python_requires specifier: %s' % specifier)
+        op, ver = m.groups()
+        specifiers.append((op, ver))
+        if op == '>=':
+            if min_ver is not None:
+                warn('Multiple >= specifiers: %s and %s' % (min_ver, ver))
+            if ver.endswith('.*'):
+                warn('Did not expect >= with a .*: %s' % ver)
+            min_ver = ver
+        elif op == '!=':
+            if not ver.endswith('.*'):
+                warn('Did not expect != without a .*: %s' % ver)
+            elif ver.count('.') != 2:
+                warn('Unexpected number of dots in %s' % ver)
+            else:
+                forbidden.add(ver[:-2])
+        else:
+            warn('Did not expect a %s specifier: %s' % (op, specifier))
+    # okay, let's do magic
+    versions = []
+    if not min_ver:
+        warn('Expected a >= specifier')
+        return versions
+    min_ver_tuple = tuple(map(int, min_ver.split('.')))[:2]
+    for major in range(1, 4):
+        for minor in range(0, CURRENT_PYTHON_3_VERSION + 1):
+            ver = '%d.%d' % (major, minor)
+            if (major, minor) >= min_ver_tuple and ver not in forbidden:
+                versions.append(ver)
+    return versions
 
 
 def get_tox_ini_python_versions(filename=TOX_INI):
@@ -215,6 +294,7 @@ def check(where='.', *, print=print, expect=None):
 
     sources = [
         ('setup.py', get_supported_python_versions, None),
+        ('- python_requires', get_python_requires, 'setup.py'),
         (TOX_INI, get_tox_ini_python_versions, TOX_INI),
         (TRAVIS_YML, get_travis_yml_python_versions, TRAVIS_YML),
         (APPVEYOR_YML, get_appveyor_yml_python_versions, APPVEYOR_YML),
@@ -231,6 +311,8 @@ def check(where='.', *, print=print, expect=None):
         if not os.path.exists(arg):
             continue
         versions = extractor(arg)
+        if versions is None:
+            continue
         print(f"{title} says:".ljust(width), ", ".join(versions))
         version_sets.append(important(versions))
 
