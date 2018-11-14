@@ -30,7 +30,7 @@ except ImportError:
 
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
-__version__ = '0.6.0.dev0'
+__version__ = '0.7.0.dev0'
 
 
 log = logging.getLogger('check-python-versions')
@@ -59,10 +59,18 @@ def pipe(*cmd, **kwargs):
 
 
 def get_supported_python_versions(repo_path='.'):
+    setup_py = os.path.join(repo_path, 'setup.py')
+    classifiers = get_setup_py_keyword(setup_py, 'classifiers')
+    if classifiers is None:
+        # AST parsing is complicated
+        classifiers = pipe(
+            "python", "setup.py", "--classifiers", cwd=repo_path).splitlines()
+    return get_versions_from_classifiers(classifiers)
+
+
+def get_versions_from_classifiers(classifiers):
     # Based on
     # https://github.com/mgedmin/project-summary/blob/master/summary.py#L221-L234
-    classifiers = pipe(
-        "python", "setup.py", "--classifiers", cwd=repo_path).splitlines()
     prefix = 'Programming Language :: Python :: '
     impl_prefix = 'Programming Language :: Python :: Implementation :: '
     cpython = impl_prefix + 'CPython'
@@ -83,6 +91,13 @@ def get_supported_python_versions(repo_path='.'):
 
 
 def get_python_requires(setup_py='setup.py'):
+    python_requires = get_setup_py_keyword(setup_py, 'python_requires')
+    if python_requires is None:
+        return None
+    return parse_python_requires(python_requires)
+
+
+def get_setup_py_keyword(setup_py, keyword):
     with open(setup_py) as f:
         tree = ast.parse(f.read(), setup_py)
     for node in ast.walk(tree):
@@ -90,26 +105,30 @@ def get_python_requires(setup_py='setup.py'):
                 and isinstance(node.func, ast.Name)
                 and node.func.id == 'setup'):
             for kwarg in node.keywords:
-                if kwarg.arg == 'python_requires':
-                    python_requires = eval_python_requires(kwarg.value)
-                    if python_requires is None:
-                        return None
-                    else:
-                        return parse_python_requires(python_requires)
+                if kwarg.arg == keyword:
+                    return eval_ast_node(kwarg.value, keyword)
             break
     else:
         warn('Could not find setup() call in setup.py')
     return None
 
 
-def eval_python_requires(node):
+def eval_ast_node(node, keyword):
     if isinstance(node, ast.Str):
         return node.s
+    if isinstance(node, (ast.List, ast.Tuple)):
+        try:
+            return ast.literal_eval(node)
+        except ValueError:
+            pass
     if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
             and isinstance(node.func.value, ast.Str)
             and node.func.attr == 'join'):
-        return node.func.value.s.join(ast.literal_eval(node.args[0]))
-    warn('Non-literal python_requires= passed to setup()')
+        try:
+            return node.func.value.s.join(ast.literal_eval(node.args[0]))
+        except ValueError:
+            pass
+    warn('Non-literal %s= passed to setup()' % keyword)
     return None
 
 
@@ -208,6 +227,10 @@ def get_travis_yml_python_versions(filename=TRAVIS_YML):
         for job in conf['matrix']['include']:
             if 'python' in job:
                 versions.append(travis_normalize_py_version(job['python']))
+    if 'jobs' in conf and 'include' in conf['jobs']:
+        for job in conf['jobs']['include']:
+            if 'python' in job:
+                versions.append(travis_normalize_py_version(job['python']))
     if 'env' in conf:
         toxenvs = []
         for env in conf['env']:
@@ -292,6 +315,11 @@ def parse_expect(v):
 
 def check(where='.', *, print=print, expect=None):
 
+    setup_py = os.path.join(where, 'setup.py')
+    if not os.path.exists(setup_py):
+        print("no setup.py -- not a Python package?")
+        return None
+
     sources = [
         ('setup.py', get_supported_python_versions, None),
         ('- python_requires', get_python_requires, 'setup.py'),
@@ -313,7 +341,7 @@ def check(where='.', *, print=print, expect=None):
         versions = extractor(arg)
         if versions is None:
             continue
-        print(f"{title} says:".ljust(width), ", ".join(versions))
+        print(f"{title} says:".ljust(width), ", ".join(versions) or "(empty)")
         version_sets.append(important(versions))
 
     if not expect:
