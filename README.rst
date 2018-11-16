@@ -54,6 +54,21 @@ you if they don't match ::
     all ok!
 
 
+Installation
+------------
+
+You need Python 3.6 or newer (f-strings!) to run check-python-versions.
+
+It's not currently available from PyPI, so git clone the repository
+and run the script directly::
+
+    git clone https://github.com/mgedmin/check-python-versions
+    cd check-python-versions
+    ./check-python-versions
+
+(or symlink it to your ~/bin or whatever)
+
+
 Usage
 -----
 
