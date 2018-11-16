@@ -53,3 +53,149 @@ you if they don't match ::
 
     all ok!
 
+
+Usage
+-----
+
+::
+
+    $ check-python-versions --help
+    usage: check-python-versions [-h] [--version] [--expect VERSIONS]
+                                 [where [where ...]]
+
+    verify that supported Python versions are the same in setup.py, tox.ini,
+    .travis.yml and appveyor.yml
+
+    positional arguments:
+      where              directory where a Python package with a setup.py and
+                         other files is located
+
+    optional arguments:
+      -h, --help         show this help message and exit
+      --version          show program's version number and exit
+      --expect VERSIONS  expect these versions to be supported, e.g. --expect
+                         2.7,3.4-3.7
+
+
+Files
+-----
+
+**setup.py** is the only required file; if any of the others are missing,
+they'll be ignored (and this will not considered a failure).
+
+- **setup.py**: the ``classifiers`` argument passed to ``setup()`` is expected
+  to have classifiers of the form::
+
+        classifiers=[
+            ...
+            "Programming Language :: Python :: x.y",
+            ...
+        ],
+
+  check-python-versions will attempt to parse the file and walk the AST to
+  extract classifiers, but if that fails, it'll execute
+  ``python setup.py --classifiers`` and parse the output.
+
+- **setup.py**: the ``python_requires`` argument passed to ``setup()``, if
+  present::
+
+        python_requires=">=2.7, !=3.0.*, !=3.1.*",
+
+  check-python-versions will attempt to parse the file and walk the AST to
+  extract the ``python_requires`` value.  It expects to find a string literal
+  or a simple expression of the form ``"literal".join(["...", "..."])``.
+
+  Only ``>=`` and ``!=`` constraints are currently supported.
+
+- **tox.ini**: if present, it's expected to have ::
+
+    [tox]
+    envlist = pyXY, ...
+
+  Environment names like pyXY-ZZZ are also accepted; the suffix is ignored.
+
+- **.travis.yml**: if present, it's expected to have ::
+
+    python:
+      - X.Y
+      - ...
+
+  and/or ::
+
+    matrix:
+      include:
+        - python: X.Y
+          ...
+        - ...
+
+  and/or ::
+
+    jobs:
+      include:
+        - python: X.Y
+          ...
+        - ...
+
+- **appveyor.yml**: if present, it's expected to have ::
+
+    environment:
+      matrix:
+        - PYTHON: C:\\PythonX.Y
+        - ...
+
+  The environment variable name is assumed to be ``PYTHON`` or ``python``.
+  The values should be one of
+
+  - ``X.Y``
+  - ``C:\\PythonX.Y`` (case-insensitive)
+  - ``C:\\PythonX.Y-x64`` (case-insensitive)
+
+- **.manylinux-install.sh**: if present, it's expected to contain a loop like
+  ::
+
+    for PYBIN in /opt/python/*/bin; do
+        if [[ "${PYBIN}" == *"cp27"* ]] || \
+           [[ "${PYBIN}" == *"cp34"* ]] || \
+           [[ "${PYBIN}" == *"cp35"* ]] || \
+           [[ "${PYBIN}" == *"cp36"* ]] || \
+           [[ "${PYBIN}" == *"cp37"* ]]; then
+            "${PYBIN}/pip" install -e /io/
+            "${PYBIN}/pip" wheel /io/ -w wheelhouse/
+               rm -rf /io/build /io/*.egg-info
+        fi
+    done
+
+  check-python-versions will look for $PYBIN tests of the form ::
+
+    [[ "${PYBIN}" == *"cpXY"* ]]
+
+  where X and Y are arbitrary digits.
+
+  These scripts are used in several zopefoundation repositories like
+  zopefoundation/zope.interface.  It's the least standartized format.
+
+
+Python versions
+---------------
+
+In addition to CPython X.Y, check-python-versions will recognize PyPy and PyPy3
+in some of the files:
+
+- **setup.py** may have a ::
+
+        'Programming Language :: Python :: Implementation :: PyPy',
+
+  classifier
+
+- **tox.ini** may have pypy[-suffix] and pypy3[-suffix] environments
+
+- **.travis.yml** may have pypy and pypy3 jobs
+
+- **appveyor.yml** and **.manylinux-install.sh** do not usually have pypy tests,
+  so check-python-versions cannot recognize them.
+
+These extra Pythons are shown, but not compared for consistency.
+
+In addition, ``python_requires`` in setup.py usually has a lower limit, but no
+upper limit.  check-python-versions will assume this means support up to the
+current Python 3.x release (3.7 at the moment).
