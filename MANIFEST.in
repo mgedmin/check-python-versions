@@ -1,1 +1,5 @@
+include *.mk
+include *.rst
+include .gitignore
 include LICENSE
+include Makefile

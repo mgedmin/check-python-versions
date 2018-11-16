@@ -30,7 +30,7 @@ except ImportError:
 
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
-__version__ = '0.7.1.dev0'
+__version__ = '0.8.0'
 
 
 log = logging.getLogger('check-python-versions')

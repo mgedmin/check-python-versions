@@ -31,6 +31,9 @@ setup(
         'Compare supported Python versions in setup.py vs tox.ini et al.'
     ),
     long_description=long_description,
+    keywords=(
+        'python packaging version checker linter setup.py tox travis appveyor'
+    ),
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',
@@ -44,4 +47,5 @@ setup(
     python_requires=">=3.6",
     scripts=['check-python-versions'],
     install_requires=['pyyaml'],
+    zip_safe=False,
 )
