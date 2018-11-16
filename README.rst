@@ -58,16 +58,9 @@ Installation
 ------------
 
 You need Python 3.6 or newer (f-strings!) to run check-python-versions.
-You also need PyYAML to parse .travis.yml and appveyor.yml files.
+Install it with ::
 
-It's not currently available from PyPI, so git clone the repository
-and run the script directly::
-
-    git clone https://github.com/mgedmin/check-python-versions
-    cd check-python-versions
-    ./check-python-versions
-
-(or symlink it to your ~/bin or whatever)
+    python3 -m pip install check-python-versions
 
 
 Usage
