@@ -30,7 +30,7 @@ except ImportError:
 
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
-__version__ = '0.7.0.dev0'
+__version__ = '0.7.1.dev0'
 
 
 log = logging.getLogger('check-python-versions')
@@ -263,9 +263,9 @@ def get_appveyor_yml_python_versions(filename=APPVEYOR_YML):
 
 
 def appveyor_normalize_py_version(ver):
-    ver = str(ver)
-    if ver.startswith('C:\\Python'):
-        ver = ver[len('C:\\Python'):]
+    ver = str(ver).lower()
+    if ver.startswith('c:\\python'):
+        ver = ver[len('c:\\python'):]
     if ver.endswith('\\'):
         ver = ver[:-1]
     if ver.endswith('-x64'):
