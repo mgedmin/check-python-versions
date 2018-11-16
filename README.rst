@@ -91,6 +91,22 @@ Usage
       --expect VERSIONS  expect these versions to be supported, e.g. --expect
                          2.7,3.4-3.7
 
+If run without any arguments, check-python-versions will look for a setup.py in
+the current working directory.
+
+Exit status is 0 if all Python packages had consistent version numbers (and, if
+--expect is specified, those numbers match your stated expectations).
+
+If you specify multiple directories on the command line, then all packages
+that failed a check will be listed at the end of the run, separated with
+spaces, for easier copying and pasting onto shell command lines.  This is
+helpful when, e.g. you want to run ::
+
+    check-python-versions ~/src/zopefoundation/*
+
+to check all 380+ packages, and then want re-run the checks only on the failed
+ones, for a faster turnabout.
+
 
 Files
 -----
