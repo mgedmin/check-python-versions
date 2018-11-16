@@ -58,6 +58,7 @@ Installation
 ------------
 
 You need Python 3.6 or newer (f-strings!) to run check-python-versions.
+You also need PyYAML to parse .travis.yml and appveyor.yml files.
 
 It's not currently available from PyPI, so git clone the repository
 and run the script directly::
