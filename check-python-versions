@@ -243,8 +243,12 @@ def get_travis_yml_python_versions(filename=TRAVIS_YML):
 
 def travis_normalize_py_version(v):
     v = str(v)
-    if v.startswith('pypy'):
-        return 'PyPy' + v[4:]
+    if v.startswith('pypy3'):
+        # could be pypy3, pypy3.5, pypy3.5-5.10.0
+        return 'PyPy3'
+    elif v.startswith('pypy'):
+        # could be pypy, pypy2, pypy2.7, pypy2.7-5.10.0
+        return 'PyPy'
     else:
         return v
 
