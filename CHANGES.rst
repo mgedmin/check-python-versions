@@ -5,6 +5,7 @@ Changelog
 ------------------
 
 - Handle syntax errors while parsing setup.py.
+- Handle 'Programming Language :: Python :: {N} :: Only" classifiers.
 
 
 0.8.0 (2018-11-16)
