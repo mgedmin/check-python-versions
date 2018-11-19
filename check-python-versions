@@ -63,8 +63,8 @@ def get_supported_python_versions(repo_path='.'):
     classifiers = get_setup_py_keyword(setup_py, 'classifiers')
     if classifiers is None:
         # AST parsing is complicated
-        classifiers = pipe(
-            "python", "setup.py", "--classifiers", cwd=repo_path).splitlines()
+        classifiers = pipe("python", "setup.py", "-q", "--classifiers",
+                           cwd=repo_path).splitlines()
     return get_versions_from_classifiers(classifiers)
 
 
