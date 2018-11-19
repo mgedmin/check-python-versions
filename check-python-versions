@@ -30,7 +30,7 @@ except ImportError:
 
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
-__version__ = '0.8.1.dev0'
+__version__ = '0.9.0.dev0'
 
 
 log = logging.getLogger('check-python-versions')
@@ -321,6 +321,11 @@ def parse_expect(v):
     return sorted(versions)
 
 
+def is_package(where='.'):
+    setup_py = os.path.join(where, 'setup.py')
+    return os.path.exists(setup_py)
+
+
 def check(where='.', *, print=print, expect=None):
 
     if not os.path.isdir(where):
@@ -376,6 +381,9 @@ def main():
     parser.add_argument('--expect', metavar='VERSIONS',
                         help='expect these versions to be supported, e.g.'
                              ' --expect 2.7,3.4-3.7')
+    parser.add_argument('--skip-non-packages', action='store_true',
+                        help='skip arguments that are not Python packages'
+                             ' without warning about them')
     parser.add_argument('where', nargs='*',
                         help='directory where a Python package with a setup.py'
                              ' and other files is located')
@@ -383,15 +391,19 @@ def main():
 
     expect = args.expect and parse_expect(args.expect)
 
-    multiple = len(args.where) > 1
+    where = args.where
+    if args.skip_non_packages:
+        where = [path for path in where if is_package(path)]
+
+    multiple = len(where) > 1
     mismatches = []
-    for n, where in enumerate(args.where or ['.']):
+    for n, path in enumerate(where or ['.']):
         if multiple:
             if n:
                 print("\n")
-            print(f"{where}:\n")
-        if not check(where, expect=expect):
-            mismatches.append(where)
+            print(f"{path}:\n")
+        if not check(path, expect=expect):
+            mismatches.append(path)
 
     if mismatches:
         if multiple:

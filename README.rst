@@ -70,20 +70,23 @@ Usage
 
     $ check-python-versions --help
     usage: check-python-versions [-h] [--version] [--expect VERSIONS]
+                                 [--skip-non-packages]
                                  [where [where ...]]
 
     verify that supported Python versions are the same in setup.py, tox.ini,
     .travis.yml and appveyor.yml
 
     positional arguments:
-      where              directory where a Python package with a setup.py and
-                         other files is located
+      where                directory where a Python package with a setup.py and
+                           other files is located
 
     optional arguments:
-      -h, --help         show this help message and exit
-      --version          show program's version number and exit
-      --expect VERSIONS  expect these versions to be supported, e.g. --expect
-                         2.7,3.4-3.7
+      -h, --help           show this help message and exit
+      --version            show program's version number and exit
+      --expect VERSIONS    expect these versions to be supported, e.g. --expect
+                           2.7,3.4-3.7
+      --skip-non-packages  skip arguments that are not Python packages without
+                           warning about them
 
 If run without any arguments, check-python-versions will look for a setup.py in
 the current working directory.
