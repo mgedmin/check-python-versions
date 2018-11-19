@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.9.0 (unreleased)
+0.9.0 (2018-11-19)
 ------------------
 
 - Handle syntax errors while parsing setup.py.
