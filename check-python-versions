@@ -323,6 +323,10 @@ def parse_expect(v):
 
 def check(where='.', *, print=print, expect=None):
 
+    if not os.path.isdir(where):
+        print("not a directory")
+        return None
+
     setup_py = os.path.join(where, 'setup.py')
     if not os.path.exists(setup_py):
         print("no setup.py -- not a Python package?")
