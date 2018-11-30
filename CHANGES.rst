@@ -1,10 +1,10 @@
 Changelog
 =========
 
-0.9.1 (unreleased)
+0.9.1 (2018-11-30)
 ------------------
 
-- Nothing changed yet.
+- Parse TOXENV in appveyor.yml.
 
 
 0.9.0 (2018-11-19)
