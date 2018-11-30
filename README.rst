@@ -164,6 +164,11 @@ they'll be ignored (and this will not considered a failure).
           ...
         - ...
 
+  and/or ::
+
+    env:
+      - TOXENV=...
+
 - **appveyor.yml**: if present, it's expected to have ::
 
     environment:
@@ -171,12 +176,14 @@ they'll be ignored (and this will not considered a failure).
         - PYTHON: C:\\PythonX.Y
         - ...
 
-  The environment variable name is assumed to be ``PYTHON`` or ``python``.
+  The environment variable name is assumed to be ``PYTHON`` (case-insensitive).
   The values should be one of
 
   - ``X.Y``
   - ``C:\\PythonX.Y`` (case-insensitive)
   - ``C:\\PythonX.Y-x64`` (case-insensitive)
+
+  Alternatively, you can use ``TOXENV`` with the usual values (pyXY).
 
 - **.manylinux-install.sh**: if present, it's expected to contain a loop like
   ::
