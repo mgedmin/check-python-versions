@@ -302,6 +302,7 @@ def important(versions):
     return {
         v for v in versions
         if not v.startswith(('PyPy', 'Jython')) and v != 'nightly'
+        and not v.endswith('-dev')
     }
 
 

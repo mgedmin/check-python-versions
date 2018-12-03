@@ -4,7 +4,7 @@ Changelog
 0.9.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Do not consider "X.Y-dev" in .travis.yml as support for Python X.Y.
 
 
 0.9.2 (2018-12-03)
