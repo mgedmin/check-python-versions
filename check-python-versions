@@ -75,11 +75,11 @@ def get_versions_from_classifiers(classifiers):
     impl_prefix = 'Programming Language :: Python :: Implementation :: '
     cpython = impl_prefix + 'CPython'
     versions = {
-        s[len(prefix):].replace(' :: Only', '')
+        s[len(prefix):].replace(' :: Only', '').rstrip()
         for s in classifiers
         if s.startswith(prefix) and s[len(prefix):len(prefix) + 1].isdigit()
     } | {
-        s[len(impl_prefix):]
+        s[len(impl_prefix):].rstrip()
         for s in classifiers
         if s.startswith(impl_prefix) and s != cpython
     }

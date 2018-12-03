@@ -4,7 +4,7 @@ Changelog
 0.9.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Strip trailing spaces from classifiers.
 
 
 0.9.1 (2018-11-30)
