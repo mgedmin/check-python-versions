@@ -7,6 +7,9 @@ import pytest
 import check_python_versions as cpv
 
 
+needs_pyyaml = pytest.mark.skipIf(cpv.yaml is None, "PyYAML not installed")
+
+
 def test_pipe():
     assert cpv.pipe('echo', 'hi') == 'hi\n'
 
@@ -289,6 +292,7 @@ def test_tox_env_to_py_version(s, expected):
     assert cpv.tox_env_to_py_version(s) == expected
 
 
+@needs_pyyaml
 def test_get_travis_yml_python_versions(tmp_path):
     travis_yml = tmp_path / ".travis.yml"
     travis_yml.write_text(textwrap.dedent("""\
@@ -326,6 +330,7 @@ def test_travis_normalize_py_version(s, expected):
     assert cpv.travis_normalize_py_version(s) == expected
 
 
+@needs_pyyaml
 def test_get_appveyor_yml_python_versions(tmp_path):
     appveyor_yml = tmp_path / "appveyor.yml"
     appveyor_yml.write_text(textwrap.dedent("""\
@@ -341,6 +346,7 @@ def test_get_appveyor_yml_python_versions(tmp_path):
     ]
 
 
+@needs_pyyaml
 def test_get_appveyor_yml_python_versions_using_toxenv(tmp_path):
     appveyor_yml = tmp_path / "appveyor.yml"
     appveyor_yml.write_text(textwrap.dedent("""\
