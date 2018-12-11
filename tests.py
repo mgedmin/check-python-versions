@@ -1,8 +1,13 @@
 import ast
+import sys
 
 import pytest
 
 import check_python_versions as cpv
+
+
+def test_pipe():
+    assert cpv.pipe('echo', 'hi') == 'hi\n'
 
 
 def test_get_versions_from_classifiers():
@@ -148,3 +153,9 @@ def test_important():
 
 def test_parse_expect():
     assert cpv.parse_expect('2.7,3.4-3.6') == ['2.7', '3.4', '3.5', '3.6']
+
+
+def test_main_help(monkeypatch):
+    monkeypatch.setattr(sys, 'argv', ['check-python-versions', '--help'])
+    with pytest.raises(SystemExit):
+        cpv.main()
