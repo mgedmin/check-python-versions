@@ -539,3 +539,19 @@ def test_main_expect_error_handling(monkeypatch, arg, capsys):
     with pytest.raises(SystemExit):
         cpv.main()
     assert f'bad value for --expect: {arg}' in capsys.readouterr().err
+
+
+def test_main_here(monkeypatch, capsys):
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions',
+    ])
+    cpv.main()
+    assert 'mismatch' not in capsys.readouterr().out
+
+
+def test_main_skip_non_packages(monkeypatch, capsys, tmp_path):
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions', '--skip-non-packages', str(tmp_path),
+    ])
+    cpv.main()
+    assert capsys.readouterr().out == ''

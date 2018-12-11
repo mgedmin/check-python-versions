@@ -415,13 +415,13 @@ def main():
     except ValueError:
         parser.error(f"bad value for --expect: {args.expect}")
 
-    where = args.where
+    where = args.where or ['.']
     if args.skip_non_packages:
         where = [path for path in where if is_package(path)]
 
     multiple = len(where) > 1
     mismatches = []
-    for n, path in enumerate(where or ['.']):
+    for n, path in enumerate(where):
         if multiple:
             if n:
                 print("\n")
