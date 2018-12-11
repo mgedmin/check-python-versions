@@ -25,8 +25,11 @@ import sys
 try:
     import yaml
 except ImportError:  # pragma: nocover
+    # Shouldn't happen, we install_requires=['PyYAML'], but maybe someone is
+    # running ./check_python_versions.py directly from a git checkout.
     yaml = None
-    print("pyaml is needed for .travis.yml support (apt install python3-yaml)")
+    print("PyYAML is needed for Travis CI/Appveyor support"
+          " (apt install python3-yaml)")
 
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
