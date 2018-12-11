@@ -1,5 +1,6 @@
 import ast
 import sys
+import textwrap
 
 import pytest
 
@@ -8,6 +9,34 @@ import check_python_versions as cpv
 
 def test_pipe():
     assert cpv.pipe('echo', 'hi') == 'hi\n'
+
+
+def test_get_supported_python_versions(tmp_path):
+    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    assert cpv.get_supported_python_versions(tmp_path) == ['2.7', '3.6']
+
+
+def test_get_supported_python_versions_computed(tmp_path):
+    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: %s' % v
+                for v in ['2.7', '3.7']
+            ],
+        )
+    """))
+    assert cpv.get_supported_python_versions(tmp_path) == ['2.7', '3.7']
 
 
 def test_get_versions_from_classifiers():
@@ -45,6 +74,42 @@ def test_get_versions_from_classifiers_with_trailing_whitespace():
     assert cpv.get_versions_from_classifiers([
         'Programming Language :: Python :: 3.6 ',
     ]) == ['3.6']
+
+
+def test_get_python_requires(tmp_path, monkeypatch):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            python_requires='>= 3.6',
+        )
+    """))
+    monkeypatch.setattr(cpv, 'CURRENT_PYTHON_3_VERSION', 7)
+    assert cpv.get_python_requires(setup_py) == ['3.6', '3.7']
+
+
+def test_get_python_requires_not_specified(tmp_path):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+        )
+    """))
+    assert cpv.get_python_requires(setup_py) is None
+
+
+def test_get_setup_py_keyword_syntax_error(tmp_path, capsys):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+        # uh do I need to close parens?  what if I forget? ;)
+    """))
+    assert cpv.get_setup_py_keyword(setup_py, 'name') is None
+    assert 'Could not parse' in capsys.readouterr().err
 
 
 def test_find_call_kwarg_in_ast():

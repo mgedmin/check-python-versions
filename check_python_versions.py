@@ -30,7 +30,7 @@ except ImportError:  # pragma: nocover
 
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
-__version__ = '0.9.3.dev0'
+__version__ = '0.10.0.dev0'
 
 
 log = logging.getLogger('check-python-versions')
@@ -48,7 +48,7 @@ CURRENT_PYTHON_3_VERSION = 7  # i.e. 3.7
 
 
 def warn(msg):
-    print(msg)
+    print(msg, file=sys.stderr)
 
 
 def pipe(*cmd, **kwargs):

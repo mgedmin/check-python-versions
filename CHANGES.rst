@@ -1,10 +1,12 @@
 Changelog
 =========
 
-0.9.3 (unreleased)
+0.10.0 (unreleased)
 ------------------
 
 - Do not consider "X.Y-dev" in .travis.yml as support for Python X.Y.
+- Print warnings to stderr
+- Added a test suite
 
 
 0.9.2 (2018-12-03)
