@@ -1,3 +1,5 @@
+import pytest
+
 import check_python_versions as cpv
 
 
@@ -52,3 +54,25 @@ def test_parse_python_requires_greater_than_with_exceptions(monkeypatch):
     assert cpv.parse_python_requires('>= 2.7, != 3.0.*, != 3.1.*') == [
         '2.7', '3.2', '3.3'
     ]
+
+
+@pytest.mark.parametrize('s, expected', [
+    ('', []),
+    ('py36,py37', ['py36', 'py37']),
+    ('py36, py37', ['py36', 'py37']),
+    ('\n  py36,\n  py37', ['py36', 'py37']),
+    ('py3{6,7},pypy', ['py36', 'py37', 'pypy']),
+])
+def test_parse_envlist(s, expected):
+    assert cpv.parse_envlist(s) == expected
+
+
+@pytest.mark.parametrize('s, expected', [
+    ('', ['']),
+    ('py36', ['py36']),
+    ('py3{6,7}', ['py36', 'py37']),
+    ('py3{6,7}-lint', ['py36-lint', 'py37-lint']),
+    ('py3{6,7}{,-lint}', ['py36', 'py36-lint', 'py37', 'py37-lint']),
+])
+def test_brace_expand(s, expected):
+    assert cpv.brace_expand(s) == expected
