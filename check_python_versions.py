@@ -24,7 +24,7 @@ import sys
 
 try:
     import yaml
-except ImportError:
+except ImportError:  # pragma: nocover
     yaml = None
     print("pyaml is needed for .travis.yml support (apt install python3-yaml)")
 

@@ -3,3 +3,8 @@ include *.rst
 include .gitignore
 include LICENSE
 include Makefile
+
+# added by check_manifest.py
+include *.py
+include .coveragerc
+include tox.ini

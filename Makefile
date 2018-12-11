@@ -6,7 +6,12 @@ all:
 
 .PHONY: test check
 test check:
-	@echo "No tests yet."
+	tox
+
+
+.PHONY: coverage
+coverage:
+	tox -e coverage
 
 
 include release.mk

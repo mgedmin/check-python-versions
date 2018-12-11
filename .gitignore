@@ -2,3 +2,6 @@
 build/
 dist/
 tmp/
+.tox/
+.coverage
+__pycache__/

@@ -12,7 +12,7 @@ with open(os.path.join(here, 'README.rst')) as f:
     long_description = f.read()
 
 metadata = {}
-with open(os.path.join(here, 'check-python-versions')) as f:
+with open(os.path.join(here, 'check_python_versions.py')) as f:
     rx = re.compile('(__version__|__author__|__url__|__licence__) = (.*)')
     for line in f:
         m = rx.match(line)
@@ -45,7 +45,12 @@ setup(
     ],
     license='GPL',
     python_requires=">=3.6",
-    scripts=['check-python-versions'],
+    py_modules=['check_python_versions'],
+    entry_points={
+        'console_scripts': [
+            'check-python-versions = check_python_versions:main',
+        ],
+    },
     install_requires=['pyyaml'],
     zip_safe=False,
 )
