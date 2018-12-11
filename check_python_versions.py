@@ -33,7 +33,7 @@ except ImportError:  # pragma: nocover
 
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
-__version__ = '0.10.0'
+__version__ = '0.10.1.dev0'
 
 
 log = logging.getLogger('check-python-versions')
