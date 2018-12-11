@@ -161,6 +161,18 @@ def test_parse_python_requires_greater_than_with_exceptions(monkeypatch):
     ]
 
 
+def test_parse_python_requires_multiple_greater_than(monkeypatch, capsys):
+    monkeypatch.setattr(cpv, 'CURRENT_PYTHON_3_VERSION', 7)
+    assert cpv.parse_python_requires('>= 2.7, >= 3.6') == ['3.6', '3.7']
+    assert 'Multiple >= specifiers: 2.7 and 3.6' in capsys.readouterr().err
+
+
+def test_parse_python_requires_unexpected_dot_star(monkeypatch, capsys):
+    monkeypatch.setattr(cpv, 'CURRENT_PYTHON_3_VERSION', 7)
+    assert cpv.parse_python_requires('>= 3.6.*') == ['3.6', '3.7']
+    assert 'Did not expect >= with a .*: 3.6.*' in capsys.readouterr().err
+
+
 @pytest.mark.parametrize('s, expected', [
     ('', []),
     ('py36,py37', ['py36', 'py37']),

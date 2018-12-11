@@ -161,6 +161,7 @@ def parse_python_requires(s):
                 warn('Multiple >= specifiers: %s and %s' % (min_ver, ver))
             if ver.endswith('.*'):
                 warn('Did not expect >= with a .*: %s' % ver)
+                ver = ver[:-2]
             min_ver = ver
         elif op == '!=':
             if not ver.endswith('.*'):
