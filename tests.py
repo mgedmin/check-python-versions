@@ -272,6 +272,26 @@ def test_tox_env_to_py_version(s, expected):
     assert cpv.tox_env_to_py_version(s) == expected
 
 
+def test_get_travis_yml_python_versions(tmp_path):
+    travis_yml = tmp_path / ".travis.yml"
+    travis_yml.write_text(textwrap.dedent("""\
+        python:
+          - 2.7
+          - 3.6
+        matrix:
+          include:
+            - python: 3.7
+        jobs:
+          include:
+            - python: 3.4
+        env:
+          - TOXENV=py35-docs
+    """))
+    assert cpv.get_travis_yml_python_versions(travis_yml) == [
+        '2.7', '3.4', '3.5', '3.6', '3.7',
+    ]
+
+
 @pytest.mark.parametrize('s, expected', [
     (3.6, '3.6'),
     ('3.7', '3.7'),
