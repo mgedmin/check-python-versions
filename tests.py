@@ -405,6 +405,26 @@ def test_parse_expect():
     assert cpv.parse_expect('2.7,3.4-3.6') == ['2.7', '3.4', '3.5', '3.6']
 
 
+def test_parse_expect_bad_range():
+    with pytest.raises(ValueError, match=r'bad range: 2\.7-3\.4 \(2 != 3\)'):
+        cpv.parse_expect('2.7-3.4')
+
+
+def test_parse_expect_bad_number():
+    with pytest.raises(ValueError):
+        cpv.parse_expect('2.x')
+
+
+def test_parse_expect_too_few():
+    with pytest.raises(ValueError):
+        cpv.parse_expect('2')
+
+
+def test_parse_expect_too_many_dots():
+    with pytest.raises(ValueError):
+        cpv.parse_expect('2.7.1')
+
+
 def test_main_help(monkeypatch):
     monkeypatch.setattr(sys, 'argv', ['check-python-versions', '--help'])
     with pytest.raises(SystemExit):
