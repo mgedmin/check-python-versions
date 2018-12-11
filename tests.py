@@ -434,6 +434,91 @@ def test_is_package_no_setup_py(tmp_path):
     assert not cpv.is_package(tmp_path)
 
 
+def test_check_not_a_directory(tmp_path, capsys):
+    assert cpv.check(tmp_path / "xyzzy") is None
+    assert capsys.readouterr().out == 'not a directory\n'
+
+
+def test_check_not_a_package(tmp_path, capsys):
+    assert cpv.check(tmp_path) is None
+    assert capsys.readouterr().out == 'no setup.py -- not a Python package?\n'
+
+
+def test_check_unknown(tmp_path, capsys):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+        )
+    """))
+    assert cpv.check(tmp_path) is True
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        setup.py says:              (empty)
+    """)
+
+
+def test_check_minimal(tmp_path, capsys):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    assert cpv.check(tmp_path) is True
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        setup.py says:              2.7, 3.6
+    """)
+
+
+def test_check_mismatch(tmp_path, capsys):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        envlist = py27
+    """))
+    assert cpv.check(tmp_path) is False
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        setup.py says:              2.7, 3.6
+        tox.ini says:               2.7
+    """)
+
+
+def test_check_expectation(tmp_path, capsys):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    assert cpv.check(tmp_path, expect=['2.7', '3.6', '3.7']) is False
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        setup.py says:              2.7, 3.6
+        expected:                   2.7, 3.6, 3.7
+    """)
+
+
 def test_main_help(monkeypatch):
     monkeypatch.setattr(sys, 'argv', ['check-python-versions', '--help'])
     with pytest.raises(SystemExit):
