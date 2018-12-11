@@ -1,3 +1,5 @@
+import ast
+
 import pytest
 
 import check_python_versions as cpv
@@ -38,6 +40,28 @@ def test_get_versions_from_classifiers_with_trailing_whitespace():
     assert cpv.get_versions_from_classifiers([
         'Programming Language :: Python :: 3.6 ',
     ]) == ['3.6']
+
+
+def test_find_call_kwarg_in_ast():
+    tree = ast.parse('foo(bar="foo")')
+    ast.dump(tree)
+    node = cpv.find_call_kwarg_in_ast(tree, 'foo', 'bar')
+    assert isinstance(node, ast.Str)
+    assert node.s == "foo"
+
+
+@pytest.mark.parametrize('code, expected', [
+    ('"hi"', "hi"),
+    ('"hi\\n"', "hi\n"),
+    ('["a", "b"]', ["a", "b"]),
+    ('("a", "b")', ("a", "b")),
+    ('"-".join(["a", "b"])', "a-b"),
+])
+def test_eval_ast_node(code, expected):
+    tree = ast.parse(f'foo(bar={code})')
+    node = cpv.find_call_kwarg_in_ast(tree, 'foo', 'bar')
+    assert node is not None
+    assert cpv.eval_ast_node(node, 'bar') == expected
 
 
 def test_parse_python_requires_empty():

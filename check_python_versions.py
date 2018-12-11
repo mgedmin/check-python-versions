@@ -106,16 +106,22 @@ def get_setup_py_keyword(setup_py, keyword):
         except SyntaxError as error:
             warn(f'Could not parse {setup_py}: {error}')
             return None
+    node = find_call_kwarg_in_ast(tree, 'setup', keyword)
+    if node is None:
+        warn('Could not find setup() call in setup.py')
+        return None
+    return eval_ast_node(node, keyword)
+
+
+def find_call_kwarg_in_ast(tree, funcname, keyword):
     for node in ast.walk(tree):
         if (isinstance(node, ast.Call)
                 and isinstance(node.func, ast.Name)
-                and node.func.id == 'setup'):
+                and node.func.id == funcname):
             for kwarg in node.keywords:
                 if kwarg.arg == keyword:
-                    return eval_ast_node(kwarg.value, keyword)
+                    return kwarg.value
             break
-    else:
-        warn('Could not find setup() call in setup.py')
     return None
 
 
