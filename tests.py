@@ -76,3 +76,51 @@ def test_parse_envlist(s, expected):
 ])
 def test_brace_expand(s, expected):
     assert cpv.brace_expand(s) == expected
+
+
+@pytest.mark.parametrize('s, expected', [
+    ('py36', '3.6'),
+    ('py37-lint', '3.7'),
+    ('pypy', 'PyPy'),
+    ('pypy3', 'PyPy3'),
+])
+def test_tox_env_to_py_version(s, expected):
+    assert cpv.tox_env_to_py_version(s) == expected
+
+
+@pytest.mark.parametrize('s, expected', [
+    (3.6, '3.6'),
+    ('3.7', '3.7'),
+    ('pypy', 'PyPy'),
+    ('pypy2', 'PyPy'),
+    ('pypy2.7', 'PyPy'),
+    ('pypy2.7-5.10.0', 'PyPy'),
+    ('pypy3', 'PyPy3'),
+    ('pypy3.5', 'PyPy3'),
+    ('pypy3.5-5.10.1', 'PyPy3'),
+    ('3.7-dev', '3.7-dev'),
+    ('nightly', 'nightly'),
+])
+def test_travis_normalize_py_version(s, expected):
+    assert cpv.travis_normalize_py_version(s) == expected
+
+
+@pytest.mark.parametrize('s, expected', [
+    ('37', '3.7'),
+    ('c:\\python34', '3.4'),
+    ('C:\\Python27\\', '2.7'),
+    ('C:\\Python27-x64', '2.7'),
+    ('C:\\PYTHON34-X64', '3.4'),
+])
+def test_appveyor_normalize_py_version(s, expected):
+    assert cpv.appveyor_normalize_py_version(s) == expected
+
+
+def test_important():
+    assert cpv.important({
+        '2.7', '3.4', '3.7-dev', 'nightly', 'PyPy3', 'Jython'
+    }) == {'2.7', '3.4'}
+
+
+def test_parse_expect():
+    assert cpv.parse_expect('2.7,3.4-3.6') == ['2.7', '3.4', '3.5', '3.6']
