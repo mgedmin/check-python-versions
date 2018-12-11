@@ -1,8 +1,8 @@
 Changelog
 =========
 
-0.10.0 (unreleased)
-------------------
+0.10.0 (2018-12-11)
+-------------------
 
 - Do not consider "X.Y-dev" in .travis.yml as support for Python X.Y.
 - Print warnings to stderr, not stdout.

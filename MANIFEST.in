@@ -1,10 +1,9 @@
 include *.mk
+include *.py
 include *.rst
+include .coveragerc
 include .gitignore
+include .travis.yml
 include LICENSE
 include Makefile
-
-# added by check_manifest.py
-include *.py
-include .coveragerc
 include tox.ini
