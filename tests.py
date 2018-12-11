@@ -36,3 +36,7 @@ def test_get_versions_from_classifiers_with_trailing_whitespace():
     assert cpv.get_versions_from_classifiers([
         'Programming Language :: Python :: 3.6 ',
     ]) == ['3.6']
+
+
+def test_parse_python_requires_empty():
+    assert cpv.parse_python_requires('') == []

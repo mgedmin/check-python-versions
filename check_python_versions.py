@@ -145,6 +145,7 @@ def parse_python_requires(s):
         m = rx.match(specifier)
         if not m:
             warn('Bad python_requires specifier: %s' % specifier)
+            continue
         op, ver = m.groups()
         specifiers.append((op, ver))
         if op == '>=':
