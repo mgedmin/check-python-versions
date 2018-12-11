@@ -425,6 +425,15 @@ def test_parse_expect_too_many_dots():
         cpv.parse_expect('2.7.1')
 
 
+def test_is_package(tmp_path):
+    (tmp_path / "setup.py").write_text("")
+    assert cpv.is_package(tmp_path)
+
+
+def test_is_package_no_setup_py(tmp_path):
+    assert not cpv.is_package(tmp_path)
+
+
 def test_main_help(monkeypatch):
     monkeypatch.setattr(sys, 'argv', ['check-python-versions', '--help'])
     with pytest.raises(SystemExit):
