@@ -107,13 +107,10 @@ def get_setup_py_keyword(setup_py, keyword):
             warn(f'Could not parse {setup_py}: {error}')
             return None
     node = find_call_kwarg_in_ast(tree, 'setup', keyword)
-    if node is None:
-        warn('Could not find setup() call in setup.py')
-        return None
-    return eval_ast_node(node, keyword)
+    return node and eval_ast_node(node, keyword)
 
 
-def find_call_kwarg_in_ast(tree, funcname, keyword):
+def find_call_kwarg_in_ast(tree, funcname, keyword, filename='setup.py'):
     for node in ast.walk(tree):
         if (isinstance(node, ast.Call)
                 and isinstance(node.func, ast.Name)
@@ -121,8 +118,11 @@ def find_call_kwarg_in_ast(tree, funcname, keyword):
             for kwarg in node.keywords:
                 if kwarg.arg == keyword:
                     return kwarg.value
-            break
-    return None
+            else:
+                return None
+    else:
+        warn(f'Could not find {funcname}() call in {filename}')
+        return None
 
 
 def eval_ast_node(node, keyword):

@@ -89,7 +89,7 @@ def test_get_python_requires(tmp_path, monkeypatch):
     assert cpv.get_python_requires(setup_py) == ['3.6', '3.7']
 
 
-def test_get_python_requires_not_specified(tmp_path):
+def test_get_python_requires_not_specified(tmp_path, capsys):
     setup_py = tmp_path / "setup.py"
     setup_py.write_text(textwrap.dedent("""\
         from setuptools import setup
@@ -98,6 +98,7 @@ def test_get_python_requires_not_specified(tmp_path):
         )
     """))
     assert cpv.get_python_requires(setup_py) is None
+    assert capsys.readouterr().err == ''
 
 
 def test_get_setup_py_keyword_syntax_error(tmp_path, capsys):
@@ -118,6 +119,22 @@ def test_find_call_kwarg_in_ast():
     node = cpv.find_call_kwarg_in_ast(tree, 'foo', 'bar')
     assert isinstance(node, ast.Str)
     assert node.s == "foo"
+
+
+def test_find_call_kwarg_in_ast_no_arg(capsys):
+    tree = ast.parse('foo(baz="foo")')
+    ast.dump(tree)
+    node = cpv.find_call_kwarg_in_ast(tree, 'foo', 'bar')
+    assert node is None
+    assert capsys.readouterr().err == ''
+
+
+def test_find_call_kwarg_in_ast_no_call(capsys):
+    tree = ast.parse('fooo(bar="foo")')
+    ast.dump(tree)
+    node = cpv.find_call_kwarg_in_ast(tree, 'foo', 'bar')
+    assert node is None
+    assert 'Could not find foo() call in setup.py' in capsys.readouterr().err
 
 
 @pytest.mark.parametrize('code, expected', [
