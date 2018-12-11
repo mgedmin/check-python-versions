@@ -191,10 +191,12 @@ def parse_python_requires(s):
 
 def get_tox_ini_python_versions(filename=TOX_INI):
     conf = configparser.ConfigParser()
-    if not conf.read(filename):
-        # no tox.ini
+    try:
+        conf.read(filename)
+        envlist = conf.get('tox', 'envlist')
+    except configparser.Error:
         return []
-    envlist = parse_envlist(conf.get('tox', 'envlist'))
+    envlist = parse_envlist(envlist)
     return sorted(set(
         tox_env_to_py_version(e) for e in envlist if e.startswith('py')))
 

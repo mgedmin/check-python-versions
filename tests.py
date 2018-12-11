@@ -199,6 +199,46 @@ def test_parse_python_requires_does_not_support_other_constraints(capsys):
     assert 'Did not expect a < specifier: < 3.0' in capsys.readouterr().err
 
 
+def test_get_tox_ini_python_versions(tmp_path):
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        envlist = py27,py36,py27-docs
+    """))
+    assert cpv.get_tox_ini_python_versions(tox_ini) == ['2.7', '3.6']
+
+
+def test_get_tox_ini_python_versions_no_tox_ini(tmp_path):
+    tox_ini = tmp_path / "tox.ini"
+    assert cpv.get_tox_ini_python_versions(tox_ini) == []
+
+
+def test_get_tox_ini_python_versions_syntax_error(tmp_path):
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        ...
+    """))
+    assert cpv.get_tox_ini_python_versions(tox_ini) == []
+
+
+def test_get_tox_ini_python_versions_no_tox_section(tmp_path):
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [flake8]
+        source = foo
+    """))
+    assert cpv.get_tox_ini_python_versions(tox_ini) == []
+
+
+def test_get_tox_ini_python_versions_no_tox_envlist(tmp_path):
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        minversion = 3.4.0
+    """))
+    assert cpv.get_tox_ini_python_versions(tox_ini) == []
+
+
 @pytest.mark.parametrize('s, expected', [
     ('', []),
     ('py36,py37', ['py36', 'py37']),
@@ -226,6 +266,7 @@ def test_brace_expand(s, expected):
     ('py37-lint', '3.7'),
     ('pypy', 'PyPy'),
     ('pypy3', 'PyPy3'),
+    ('flake8', 'flake8'),
 ])
 def test_tox_env_to_py_version(s, expected):
     assert cpv.tox_env_to_py_version(s) == expected
