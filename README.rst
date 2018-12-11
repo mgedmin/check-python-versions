@@ -1,6 +1,23 @@
 check-python-versions
 =====================
 
+.. image:: https://img.shields.io/pypi/v/check-python-versions.svg
+    :target: https://pypi.org/project/check-python-versions/
+    :alt: Latest release
+
+.. image:: https://img.shields.io/pypi/pyversions/check-python-versions.svg
+    :target: https://pypi.org/project/check-python-versions/
+    :alt: Supported Python versions
+
+.. image:: https://travis-ci.org/mgedmin/check-python-versions.svg?branch=master
+    :target: https://travis-ci.org/mgedmin/check-python-versions
+    :alt: Build status
+
+.. image:: https://coveralls.io/repos/mgedmin/check-python-versions/badge.svg?branch=master
+    :target: https://coveralls.io/r/mgedmin/check-python-versions
+    :alt: Test coverage
+
+
 This is a tool for Python package maintainers who want to explicitly state
 which Python versions they support.
 
