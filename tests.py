@@ -134,6 +134,17 @@ def test_eval_ast_node(code, expected):
     assert cpv.eval_ast_node(node, 'bar') == expected
 
 
+@pytest.mark.parametrize('code', [
+    '[2 * 2]',
+    '"".join([2 * 2])',
+])
+def test_eval_ast_node_failures(code, capsys):
+    tree = ast.parse(f'foo(bar={code})')
+    node = cpv.find_call_kwarg_in_ast(tree, 'foo', 'bar')
+    assert cpv.eval_ast_node(node, 'bar') is None
+    assert 'Non-literal bar= passed to setup()' in capsys.readouterr().err
+
+
 def test_parse_python_requires_empty():
     assert cpv.parse_python_requires('') == []
 
