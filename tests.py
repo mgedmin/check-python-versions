@@ -523,3 +523,19 @@ def test_main_help(monkeypatch):
     monkeypatch.setattr(sys, 'argv', ['check-python-versions', '--help'])
     with pytest.raises(SystemExit):
         cpv.main()
+
+
+@pytest.mark.parametrize('arg', [
+    'xyzzy',
+    '1,2,3',
+    '2.x',
+    '1.2.3',
+    '2.7-3.6',
+])
+def test_main_expect_error_handling(monkeypatch, arg, capsys):
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions', '--expect', arg,
+    ])
+    with pytest.raises(SystemExit):
+        cpv.main()
+    assert f'bad value for --expect: {arg}' in capsys.readouterr().err

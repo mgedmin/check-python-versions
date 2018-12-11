@@ -410,7 +410,10 @@ def main():
                              ' and other files is located')
     args = parser.parse_args()
 
-    expect = args.expect and parse_expect(args.expect)
+    try:
+        expect = args.expect and parse_expect(args.expect)
+    except ValueError:
+        parser.error(f"bad value for --expect: {args.expect}")
 
     where = args.where
     if args.skip_non_packages:
