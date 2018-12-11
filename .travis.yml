@@ -6,7 +6,7 @@ python:
 install:
     - pip install pytest coverage coveralls
 script:
-    - coverage run -m pytest
+    - coverage run -m pytest tests.py
     - coverage report
 after_script:
     - coveralls
