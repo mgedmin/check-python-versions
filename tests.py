@@ -326,6 +326,34 @@ def test_travis_normalize_py_version(s, expected):
     assert cpv.travis_normalize_py_version(s) == expected
 
 
+def test_get_appveyor_yml_python_versions(tmp_path):
+    appveyor_yml = tmp_path / "appveyor.yml"
+    appveyor_yml.write_text(textwrap.dedent("""\
+        environment:
+          matrix:
+            - PYTHON: c:\\python27
+            - PYTHON: c:\\python27-x64
+            - PYTHON: c:\\python36
+            - PYTHON: c:\\python36-x64
+    """))
+    assert cpv.get_appveyor_yml_python_versions(appveyor_yml) == [
+        '2.7', '3.6',
+    ]
+
+
+def test_get_appveyor_yml_python_versions_using_toxenv(tmp_path):
+    appveyor_yml = tmp_path / "appveyor.yml"
+    appveyor_yml.write_text(textwrap.dedent("""\
+        environment:
+          matrix:
+            - TOXENV: py27
+            - TOXENV: py37
+    """))
+    assert cpv.get_appveyor_yml_python_versions(appveyor_yml) == [
+        '2.7', '3.7',
+    ]
+
+
 @pytest.mark.parametrize('s, expected', [
     ('37', '3.7'),
     ('c:\\python34', '3.4'),
