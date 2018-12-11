@@ -40,3 +40,15 @@ def test_get_versions_from_classifiers_with_trailing_whitespace():
 
 def test_parse_python_requires_empty():
     assert cpv.parse_python_requires('') == []
+
+
+def test_parse_python_requires_greater_than(monkeypatch):
+    monkeypatch.setattr(cpv, 'CURRENT_PYTHON_3_VERSION', 8)
+    assert cpv.parse_python_requires('>= 3.6') == ['3.6', '3.7', '3.8']
+
+
+def test_parse_python_requires_greater_than_with_exceptions(monkeypatch):
+    monkeypatch.setattr(cpv, 'CURRENT_PYTHON_3_VERSION', 3)
+    assert cpv.parse_python_requires('>= 2.7, != 3.0.*, != 3.1.*') == [
+        '2.7', '3.2', '3.3'
+    ]

@@ -42,6 +42,8 @@ APPVEYOR_YML = 'appveyor.yml'
 MANYLINUX_INSTALL_SH = '.manylinux-install.sh'
 
 
+MAX_PYTHON_1_VERSION = 6  # i.e. 1.6
+MAX_PYTHON_2_VERSION = 7  # i.e. 2.7
 CURRENT_PYTHON_3_VERSION = 7  # i.e. 3.7
 
 
@@ -169,8 +171,11 @@ def parse_python_requires(s):
         warn('Expected a >= specifier')
         return versions
     min_ver_tuple = tuple(map(int, min_ver.split('.')))[:2]
-    for major in range(1, 4):
-        for minor in range(0, CURRENT_PYTHON_3_VERSION + 1):
+    for major, max_minor in [
+            (1, MAX_PYTHON_1_VERSION),
+            (2, MAX_PYTHON_2_VERSION),
+            (3, CURRENT_PYTHON_3_VERSION)]:
+        for minor in range(0, max_minor + 1):
             ver = '%d.%d' % (major, minor)
             if (major, minor) >= min_ver_tuple and ver not in forbidden:
                 versions.append(ver)
