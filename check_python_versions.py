@@ -431,11 +431,11 @@ def main():
 
     if mismatches:
         if multiple:
-            sys.exit(f"\nmismatch in {' '.join(mismatches)}!")
+            sys.exit(f"\n\nmismatch in {' '.join(mismatches)}!")
         else:
             sys.exit("\nmismatch!")
     elif multiple:
-        print("\nall ok!")
+        print("\n\nall ok!")
 
 
 if __name__ == '__main__':

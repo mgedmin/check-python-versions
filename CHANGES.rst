@@ -5,8 +5,9 @@ Changelog
 ------------------
 
 - Do not consider "X.Y-dev" in .travis.yml as support for Python X.Y.
-- Print warnings to stderr
-- Added a test suite
+- Print warnings to stderr, not stdout.
+- Add a test suite.
+- Fix a lot of minor buglets.
 
 
 0.9.2 (2018-12-03)

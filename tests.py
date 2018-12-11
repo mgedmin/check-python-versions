@@ -555,3 +555,54 @@ def test_main_skip_non_packages(monkeypatch, capsys, tmp_path):
     ])
     cpv.main()
     assert capsys.readouterr().out == ''
+
+
+def test_main_single(monkeypatch, capsys, tmp_path):
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions',
+        str(tmp_path / "a"),
+    ])
+    with pytest.raises(SystemExit) as exc_info:
+        cpv.main()
+    assert (
+        capsys.readouterr().out + str(exc_info.value) + '\n'
+    ).replace(str(tmp_path), 'tmp') == textwrap.dedent("""\
+        not a directory
+
+        mismatch!
+    """)
+
+
+def test_main_multiple(monkeypatch, capsys, tmp_path):
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions',
+        str(tmp_path / "a"),
+        str(tmp_path / "b"),
+    ])
+    with pytest.raises(SystemExit) as exc_info:
+        cpv.main()
+    assert (
+        capsys.readouterr().out + str(exc_info.value) + '\n'
+    ).replace(str(tmp_path), 'tmp') == textwrap.dedent("""\
+        tmp/a:
+
+        not a directory
+
+
+        tmp/b:
+
+        not a directory
+
+
+        mismatch in tmp/a tmp/b!
+    """)
+
+
+def test_main_multiple_ok(monkeypatch, capsys):
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions', '.', '.',
+    ])
+    cpv.main()
+    assert (
+        capsys.readouterr().out.endswith('\n\nall ok!\n')
+    )
