@@ -145,8 +145,9 @@ def test_eval_ast_node_failures(code, capsys):
     assert 'Non-literal bar= passed to setup()' in capsys.readouterr().err
 
 
-def test_parse_python_requires_empty():
+def test_parse_python_requires_empty(capsys):
     assert cpv.parse_python_requires('') == []
+    assert 'Bad python_requires specifier: ' in capsys.readouterr().err
 
 
 def test_parse_python_requires_greater_than(monkeypatch):
@@ -171,6 +172,31 @@ def test_parse_python_requires_unexpected_dot_star(monkeypatch, capsys):
     monkeypatch.setattr(cpv, 'CURRENT_PYTHON_3_VERSION', 7)
     assert cpv.parse_python_requires('>= 3.6.*') == ['3.6', '3.7']
     assert 'Did not expect >= with a .*: 3.6.*' in capsys.readouterr().err
+
+
+def test_parse_python_requires_not_equals_without_a_star(capsys):
+    assert cpv.parse_python_requires('!= 3.0') == []
+    assert 'Did not expect != without a .*: 3.0' in capsys.readouterr().err
+
+
+def test_parse_python_requires_not_equals_too_few_dots(capsys):
+    assert cpv.parse_python_requires('!= 3.*') == []
+    assert 'Unexpected number of dots in 3.*' in capsys.readouterr().err
+
+
+def test_parse_python_requires_not_equals_too_many_dots(capsys):
+    assert cpv.parse_python_requires('!= 3.0.0.*') == []
+    assert 'Unexpected number of dots in 3.0.0.*' in capsys.readouterr().err
+
+
+def test_parse_python_requires_no_min_version(capsys):
+    assert cpv.parse_python_requires('!= 3.0.*') == []
+    assert 'Expected a >= specifier' in capsys.readouterr().err
+
+
+def test_parse_python_requires_does_not_support_other_constraints(capsys):
+    assert cpv.parse_python_requires('< 3.0') == []
+    assert 'Did not expect a < specifier: < 3.0' in capsys.readouterr().err
 
 
 @pytest.mark.parametrize('s, expected', [
