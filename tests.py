@@ -1,4 +1,5 @@
 import ast
+import os
 import sys
 import textwrap
 
@@ -589,7 +590,7 @@ def test_main_multiple(monkeypatch, capsys, tmp_path):
         cpv.main()
     assert (
         capsys.readouterr().out + str(exc_info.value) + '\n'
-    ).replace(str(tmp_path), 'tmp') == textwrap.dedent("""\
+    ).replace(str(tmp_path) + os.path.sep, 'tmp/') == textwrap.dedent("""\
         tmp/a:
 
         not a directory
