@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.11.0 (unreleased)
+0.11.0 (2019-02-13)
 -------------------
 
 - Implement a full PEP-440 parser for python_requires.

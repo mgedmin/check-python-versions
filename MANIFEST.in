@@ -7,3 +7,6 @@ include .travis.yml
 include LICENSE
 include Makefile
 include tox.ini
+
+# added by check_manifest.py
+include *.yml
