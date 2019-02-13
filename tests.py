@@ -166,9 +166,33 @@ def test_eval_ast_node_failures(code, capsys):
     assert 'Non-literal bar= passed to setup()' in capsys.readouterr().err
 
 
-def test_parse_python_requires_empty(capsys):
-    assert cpv.parse_python_requires('') == []
-    assert 'Bad python_requires specifier: ' in capsys.readouterr().err
+@pytest.mark.parametrize('constraint, result', [
+    ('~= 2.7', ['2.7']),
+    ('~= 2.7.12', ['2.7']),
+])
+def test_parse_python_requires_approximately(constraint, result):
+    assert cpv.parse_python_requires(constraint) == result
+
+
+def test_parse_python_requires_approximately_not_enough_dots(capsys):
+    assert cpv.parse_python_requires('~= 2') is None
+    assert (
+        'Bad python_requires specifier: ~= 2'
+        ' (~= requires a version with at least one dot)'
+        in capsys.readouterr().err
+    )
+
+
+@pytest.mark.parametrize('constraint, result', [
+    ('== 2.7', ['2.7']),
+    ('== 2.7.*', ['2.7']),
+    ('== 2.7.12', ['2.7']),
+    ('== 2.*, >= 2.6', ['2.6', '2.7']),
+    ('== 3.0', ['3.0']),
+    ('== 3', ['3.0']),
+])
+def test_parse_python_requires_matching_version(constraint, result):
+    assert cpv.parse_python_requires(constraint) == result
 
 
 def test_parse_python_requires_greater_than(monkeypatch):
@@ -176,48 +200,73 @@ def test_parse_python_requires_greater_than(monkeypatch):
     assert cpv.parse_python_requires('>= 3.6') == ['3.6', '3.7', '3.8']
 
 
-def test_parse_python_requires_greater_than_with_exceptions(monkeypatch):
+@pytest.mark.parametrize('constraint, result', [
+    ('>= 2.7, != 3.*', ['2.7']),
+    ('>= 2.7.12, != 3.*', ['2.7']),
+    ('>= 2.7, != 3.0.*, != 3.1.*', ['2.7', '3.2', '3.3']),
+    # != 3.2 means we reject 3.2.0 but still accept any other 3.2.x
+    ('>= 2.7, != 3.2', ['2.7', '3.0', '3.1', '3.2', '3.3']),
+    ('>= 2.7, != 3.2.1', ['2.7', '3.0', '3.1', '3.2', '3.3']),
+    ('>= 2.7, <= 3', ['2.7', '3.0']),
+    ('>= 2.7, <= 3.2', ['2.7', '3.0', '3.1', '3.2']),
+    ('>= 2.7, <= 3.2.1', ['2.7', '3.0', '3.1', '3.2']),
+    ('>= 3', ['3.0', '3.1', '3.2', '3.3']),
+])
+def test_parse_python_requires_greater_than_with_exceptions(
+    monkeypatch, constraint, result
+):
     monkeypatch.setattr(cpv, 'CURRENT_PYTHON_3_VERSION', 3)
-    assert cpv.parse_python_requires('>= 2.7, != 3.0.*, != 3.1.*') == [
-        '2.7', '3.2', '3.3'
-    ]
+    assert cpv.parse_python_requires(constraint) == result
 
 
-def test_parse_python_requires_multiple_greater_than(monkeypatch, capsys):
+def test_parse_python_requires_multiple_greater_than(monkeypatch):
     monkeypatch.setattr(cpv, 'CURRENT_PYTHON_3_VERSION', 7)
     assert cpv.parse_python_requires('>= 2.7, >= 3.6') == ['3.6', '3.7']
-    assert 'Multiple >= specifiers: 2.7 and 3.6' in capsys.readouterr().err
 
 
-def test_parse_python_requires_unexpected_dot_star(monkeypatch, capsys):
+@pytest.mark.parametrize('constraint, result', [
+    ('> 2, < 3.1', ['3.0']),
+    ('> 2.6, < 3', ['2.7']),
+    ('> 2.7.12, < 3', ['2.7']),
+    ('> 2.7.12, < 3.0', ['2.7']),
+    ('> 2.7.12, < 3.1', ['2.7', '3.0']),
+    ('> 2.7.12, < 3.0.1', ['2.7', '3.0']),
+])
+def test_parse_python_exclusive_ordering(constraint, result):
+    assert cpv.parse_python_requires(constraint) == result
+
+
+@pytest.mark.parametrize('constraint, result', [
+    ('=== 2.7', ['2.7']),
+    ('=== 2.7.12', ['2.7']),
+    ('=== 3', []),
+])
+def test_parse_python_requires_arbitrary_version(constraint, result):
+    assert cpv.parse_python_requires(constraint) == result
+
+
+@pytest.mark.parametrize('op', ['~=', '>=', '<=', '>', '<', '==='])
+def test_parse_python_requires_unexpected_dot_star(monkeypatch, capsys, op):
     monkeypatch.setattr(cpv, 'CURRENT_PYTHON_3_VERSION', 7)
-    assert cpv.parse_python_requires('>= 3.6.*') == ['3.6', '3.7']
-    assert 'Did not expect >= with a .*: 3.6.*' in capsys.readouterr().err
+    assert cpv.parse_python_requires(f'{op} 3.6.*') is None
+    assert (
+        f'Bad python_requires specifier: {op} 3.6.* ({op} does not allow a .*)'
+        in capsys.readouterr().err
+    )
 
 
-def test_parse_python_requires_not_equals_without_a_star(capsys):
-    assert cpv.parse_python_requires('!= 3.0') == []
-    assert 'Did not expect != without a .*: 3.0' in capsys.readouterr().err
-
-
-def test_parse_python_requires_not_equals_too_few_dots(capsys):
-    assert cpv.parse_python_requires('!= 3.*') == []
-    assert 'Unexpected number of dots in 3.*' in capsys.readouterr().err
-
-
-def test_parse_python_requires_not_equals_too_many_dots(capsys):
-    assert cpv.parse_python_requires('!= 3.0.0.*') == []
-    assert 'Unexpected number of dots in 3.0.0.*' in capsys.readouterr().err
-
-
-def test_parse_python_requires_no_min_version(capsys):
-    assert cpv.parse_python_requires('!= 3.0.*') == []
-    assert 'Expected a >= specifier' in capsys.readouterr().err
-
-
-def test_parse_python_requires_does_not_support_other_constraints(capsys):
-    assert cpv.parse_python_requires('< 3.0') == []
-    assert 'Did not expect a < specifier: < 3.0' in capsys.readouterr().err
+@pytest.mark.parametrize('specifier', [
+    '%= 42',
+    '== nobody.knows',
+    '!= *.*.*',
+    'xyzzy',
+])
+def test_parse_python_requires_syntax_errors(capsys, specifier):
+    assert cpv.parse_python_requires(specifier) is None
+    assert (
+        f'Bad python_requires specifier: {specifier}'
+        in capsys.readouterr().err
+    )
 
 
 def test_get_tox_ini_python_versions(tmp_path):

@@ -20,6 +20,7 @@ import os
 import re
 import subprocess
 import sys
+from functools import partial
 
 
 try:
@@ -143,52 +144,143 @@ def eval_ast_node(node, keyword):
             return node.func.value.s.join(ast.literal_eval(node.args[0]))
         except ValueError:
             pass
-    warn('Non-literal %s= passed to setup()' % keyword)
+    warn(f'Non-literal {keyword}= passed to setup()')
     return None
 
 
 def parse_python_requires(s):
-    rx = re.compile(r'^(~=|==|!=|<=|>=|<|>|===)\s*(\d+(?:\.\d+)*(?:\.\*)?$)')
-    specifiers = []
-    min_ver = None
-    forbidden = set()
+    # https://www.python.org/dev/peps/pep-0440/#version-specifiers
+    rx = re.compile(r'^(~=|==|!=|<=|>=|<|>|===)\s*(\d+(?:\.\d+)*(?:\.\*)?)$')
+
+    class BadConstraint(Exception):
+        pass
+
+    handlers = {}
+    handler = partial(partial, handlers.__setitem__)
+
+    #
+    # We are not doing a strict PEP-440 implementation here because if
+    # python_reqiures allows, say, Python 2.7.16, then we want to report that
+    # as Python 2.7.  In each handler ``canditate`` is a two-tuple (X, Y)
+    # that represents any Python version between X.Y.0 and X.Y.<whatever>.
+    #
+
+    @handler('~=')
+    def compatible_version(constraint):
+        if len(constraint) < 2:
+            raise BadConstraint('~= requires a version with at least one dot')
+        if constraint[-1] == '*':
+            raise BadConstraint('~= does not allow a .*')
+        return lambda candidate: candidate == constraint[:2]
+
+    @handler('==')
+    def matching_version(constraint):
+        # we know len(candidate) == 2
+        if len(constraint) == 2 and constraint[-1] == '*':
+            return lambda candidate: candidate[0] == constraint[0]
+        elif len(constraint) == 1:
+            # == X should imply Python X.0
+            return lambda candidate: candidate == constraint + (0,)
+        else:
+            # == X.Y.* and == X.Y.Z both imply Python X.Y
+            return lambda candidate: candidate == constraint[:2]
+
+    @handler('!=')
+    def excluded_version(constraint):
+        # we know len(candidate) == 2
+        if constraint[-1] != '*':
+            # != X or != X.Y or != X.Y.Z all are meaningless for us, because
+            # there exists some W != Z where we allow X.Y.W and thus allow
+            # Python X.Y.
+            return lambda candidate: True
+        elif len(constraint) == 2:
+            # != X.* excludes the entirety of a major version
+            return lambda candidate: candidate[0] != constraint[0]
+        else:
+            # != X.Y.* excludes one particular minor version X.Y,
+            # != X.Y.Z.* does not exclude anything, but it's fine,
+            # len(candidate) != len(constraint[:-1] so it'll be equivalent to
+            # True anyway.
+            return lambda candidate: candidate != constraint[:-1]
+
+    @handler('>=')
+    def greater_or_equal_version(constraint):
+        if constraint[-1] == '*':
+            raise BadConstraint('>= does not allow a .*')
+        # >= X, >= X.Y, >= X.Y.Z all work out nicely because in Python
+        # (3, 0) >= (3,)
+        return lambda candidate: candidate >= constraint[:2]
+
+    @handler('<=')
+    def lesser_or_equal_version(constraint):
+        if constraint[-1] == '*':
+            raise BadConstraint('<= does not allow a .*')
+        if len(constraint) == 1:
+            # <= X allows up to X.0
+            return lambda candidate: candidate <= constraint + (0,)
+        else:
+            # <= X.Y[.Z] allows up to X.Y
+            return lambda candidate: candidate <= constraint
+
+    @handler('>')
+    def greater_version(constraint):
+        if constraint[-1] == '*':
+            raise BadConstraint('> does not allow a .*')
+        if len(constraint) == 1:
+            # > X allows X+1.0 etc
+            return lambda candidate: candidate[0] > constraint[0]
+        elif len(constraint) == 2:
+            # > X.Y allows X.Y+1 etc
+            return lambda candidate: candidate > constraint
+        else:
+            # > X.Y.Z allows X.Y
+            return lambda candidate: candidate >= constraint[:2]
+
+    @handler('<')
+    def lesser_version(constraint):
+        if constraint[-1] == '*':
+            raise BadConstraint('< does not allow a .*')
+        # < X, < X.Y, < X.Y.Z all work out nicely because in Python
+        # (3, 0) > (3,), (3, 0) == (3, 0) and (3, 0) < (3, 0, 1)
+        return lambda candidate: candidate < constraint
+
+    @handler('===')
+    def arbitrary_version(constraint):
+        if constraint[-1] == '*':
+            raise BadConstraint('=== does not allow a .*')
+        # === X does not allow anything
+        # === X.Y throws me into confusion; will pip compare Python's X.Y.Z ===
+        # X.Y and reject all possible values of Z?
+        # === X.Y.Z allows X.Y
+        return lambda candidate: candidate == constraint[:2]
+
+    constraints = []
     for specifier in map(str.strip, s.split(',')):
         m = rx.match(specifier)
         if not m:
-            warn('Bad python_requires specifier: %s' % specifier)
+            warn(f'Bad python_requires specifier: {specifier}')
             continue
         op, ver = m.groups()
-        specifiers.append((op, ver))
-        if op == '>=':
-            if min_ver is not None:
-                warn('Multiple >= specifiers: %s and %s' % (min_ver, ver))
-            if ver.endswith('.*'):
-                warn('Did not expect >= with a .*: %s' % ver)
-                ver = ver[:-2]
-            min_ver = ver
-        elif op == '!=':
-            if not ver.endswith('.*'):
-                warn('Did not expect != without a .*: %s' % ver)
-            elif ver.count('.') != 2:
-                warn('Unexpected number of dots in %s' % ver)
-            else:
-                forbidden.add(ver[:-2])
-        else:
-            warn('Did not expect a %s specifier: %s' % (op, specifier))
-    # okay, let's do magic
+        ver = tuple(
+            int(segment) if segment != '*' else segment
+            for segment in ver.split('.')
+        )
+        try:
+            constraints.append(handlers[op](ver))
+        except BadConstraint as error:
+            warn(f'Bad python_requires specifier: {specifier} ({error})')
+
+    if not constraints:
+        return None
+
     versions = []
-    if not min_ver:
-        warn('Expected a >= specifier')
-        return versions
-    min_ver_tuple = tuple(map(int, min_ver.split('.')))[:2]
     for major, max_minor in [
             (1, MAX_PYTHON_1_VERSION),
             (2, MAX_PYTHON_2_VERSION),
             (3, CURRENT_PYTHON_3_VERSION)]:
         for minor in range(0, max_minor + 1):
-            ver = '%d.%d' % (major, minor)
-            if (major, minor) >= min_ver_tuple and ver not in forbidden:
-                versions.append(ver)
+            if all(constraint((major, minor)) for constraint in constraints):
+                versions.append(f'{major}.{minor}')
     return versions
 
 
