@@ -1,6 +1,7 @@
 [run]
 source = check_python_versions
 cover_pylib = False
+branch = True
 
 [report]
 exclude_lines =

@@ -352,14 +352,30 @@ def test_get_travis_yml_python_versions(tmp_path):
         matrix:
           include:
             - python: 3.7
+            - name: something unrelated
         jobs:
           include:
             - python: 3.4
+            - name: something unrelated
         env:
           - TOXENV=py35-docs
+          - UNRELATED=variable
     """))
     assert cpv.get_travis_yml_python_versions(travis_yml) == [
         '2.7', '3.4', '3.5', '3.6', '3.7',
+    ]
+
+
+@needs_pyyaml
+def test_get_travis_yml_python_versions_no_python_only_matrix(tmp_path):
+    travis_yml = tmp_path / ".travis.yml"
+    travis_yml.write_text(textwrap.dedent("""\
+        matrix:
+          include:
+            - python: 3.7
+    """))
+    assert cpv.get_travis_yml_python_versions(travis_yml) == [
+        '3.7',
     ]
 
 
@@ -390,6 +406,7 @@ def test_get_appveyor_yml_python_versions(tmp_path):
             - PYTHON: c:\\python27-x64
             - PYTHON: c:\\python36
             - PYTHON: c:\\python36-x64
+              UNRELATED: variable
     """))
     assert cpv.get_appveyor_yml_python_versions(appveyor_yml) == [
         '2.7', '3.6',
