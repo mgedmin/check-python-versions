@@ -1,10 +1,10 @@
 Changelog
 =========
 
-0.11.1 (unreleased)
+0.12.0 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Ignore unreleased Python versions (3.8 at the moment).
 
 
 0.11.0 (2019-02-13)

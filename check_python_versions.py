@@ -34,7 +34,7 @@ except ImportError:  # pragma: nocover
 
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
-__version__ = '0.11.1.dev0'
+__version__ = '0.12.0.dev0'
 
 
 log = logging.getLogger('check-python-versions')
@@ -409,10 +409,11 @@ def get_manylinux_python_versions(filename=MANYLINUX_INSTALL_SH):
 
 
 def important(versions):
+    upcoming_release = f'3.{CURRENT_PYTHON_3_VERSION + 1}'
     return {
         v for v in versions
         if not v.startswith(('PyPy', 'Jython')) and v != 'nightly'
-        and not v.endswith('-dev')
+        and not v.endswith('-dev') and v != upcoming_release
     }
 
 

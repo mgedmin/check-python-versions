@@ -468,9 +468,10 @@ def test_get_manylinux_python_versions(tmp_path):
     ]
 
 
-def test_important():
+def test_important(monkeypatch):
+    monkeypatch.setattr(cpv, 'CURRENT_PYTHON_3_VERSION', 7)
     assert cpv.important({
-        '2.7', '3.4', '3.7-dev', 'nightly', 'PyPy3', 'Jython'
+        '2.7', '3.4', '3.7-dev', '3.8', 'nightly', 'PyPy3', 'Jython'
     }) == {'2.7', '3.4'}
 
 
