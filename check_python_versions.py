@@ -53,6 +53,12 @@ MAX_PYTHON_1_VERSION = 6  # i.e. 1.6
 MAX_PYTHON_2_VERSION = 7  # i.e. 2.7
 CURRENT_PYTHON_3_VERSION = 7  # i.e. 3.7
 
+MAX_MINOR_FOR_MAJOR = {
+    1: MAX_PYTHON_1_VERSION,
+    2: MAX_PYTHON_2_VERSION,
+    3: CURRENT_PYTHON_3_VERSION,
+}
+
 
 def warn(msg):
     print(msg, file=sys.stderr)
@@ -559,7 +565,16 @@ def parse_version_list(v):
             lo = hi = part
 
         lo_major, lo_minor = parse_version(lo)
-        hi_major, hi_minor = parse_version(hi)
+
+        if hi:
+            hi_major, hi_minor = parse_version(hi)
+        else:
+            hi_major = lo_major
+            try:
+                hi_minor = MAX_MINOR_FOR_MAJOR[hi_major]
+            except KeyError:
+                raise argparse.ArgumentTypeError(
+                    f'bad range: {part}')
 
         if lo_major != hi_major:
             raise argparse.ArgumentTypeError(

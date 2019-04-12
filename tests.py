@@ -599,6 +599,19 @@ def test_parse_version_list():
     ) == ['2.7', '3.4', '3.5', '3.6']
 
 
+def test_parse_version_list_magic_range(monkeypatch):
+    monkeypatch.setattr(cpv, 'CURRENT_PYTHON_3_VERSION', 7)
+    assert cpv.parse_version_list(
+        '2.7,3.4-'
+    ) == ['2.7', '3.4', '3.5', '3.6', '3.7']
+
+
+def test_parse_version_list_bad_magic_range():
+    with pytest.raises(argparse.ArgumentTypeError,
+                       match=r'bad range: 4\.1-'):
+        cpv.parse_version_list('4.1-')
+
+
 def test_parse_version_list_bad_range():
     with pytest.raises(argparse.ArgumentTypeError,
                        match=r'bad range: 2\.7-3\.4 \(2 != 3\)'):
