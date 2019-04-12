@@ -203,6 +203,28 @@ def test_eval_ast_node(code, expected):
     assert cpv.eval_ast_node(node, 'bar') == expected
 
 
+def test_to_literal():
+    assert cpv.to_literal("blah") == '"blah"'
+    assert cpv.to_literal("blah", "'") == "'blah'"
+
+
+def test_to_literal_embedded_quote():
+    assert cpv.to_literal(
+        "Environment :: Handhelds/PDA's"
+    ) == '"Environment :: Handhelds/PDA\'s"'
+    assert cpv.to_literal(
+        "Environment :: Handhelds/PDA's", "'"
+    ) == '"Environment :: Handhelds/PDA\'s"'
+
+
+def test_to_literal_all_the_classifiers():
+    with open('CLASSIFIERS') as f:
+        for line in f:
+            classifier = line.strip()
+            literal = cpv.to_literal(classifier)
+            assert ast.literal_eval(literal) == classifier
+
+
 def test_update_call_arg_in_source():
     source_lines = textwrap.dedent("""\
         setup(

@@ -189,10 +189,15 @@ def confirm(prompt):
 
 
 def to_literal(value, quote_style='"'):
-    safe_characters = string.ascii_letters + string.digits + ' .:,-=><()/+'
+    # Because I don't want to deal with quoting, I'll require all values
+    # to contain only safe characters (i.e. no ' or " or \).  Except some
+    # PyPI classifiers do include ' so I need to handle that at least.
+    safe_characters = string.ascii_letters + string.digits + " .:,-=><()/+'#"
     assert all(
         c in safe_characters for c in value
     ), f'{value!r} has unexpected characters'
+    if quote_style == "'" and quote_style in value:
+        quote_style = '"'
     assert quote_style not in value
     return f'{quote_style}{value}{quote_style}'
 
