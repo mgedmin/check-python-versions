@@ -19,6 +19,7 @@ import difflib
 import logging
 import os
 import re
+import stat
 import string
 import subprocess
 import sys
@@ -158,9 +159,12 @@ def update_setup_py_keyword(setup_py, keyword, new_value):
 def confirm_and_update_file(filename, old_lines, new_lines):
     print_diff(old_lines, new_lines, filename)
     if confirm(f"Write changes to {filename}?"):
-        with open(filename + '.tmp', 'w') as f:
+        mode = stat.S_IMODE(os.stat(filename).st_mode)
+        tempfile = filename + '.tmp'
+        with open(tempfile, 'w') as f:
+            os.fchmod(f.fileno(), mode)
             f.writelines(new_lines)
-        os.rename(filename + '.tmp', filename)
+        os.rename(tempfile, filename)
 
 
 def print_diff(a, b, filename):
