@@ -681,7 +681,7 @@ def update_versions(where='.', *, add=None, drop=None, update=None):
         update_supported_python_versions(where, new_versions)
 
 
-def main():
+def _main():
     parser = argparse.ArgumentParser(
         description="verify that supported Python versions are the same"
                     " in setup.py, tox.ini, .travis.yml and appveyor.yml")
@@ -743,6 +743,13 @@ def main():
             sys.exit("\nmismatch!")
     elif multiple:
         print("\n\nall ok!")
+
+
+def main():
+    try:
+        _main()
+    except KeyboardInterrupt:
+        sys.exit(2)
 
 
 if __name__ == '__main__':
