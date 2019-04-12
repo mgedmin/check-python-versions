@@ -1,6 +1,7 @@
 import argparse
 import ast
 import os
+import re
 import sys
 import textwrap
 
@@ -663,18 +664,21 @@ def test_parse_version_list_magic_range(monkeypatch):
     assert cpv.parse_version_list(
         '2.7,3.4-'
     ) == ['2.7', '3.4', '3.5', '3.6', '3.7']
+    assert cpv.parse_version_list(
+        '2.6,-3.4'
+    ) == ['2.6', '3.0', '3.1', '3.2', '3.3', '3.4']
 
 
-def test_parse_version_list_bad_magic_range():
+@pytest.mark.parametrize('v', [
+    '4.1-',     # unknown major version
+    '-',        # both endpoints missing
+    '2.7-3.4',  # major versions differ
+])
+def test_parse_version_list_bad_range(v):
     with pytest.raises(argparse.ArgumentTypeError,
-                       match=r'bad range: 4\.1-'):
-        cpv.parse_version_list('4.1-')
+                       match=re.escape(f'bad range: {v}')):
+        cpv.parse_version_list(v)
 
-
-def test_parse_version_list_bad_range():
-    with pytest.raises(argparse.ArgumentTypeError,
-                       match=r'bad range: 2\.7-3\.4 \(2 != 3\)'):
-        cpv.parse_version_list('2.7-3.4')
 
 
 def test_parse_version_list_bad_number():

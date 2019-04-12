@@ -583,17 +583,22 @@ def parse_version_list(v):
         else:
             lo = hi = part
 
-        lo_major, lo_minor = parse_version(lo)
-
-        if hi:
+        if lo and hi:
+            lo_major, lo_minor = parse_version(lo)
             hi_major, hi_minor = parse_version(hi)
-        else:
-            hi_major = lo_major
+        elif hi and not lo:
+            hi_major, hi_minor = parse_version(hi)
+            lo_major, lo_minor = hi_major, 0
+        elif lo and not hi:
+            lo_major, lo_minor = parse_version(lo)
             try:
-                hi_minor = MAX_MINOR_FOR_MAJOR[hi_major]
+                hi_major, hi_minor = lo_major, MAX_MINOR_FOR_MAJOR[lo_major]
             except KeyError:
                 raise argparse.ArgumentTypeError(
                     f'bad range: {part}')
+        else:
+            raise argparse.ArgumentTypeError(
+                f'bad range: {part}')
 
         if lo_major != hi_major:
             raise argparse.ArgumentTypeError(
