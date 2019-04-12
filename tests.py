@@ -81,6 +81,53 @@ def test_get_versions_from_classifiers_with_trailing_whitespace():
     ]) == ['3.6']
 
 
+def test_update_classifiers():
+    assert cpv.update_classifiers([
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
+        'Typing :: Typed',
+    ], ['2.7', '3.7']) == [
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
+        'Typing :: Typed',
+    ]
+
+
+def test_update_classifiers_none_were_present():
+    assert cpv.update_classifiers([
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'Operating System :: OS Independent',
+    ], ['2.7', '3.7']) == [
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.7',
+    ]
+
+
 def test_get_python_requires(tmp_path, monkeypatch):
     setup_py = tmp_path / "setup.py"
     setup_py.write_text(textwrap.dedent("""\
@@ -154,6 +201,54 @@ def test_eval_ast_node(code, expected):
     node = cpv.find_call_kwarg_in_ast(tree, 'foo', 'bar')
     assert node is not None
     assert cpv.eval_ast_node(node, 'bar') == expected
+
+
+def test_update_call_arg_in_source():
+    source_lines = textwrap.dedent("""\
+        setup(
+            foo=1,
+            bar=[
+                "a",
+                "b",
+                "c",
+            ],
+            baz=2,
+        )
+    """).splitlines(True)
+    result = cpv.update_call_arg_in_source(source_lines, "setup", "bar",
+                                           ["x", "y"])
+    assert "".join(result) == textwrap.dedent("""\
+        setup(
+            foo=1,
+            bar=[
+                "x",
+                "y",
+            ],
+            baz=2,
+        )
+    """)
+
+
+def test_update_call_arg_in_source_preserves_indent_and_quote_style():
+    source_lines = textwrap.dedent("""\
+        setup(foo=1,
+              bar=[
+                  'a',
+                  'b',
+                  'c',
+              ],
+        )
+    """).splitlines(True)
+    result = cpv.update_call_arg_in_source(source_lines, "setup", "bar",
+                                           ["x", "y"])
+    assert "".join(result) == textwrap.dedent("""\
+        setup(foo=1,
+              bar=[
+                  'x',
+                  'y',
+              ],
+        )
+    """)
 
 
 @pytest.mark.parametrize('code', [
@@ -501,6 +596,26 @@ def test_parse_version_list_too_few():
 def test_parse_version_list_too_many_dots():
     with pytest.raises(argparse.ArgumentTypeError):
         cpv.parse_version_list('2.7.1')
+
+
+def test_update_version_list():
+    assert cpv.update_version_list(['2.7', '3.4']) == ['2.7', '3.4']
+    assert cpv.update_version_list(['2.7', '3.4'], add=['3.4', '3.5']) == [
+        '2.7', '3.4', '3.5',
+    ]
+    assert cpv.update_version_list(['2.7', '3.4'], drop=['3.4', '3.5']) == [
+        '2.7',
+    ]
+    assert cpv.update_version_list(['2.7', '3.4'], add=['3.5'],
+                                   drop=['2.7']) == [
+        '3.4', '3.5',
+    ]
+    assert cpv.update_version_list(['2.7', '3.4'], drop=['3.4', '3.5']) == [
+        '2.7',
+    ]
+    assert cpv.update_version_list(['2.7', '3.4'], update=['3.4', '3.5']) == [
+        '3.4', '3.5',
+    ]
 
 
 def test_is_package(tmp_path):

@@ -15,9 +15,11 @@ Makes sure the set of supported Python versions is consistent between
 import argparse
 import ast
 import configparser
+import difflib
 import logging
 import os
 import re
+import string
 import subprocess
 import sys
 from functools import partial
@@ -74,6 +76,11 @@ def get_supported_python_versions(repo_path='.'):
     return get_versions_from_classifiers(classifiers)
 
 
+def is_version_classifier(s):
+    prefix = 'Programming Language :: Python :: '
+    return s.startswith(prefix) and s[len(prefix):len(prefix) + 1].isdigit()
+
+
 def get_versions_from_classifiers(classifiers):
     # Based on
     # https://github.com/mgedmin/project-summary/blob/master/summary.py#L221-L234
@@ -83,7 +90,7 @@ def get_versions_from_classifiers(classifiers):
     versions = {
         s[len(prefix):].replace(' :: Only', '').rstrip()
         for s in classifiers
-        if s.startswith(prefix) and s[len(prefix):len(prefix) + 1].isdigit()
+        if is_version_classifier(s)
     } | {
         s[len(impl_prefix):].rstrip()
         for s in classifiers
@@ -94,6 +101,33 @@ def get_versions_from_classifiers(classifiers):
                 v.startswith(f'{major}.') for v in versions):
             versions.remove(major)
     return sorted(versions)
+
+
+def update_classifiers(classifiers, new_versions):
+    prefix = 'Programming Language :: Python :: '
+
+    for pos, s in enumerate(classifiers):
+        if is_version_classifier(s):
+            break
+    else:
+        pos = len(classifiers)
+
+    classifiers = [
+        s for s in classifiers if not is_version_classifier(s)
+    ]
+    new_classifiers = [
+        f'{prefix}{version}'
+        for version in new_versions
+    ]
+    classifiers[pos:pos] = new_classifiers
+    return classifiers
+
+
+def update_supported_python_versions(repo_path, new_versions):
+    setup_py = os.path.join(repo_path, 'setup.py')
+    classifiers = get_setup_py_keyword(setup_py, 'classifiers')
+    new_classifiers = update_classifiers(classifiers, new_versions)
+    update_setup_py_keyword(setup_py, 'classifiers', new_classifiers)
 
 
 def get_python_requires(setup_py='setup.py'):
@@ -112,6 +146,85 @@ def get_setup_py_keyword(setup_py, keyword):
             return None
     node = find_call_kwarg_in_ast(tree, 'setup', keyword)
     return node and eval_ast_node(node, keyword)
+
+
+def update_setup_py_keyword(setup_py, keyword, new_value):
+    with open(setup_py) as f:
+        lines = f.readlines()
+    new_lines = update_call_arg_in_source(lines, 'setup', keyword, new_value)
+    confirm_and_update_file(setup_py, lines, new_lines)
+
+
+def confirm_and_update_file(filename, old_lines, new_lines):
+    print_diff(old_lines, new_lines, filename)
+    if confirm(f"Write changes to {filename}?"):
+        with open(filename + '.tmp', 'w') as f:
+            f.writelines(new_lines)
+        os.rename(filename + '.tmp', filename)
+
+
+def print_diff(a, b, filename):
+    print(''.join(difflib.unified_diff(
+        a, b,
+        filename, filename,
+        "(original)", "(updated)",
+    )))
+
+
+def confirm(prompt):
+    while True:
+        answer = input(f'{prompt} [y/N] ').strip().lower()
+        if answer == 'y':
+            print()
+            return True
+        if answer == 'n' or not answer:
+            print()
+            return False
+
+
+def to_literal(value, quote_style='"'):
+    safe_characters = string.ascii_letters + string.digits + ' .:,-=><()'
+    assert all(
+        c in safe_characters for c in value
+    ), f'{value!r} has unexpected characters'
+    assert quote_style not in value
+    return f'{quote_style}{value}{quote_style}'
+
+
+def update_call_arg_in_source(source_lines, function, keyword, new_value):
+    lines = iter(enumerate(source_lines))
+    for n, line in lines:
+        if line.startswith(f'{function}('):
+            break
+    else:
+        warn(f'Did not find {function}() call')
+        return
+    for n, line in lines:
+        if line.lstrip().startswith(f'{keyword}='):
+            break
+    else:
+        warn(f'Did not find {keyword}= argument in {function}() call')
+        return
+
+    start = n + 1
+    indent = 8
+    quote_style = '"'
+    for n, line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith('],'):
+            break
+        elif stripped:
+            indent = len(line) - len(stripped)
+            if stripped[0] in ('"', "'"):
+                quote_style = stripped[0]
+    else:
+        warn(f'Did not understand {keyword}= formatting in {function}() call')
+    end = n
+
+    return source_lines[:start] + [
+        f"{' ' * indent}{to_literal(value, quote_style)},\n"
+        for value in new_value
+    ] + source_lines[end:]
 
 
 def find_call_kwarg_in_ast(tree, funcname, keyword, filename='setup.py'):
@@ -447,6 +560,13 @@ def parse_version_list(v):
     return sorted(versions)
 
 
+def update_version_list(versions, add=None, drop=None, update=None):
+    if update:
+        return sorted(update)
+    else:
+        return sorted(set(versions).union(add or ()).difference(drop or ()))
+
+
 def is_package(where='.'):
     setup_py = os.path.join(where, 'setup.py')
     return os.path.exists(setup_py)
@@ -503,6 +623,18 @@ def check_versions(where='.', *, print=print, expect=None):
     )
 
 
+def update_versions(where='.', *, add=None, drop=None, update=None):
+
+    versions = get_supported_python_versions(where)
+    if versions is None:
+        return
+
+    new_versions = update_version_list(
+        versions, add=add, drop=drop, update=update)
+    if versions != new_versions:
+        update_supported_python_versions(where, new_versions)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="verify that supported Python versions are the same"
@@ -519,7 +651,23 @@ def main():
     parser.add_argument('where', nargs='*',
                         help='directory where a Python package with a setup.py'
                              ' and other files is located')
+    group = parser.add_argument_group(
+        "updating supported version lists (EXPERIMENTAL)")
+    group.add_argument('--add', metavar='VERSIONS', type=parse_version_list,
+                       help='add these versions to supported ones, e.g'
+                            ' --add 3.8')
+    group.add_argument('--drop', metavar='VERSIONS', type=parse_version_list,
+                       help='drop these versions from supported ones, e.g'
+                            ' --drop 2.6,3.4')
+    group.add_argument('--update', metavar='VERSIONS', type=parse_version_list,
+                       help='update the set of supported versions, e.g.'
+                            ' --update 2.7,3.5-3.7')
     args = parser.parse_args()
+
+    if args.update and args.add:
+        parser.error("argument --add: not allowed with argument --update")
+    if args.update and args.drop:
+        parser.error("argument --drop: not allowed with argument --update")
 
     where = args.where or ['.']
     if args.skip_non_packages:
@@ -535,6 +683,9 @@ def main():
         if not check_package(path):
             mismatches.append(path)
             continue
+        if args.add or args.drop or args.update:
+            update_versions(path, add=args.add, drop=args.drop,
+                            update=args.update)
         if not check_versions(path, expect=args.expect):
             mismatches.append(path)
             continue
