@@ -181,7 +181,7 @@ def update_setup_py_keyword(setup_py, keyword, new_value):
 
 def confirm_and_update_file(filename, old_lines, new_lines):
     print_diff(old_lines, new_lines, filename)
-    if confirm(f"Write changes to {filename}?"):
+    if new_lines != old_lines and confirm(f"Write changes to {filename}?"):
         mode = stat.S_IMODE(os.stat(filename).st_mode)
         tempfile = filename + '.tmp'
         with open(tempfile, 'w') as f:
@@ -230,13 +230,13 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
             break
     else:
         warn(f'Did not find {function}() call')
-        return
+        return source_lines
     for n, line in lines:
         if line.lstrip().startswith(f'{keyword}='):
             break
     else:
         warn(f'Did not find {keyword}= argument in {function}() call')
-        return
+        return source_lines
 
     start = n + 1
     indent = 8
@@ -251,6 +251,7 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
                 quote_style = stripped[0]
     else:
         warn(f'Did not understand {keyword}= formatting in {function}() call')
+        return source_lines
     end = n
 
     return source_lines[:start] + [
