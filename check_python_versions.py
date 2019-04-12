@@ -244,23 +244,32 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
     start = n + 1
     indent = 8
     quote_style = '"'
+    need_closing_brace = False
     for n, line in lines:
         stripped = line.lstrip()
         if stripped.startswith('],'):
+            end = n
             break
         elif stripped:
             indent = len(line) - len(stripped)
             if stripped[0] in ('"', "'"):
                 quote_style = stripped[0]
+            if line.rstrip().endswith('],'):
+                need_closing_brace = True
+                end = n + 1
+                break
     else:
         warn(f'Did not understand {keyword}= formatting in {function}() call')
         return source_lines
-    end = n
+
+    extra = []
+    if need_closing_brace:
+        extra = [f"{' ' * (indent - 4)}],\n"]
 
     return source_lines[:start] + [
         f"{' ' * indent}{to_literal(value, quote_style)},\n"
         for value in new_value
-    ] + source_lines[end:]
+    ] + extra + source_lines[end:]
 
 
 def find_call_kwarg_in_ast(tree, funcname, keyword, filename='setup.py'):
