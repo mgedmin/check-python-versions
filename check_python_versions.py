@@ -127,6 +127,8 @@ def update_classifiers(classifiers, new_versions):
 def update_supported_python_versions(repo_path, new_versions):
     setup_py = os.path.join(repo_path, 'setup.py')
     classifiers = get_setup_py_keyword(setup_py, 'classifiers')
+    if classifiers is None:
+        return
     new_classifiers = update_classifiers(classifiers, new_versions)
     update_setup_py_keyword(setup_py, 'classifiers', new_classifiers)
 
@@ -187,7 +189,7 @@ def confirm(prompt):
 
 
 def to_literal(value, quote_style='"'):
-    safe_characters = string.ascii_letters + string.digits + ' .:,-=><()'
+    safe_characters = string.ascii_letters + string.digits + ' .:,-=><()/+'
     assert all(
         c in safe_characters for c in value
     ), f'{value!r} has unexpected characters'
@@ -633,6 +635,7 @@ def update_versions(where='.', *, add=None, drop=None, update=None):
     if versions is None:
         return
 
+    versions = sorted(important(versions))
     new_versions = update_version_list(
         versions, add=add, drop=drop, update=update)
     if versions != new_versions:
