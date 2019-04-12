@@ -200,7 +200,10 @@ def print_diff(a, b, filename):
 
 def confirm(prompt):
     while True:
-        answer = input(f'{prompt} [y/N] ').strip().lower()
+        try:
+            answer = input(f'{prompt} [y/N] ').strip().lower()
+        except EOFError:
+            answer = ""
         if answer == 'y':
             print()
             return True
