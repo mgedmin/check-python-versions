@@ -513,13 +513,24 @@ def test_is_package_no_setup_py(tmp_path):
 
 
 def test_check_not_a_directory(tmp_path, capsys):
-    assert cpv.check(tmp_path / "xyzzy") is None
+    assert not cpv.check_package(tmp_path / "xyzzy")
     assert capsys.readouterr().out == 'not a directory\n'
 
 
 def test_check_not_a_package(tmp_path, capsys):
-    assert cpv.check(tmp_path) is None
+    assert not cpv.check_package(tmp_path)
     assert capsys.readouterr().out == 'no setup.py -- not a Python package?\n'
+
+
+def test_check_package(tmp_path):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+        )
+    """))
+    assert cpv.check_package(tmp_path) is True
 
 
 def test_check_unknown(tmp_path, capsys):
@@ -530,7 +541,7 @@ def test_check_unknown(tmp_path, capsys):
             name='foo',
         )
     """))
-    assert cpv.check(tmp_path) is True
+    assert cpv.check_versions(tmp_path) is True
     assert capsys.readouterr().out == textwrap.dedent("""\
         setup.py says:              (empty)
     """)
@@ -548,7 +559,7 @@ def test_check_minimal(tmp_path, capsys):
             ],
         )
     """))
-    assert cpv.check(tmp_path) is True
+    assert cpv.check_versions(tmp_path) is True
     assert capsys.readouterr().out == textwrap.dedent("""\
         setup.py says:              2.7, 3.6
     """)
@@ -571,7 +582,7 @@ def test_check_mismatch(tmp_path, capsys):
         [tox]
         envlist = py27
     """))
-    assert cpv.check(tmp_path) is False
+    assert cpv.check_versions(tmp_path) is False
     assert capsys.readouterr().out == textwrap.dedent("""\
         setup.py says:              2.7, 3.6
         tox.ini says:               2.7
@@ -590,7 +601,7 @@ def test_check_expectation(tmp_path, capsys):
             ],
         )
     """))
-    assert cpv.check(tmp_path, expect=['2.7', '3.6', '3.7']) is False
+    assert cpv.check_versions(tmp_path, expect=['2.7', '3.6', '3.7']) is False
     assert capsys.readouterr().out == textwrap.dedent("""\
         setup.py says:              2.7, 3.6
         expected:                   2.7, 3.6, 3.7
@@ -657,7 +668,19 @@ def test_main_multiple(monkeypatch, capsys, tmp_path):
         'check-python-versions',
         str(tmp_path / "a"),
         str(tmp_path / "b"),
+        '--expect', '3.6, 3.7'
     ])
+    (tmp_path / "a").mkdir()
+    (tmp_path / "a" / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
     with pytest.raises(SystemExit) as exc_info:
         cpv.main()
     assert (
@@ -665,7 +688,8 @@ def test_main_multiple(monkeypatch, capsys, tmp_path):
     ).replace(str(tmp_path) + os.path.sep, 'tmp/') == textwrap.dedent("""\
         tmp/a:
 
-        not a directory
+        setup.py says:              2.7, 3.6
+        expected:                   3.6, 3.7
 
 
         tmp/b:

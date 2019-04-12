@@ -452,16 +452,21 @@ def is_package(where='.'):
     return os.path.exists(setup_py)
 
 
-def check(where='.', *, print=print, expect=None):
+def check_package(where='.', *, print=print):
 
     if not os.path.isdir(where):
         print("not a directory")
-        return None
+        return False
 
     setup_py = os.path.join(where, 'setup.py')
     if not os.path.exists(setup_py):
         print("no setup.py -- not a Python package?")
-        return None
+        return False
+
+    return True
+
+
+def check_versions(where='.', *, print=print, expect=None):
 
     sources = [
         ('setup.py', get_supported_python_versions, None),
@@ -527,8 +532,12 @@ def main():
             if n:
                 print("\n")
             print(f"{path}:\n")
-        if not check(path, expect=args.expect):
+        if not check_package(path):
             mismatches.append(path)
+            continue
+        if not check_versions(path, expect=args.expect):
+            mismatches.append(path)
+            continue
 
     if mismatches:
         if multiple:
