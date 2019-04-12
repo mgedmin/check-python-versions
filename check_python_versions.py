@@ -88,6 +88,14 @@ def is_version_classifier(s):
     return s.startswith(prefix) and s[len(prefix):len(prefix) + 1].isdigit()
 
 
+def is_major_version_classifier(s):
+    prefix = 'Programming Language :: Python :: '
+    return (
+        s.startswith(prefix)
+        and s[len(prefix):].replace(' :: Only', '').isdigit()
+    )
+
+
 def get_versions_from_classifiers(classifiers):
     # Based on
     # https://github.com/mgedmin/project-summary/blob/master/summary.py#L221-L234
@@ -118,6 +126,13 @@ def update_classifiers(classifiers, new_versions):
             break
     else:
         pos = len(classifiers)
+
+    if any(map(is_major_version_classifier, classifiers)):
+        new_versions = sorted(
+            set(new_versions).union(
+                v.partition('.')[0] for v in new_versions
+            )
+        )
 
     classifiers = [
         s for s in classifiers if not is_version_classifier(s)
