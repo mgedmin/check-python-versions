@@ -417,7 +417,15 @@ def important(versions):
     }
 
 
-def parse_expect(v):
+def parse_version(v):
+    try:
+        major, minor = map(int, v.split('.', 1))
+    except ValueError:
+        raise argparse.ArgumentTypeError(f'bad version: {v}')
+    return (major, minor)
+
+
+def parse_version_list(v):
     versions = set()
 
     for part in v.split(','):
@@ -426,11 +434,12 @@ def parse_expect(v):
         else:
             lo = hi = part
 
-        lo_major, lo_minor = map(int, lo.split('.', 1))
-        hi_major, hi_minor = map(int, hi.split('.', 1))
+        lo_major, lo_minor = parse_version(lo)
+        hi_major, hi_minor = parse_version(hi)
 
         if lo_major != hi_major:
-            raise ValueError(f'bad range: {part} ({lo_major} != {hi_major})')
+            raise argparse.ArgumentTypeError(
+                f'bad range: {part} ({lo_major} != {hi_major})')
 
         for v in range(lo_minor, hi_minor + 1):
             versions.add(f'{lo_major}.{v}')
@@ -496,8 +505,9 @@ def main():
     parser.add_argument('--version', action='version',
                         version="%(prog)s version " + __version__)
     parser.add_argument('--expect', metavar='VERSIONS',
+                        type=parse_version_list,
                         help='expect these versions to be supported, e.g.'
-                             ' --expect 2.7,3.4-3.7')
+                             ' --expect 2.7,3.5-3.7')
     parser.add_argument('--skip-non-packages', action='store_true',
                         help='skip arguments that are not Python packages'
                              ' without warning about them')
@@ -505,11 +515,6 @@ def main():
                         help='directory where a Python package with a setup.py'
                              ' and other files is located')
     args = parser.parse_args()
-
-    try:
-        expect = args.expect and parse_expect(args.expect)
-    except ValueError:
-        parser.error(f"bad value for --expect: {args.expect}")
 
     where = args.where or ['.']
     if args.skip_non_packages:
@@ -522,7 +527,7 @@ def main():
             if n:
                 print("\n")
             print(f"{path}:\n")
-        if not check(path, expect=expect):
+        if not check(path, expect=args.expect):
             mismatches.append(path)
 
     if mismatches:

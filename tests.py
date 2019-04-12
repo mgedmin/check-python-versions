@@ -1,3 +1,4 @@
+import argparse
 import ast
 import os
 import sys
@@ -475,28 +476,31 @@ def test_important(monkeypatch):
     }) == {'2.7', '3.4'}
 
 
-def test_parse_expect():
-    assert cpv.parse_expect('2.7,3.4-3.6') == ['2.7', '3.4', '3.5', '3.6']
+def test_parse_version_list():
+    assert cpv.parse_version_list(
+        '2.7,3.4-3.6'
+    ) == ['2.7', '3.4', '3.5', '3.6']
 
 
-def test_parse_expect_bad_range():
-    with pytest.raises(ValueError, match=r'bad range: 2\.7-3\.4 \(2 != 3\)'):
-        cpv.parse_expect('2.7-3.4')
+def test_parse_version_list_bad_range():
+    with pytest.raises(argparse.ArgumentTypeError,
+                       match=r'bad range: 2\.7-3\.4 \(2 != 3\)'):
+        cpv.parse_version_list('2.7-3.4')
 
 
-def test_parse_expect_bad_number():
-    with pytest.raises(ValueError):
-        cpv.parse_expect('2.x')
+def test_parse_version_list_bad_number():
+    with pytest.raises(argparse.ArgumentTypeError):
+        cpv.parse_version_list('2.x')
 
 
-def test_parse_expect_too_few():
-    with pytest.raises(ValueError):
-        cpv.parse_expect('2')
+def test_parse_version_list_too_few():
+    with pytest.raises(argparse.ArgumentTypeError):
+        cpv.parse_version_list('2')
 
 
-def test_parse_expect_too_many_dots():
-    with pytest.raises(ValueError):
-        cpv.parse_expect('2.7.1')
+def test_parse_version_list_too_many_dots():
+    with pytest.raises(argparse.ArgumentTypeError):
+        cpv.parse_version_list('2.7.1')
 
 
 def test_is_package(tmp_path):
@@ -612,7 +616,8 @@ def test_main_expect_error_handling(monkeypatch, arg, capsys):
     ])
     with pytest.raises(SystemExit):
         cpv.main()
-    assert f'bad value for --expect: {arg}' in capsys.readouterr().err
+    # the error is either 'bad version: ...' or 'bad range: ...'
+    assert f'--expect: bad' in capsys.readouterr().err
 
 
 def test_main_here(monkeypatch, capsys):
