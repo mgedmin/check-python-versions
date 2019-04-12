@@ -235,41 +235,43 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
         warn(f'Did not find {function}() call')
         return source_lines
     for n, line in lines:
-        if line.lstrip().startswith(f'{keyword}='):
+        stripped = line.lstrip()
+        if stripped.startswith(f'{keyword}='):
+            first_indent = len(line) - len(stripped)
+            must_fix_indents = not line.rstrip().endswith('=[')
             break
     else:
         warn(f'Did not find {keyword}= argument in {function}() call')
         return source_lines
 
-    start = n + 1
-    indent = 8
+    start = n
+    indent = first_indent + 4
     quote_style = '"'
-    need_closing_brace = False
     for n, line in lines:
         stripped = line.lstrip()
         if stripped.startswith('],'):
-            end = n
+            end = n + 1
             break
         elif stripped:
-            indent = len(line) - len(stripped)
+            if not must_fix_indents:
+                indent = len(line) - len(stripped)
             if stripped[0] in ('"', "'"):
                 quote_style = stripped[0]
             if line.rstrip().endswith('],'):
-                need_closing_brace = True
                 end = n + 1
                 break
     else:
         warn(f'Did not understand {keyword}= formatting in {function}() call')
         return source_lines
 
-    extra = []
-    if need_closing_brace:
-        extra = [f"{' ' * (indent - 4)}],\n"]
-
     return source_lines[:start] + [
+        f"{' ' * first_indent}{keyword}=[\n"
+    ] + [
         f"{' ' * indent}{to_literal(value, quote_style)},\n"
         for value in new_value
-    ] + extra + source_lines[end:]
+    ] + [
+        f"{' ' * first_indent}],\n"
+    ] + source_lines[end:]
 
 
 def find_call_kwarg_in_ast(tree, funcname, keyword, filename='setup.py'):

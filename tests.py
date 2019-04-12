@@ -356,6 +356,28 @@ def test_update_call_arg_in_source_fixes_closing_bracket():
     """)
 
 
+def test_update_call_arg_in_source_fixes_opening_bracket():
+    source_lines = textwrap.dedent("""\
+        setup(foo=1,
+              bar=['a',
+                   'b',
+                   'c'],
+              baz=2,
+        )
+    """).splitlines(True)
+    result = cpv.update_call_arg_in_source(source_lines, "setup", "bar",
+                                           ["x", "y"])
+    assert "".join(result) == textwrap.dedent("""\
+        setup(foo=1,
+              bar=[
+                  'x',
+                  'y',
+              ],
+              baz=2,
+        )
+    """)
+
+
 @pytest.mark.parametrize('code', [
     '[2 * 2]',
     '"".join([2 * 2])',
