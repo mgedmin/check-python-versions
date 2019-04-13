@@ -14,4 +14,8 @@ coverage:
 	tox -e coverage
 
 
+.PHONY: flake8
+flake8:
+	flake8 src setup.py
+
 include release.mk
