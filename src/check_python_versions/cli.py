@@ -20,6 +20,7 @@ from .parsers.tox import (
 from .parsers.travis import (
     TRAVIS_YML,
     get_travis_yml_python_versions,
+    update_travis_yml_python_versions,
 )
 from .parsers.appveyor import (
     APPVEYOR_YML,
@@ -142,12 +143,26 @@ def check_versions(where='.', *, print=print, expect=None):
 
 def update_versions(where='.', *, add=None, drop=None, update=None):
 
-    versions = get_supported_python_versions(where)
-    versions = sorted(important(versions))
-    new_versions = update_version_list(
-        versions, add=add, drop=drop, update=update)
-    if versions != new_versions:
-        update_supported_python_versions(where, new_versions)
+    sources = [
+        (None, get_supported_python_versions,
+         update_supported_python_versions),
+        (TRAVIS_YML, get_travis_yml_python_versions,
+         update_travis_yml_python_versions),
+    ]
+
+    for (filename, extractor, updater) in sources:
+        arg = os.path.join(where, filename) if filename else where
+        if not os.path.exists(arg):
+            continue
+        versions = extractor(arg)
+        if versions is None:
+            continue
+
+        versions = sorted(important(versions))
+        new_versions = update_version_list(
+            versions, add=add, drop=drop, update=update)
+        if versions != new_versions:
+            updater(arg, new_versions)
 
 
 def _main():

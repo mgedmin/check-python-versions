@@ -9,12 +9,18 @@ MAX_MINOR_FOR_MAJOR = {
 }
 
 
-def important(versions):
+def is_important(v):
     upcoming_release = f'3.{CURRENT_PYTHON_3_VERSION + 1}'
+    return (
+        not v.startswith(('PyPy', 'Jython')) and v != 'nightly'
+        and not v.endswith('-dev') and v != upcoming_release
+    )
+
+
+def important(versions):
     return {
         v for v in versions
-        if not v.startswith(('PyPy', 'Jython')) and v != 'nightly'
-        and not v.endswith('-dev') and v != upcoming_release
+        if is_important(v)
     }
 
 

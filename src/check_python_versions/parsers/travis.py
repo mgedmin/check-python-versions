@@ -4,6 +4,8 @@ except ImportError:  # pragma: nocover
     yaml = None
 
 from .tox import parse_envlist, tox_env_to_py_version
+from ..utils import warn, confirm_and_update_file
+from ..versions import is_important
 
 
 TRAVIS_YML = '.travis.yml'
@@ -43,3 +45,42 @@ def travis_normalize_py_version(v):
         return 'PyPy'
     else:
         return v
+
+
+def update_travis_yml_python_versions(filename, new_versions):
+    with open(filename) as fp:
+        orig_lines = fp.readlines()
+
+    lines = iter(enumerate(orig_lines))
+    for n, line in lines:
+        if line == 'python:\n':
+            break
+    else:
+        warn(f'Did not find python setting in {filename}')
+        return
+
+    start = end = n + 1
+    indent = 2
+    keep = []
+    for n, line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith('- '):
+            indent = len(line) - len(stripped)
+            end = n + 1
+            ver = stripped[2:].strip()
+            if not is_important(travis_normalize_py_version(ver)):
+                keep.append(line)
+        elif stripped.startswith('#'):
+            keep.append(line)
+            end = n + 1
+        if line and line[0] != ' ':
+            break
+
+    # XXX: if python 3.7 was enabled via matrix.include, we'll add a
+    # second 3.7 entry directly to top-level python, without even
+    # checking for dist: xenial.
+    new_lines = orig_lines[:start] + [
+        f"{' ' * indent}- {ver}\n"
+        for ver in new_versions
+    ] + keep + orig_lines[end:]
+    confirm_and_update_file(filename, orig_lines, new_lines)
