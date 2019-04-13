@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """
 Check supported Python versions in a Python package.
 
@@ -766,7 +765,3 @@ def main():
         _main()
     except KeyboardInterrupt:
         sys.exit(2)
-
-
-if __name__ == '__main__':
-    main()
