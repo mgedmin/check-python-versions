@@ -7,7 +7,7 @@ import textwrap
 
 import pytest
 
-import check_python_versions as cpv
+import check_python_versions.cli as cpv
 
 
 needs_pyyaml = pytest.mark.skipIf(cpv.yaml is None, "PyYAML not installed")

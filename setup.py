@@ -51,7 +51,7 @@ setup(
     package_dir={'': 'src/'},
     entry_points={
         'console_scripts': [
-            'check-python-versions = check_python_versions:main',
+            'check-python-versions = check_python_versions.cli:main',
         ],
     },
     install_requires=['pyyaml'],
