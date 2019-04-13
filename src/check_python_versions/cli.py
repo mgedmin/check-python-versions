@@ -143,9 +143,6 @@ def check_versions(where='.', *, print=print, expect=None):
 def update_versions(where='.', *, add=None, drop=None, update=None):
 
     versions = get_supported_python_versions(where)
-    if versions is None:
-        return
-
     versions = sorted(important(versions))
     new_versions = update_version_list(
         versions, add=add, drop=drop, update=update)

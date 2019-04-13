@@ -3,6 +3,7 @@ import os
 import re
 import sys
 import textwrap
+from io import StringIO
 
 import pytest
 
@@ -156,6 +157,20 @@ def test_check_expectation(tmp_path, capsys):
     """)
 
 
+def test_update_versions_no_change(tmp_path):
+    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    cpv.update_versions(tmp_path, add=['3.6'])
+
+
 def test_main_help(monkeypatch):
     monkeypatch.setattr(sys, 'argv', ['check-python-versions', '--help'])
     with pytest.raises(SystemExit):
@@ -177,6 +192,22 @@ def test_main_expect_error_handling(monkeypatch, arg, capsys):
         cpv.main()
     # the error is either 'bad version: ...' or 'bad range: ...'
     assert f'--expect: bad' in capsys.readouterr().err
+
+
+@pytest.mark.parametrize('arg', ['--add', '--drop'])
+def test_main_conflicting_args(monkeypatch, tmp_path, capsys, arg):
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions',
+        str(tmp_path),
+        arg, '3.8',
+        '--update', '3.6-3.7',
+    ])
+    with pytest.raises(SystemExit):
+        cpv.main()
+    assert (
+        f'argument {arg}: not allowed with argument --update'
+        in capsys.readouterr().err
+    )
 
 
 def test_main_here(monkeypatch, capsys):
@@ -257,3 +288,115 @@ def test_main_multiple_ok(monkeypatch, capsys):
     assert (
         capsys.readouterr().out.endswith('\n\nall ok!\n')
     )
+
+
+def test_main_update(monkeypatch, capsys, tmp_path):
+    monkeypatch.setattr(sys, 'stdin', StringIO('y\n'))
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions',
+        str(tmp_path),
+        '--add', '3.7,3.8',
+    ])
+    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    cpv.main()
+    assert (
+        capsys.readouterr().out
+        .replace(str(tmp_path) + os.path.sep, 'tmp/')
+        .expandtabs()
+        .replace(' \n', '\n\n')
+    ) == textwrap.dedent("""\
+        --- tmp/setup.py        (original)
+        +++ tmp/setup.py        (updated)
+        @@ -4,5 +4,7 @@
+             classifiers=[
+                 'Programming Language :: Python :: 2.7',
+                 'Programming Language :: Python :: 3.6',
+        +        'Programming Language :: Python :: 3.7',
+        +        'Programming Language :: Python :: 3.8',
+             ],
+         )
+
+        Write changes to tmp/setup.py? [y/N]
+
+        setup.py says:              2.7, 3.6, 3.7, 3.8
+    """)
+    assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+                'Programming Language :: Python :: 3.7',
+                'Programming Language :: Python :: 3.8',
+            ],
+        )
+    """)
+
+
+def test_main_update_rejected(monkeypatch, capsys, tmp_path):
+    monkeypatch.setattr(sys, 'stdin', StringIO('n\n'))
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions',
+        str(tmp_path),
+        '--add', '3.7,3.8',
+    ])
+    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    cpv.main()
+    assert (
+        capsys.readouterr().out
+        .replace(str(tmp_path) + os.path.sep, 'tmp/')
+        .expandtabs()
+        .replace(' \n', '\n\n')
+    ) == textwrap.dedent("""\
+        --- tmp/setup.py        (original)
+        +++ tmp/setup.py        (updated)
+        @@ -4,5 +4,7 @@
+             classifiers=[
+                 'Programming Language :: Python :: 2.7',
+                 'Programming Language :: Python :: 3.6',
+        +        'Programming Language :: Python :: 3.7',
+        +        'Programming Language :: Python :: 3.8',
+             ],
+         )
+
+        Write changes to tmp/setup.py? [y/N]
+
+        setup.py says:              2.7, 3.6
+    """)
+    assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """)
+
+
+def test_main_handles_ctrl_c(monkeypatch):
+    def raise_keyboard_interrupt():
+        raise KeyboardInterrupt()
+    monkeypatch.setattr(cpv, '_main', raise_keyboard_interrupt)
+    with pytest.raises(SystemExit):
+        cpv.main()

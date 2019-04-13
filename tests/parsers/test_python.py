@@ -14,6 +14,7 @@ from check_python_versions.parsers.python import (
     to_literal,
     update_call_arg_in_source,
     update_classifiers,
+    update_supported_python_versions,
 )
 
 
@@ -188,6 +189,24 @@ def test_update_classifiers_none_were_present():
     ]
 
 
+def test_update_supported_python_versions(tmp_path, capsys):
+    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: %s' % v
+                for v in ['2.7', '3.7']
+            ],
+        )
+    """))
+    update_supported_python_versions(tmp_path, ['3.7', '3.8'])
+    assert (
+        'Non-literal classifiers= passed to setup()'
+        in capsys.readouterr().err
+    )
+
+
 def test_get_python_requires(tmp_path, fix_max_python_3_version):
     setup_py = tmp_path / "setup.py"
     setup_py.write_text(textwrap.dedent("""\
@@ -292,7 +311,8 @@ def test_update_call_arg_in_source():
             bar=[
                 "a",
                 "b",
-                "c",
+
+                r"c",
             ],
             baz=2,
         )
@@ -376,6 +396,42 @@ def test_update_call_arg_in_source_fixes_opening_bracket():
               baz=2,
         )
     """)
+
+
+def test_update_call_arg_in_source_no_function_call(capsys):
+    source_lines = textwrap.dedent("""\
+    """).splitlines(True)
+    result = update_call_arg_in_source(source_lines, "setup", "bar",
+                                       ["x", "y"])
+    assert result == source_lines
+    assert "Did not find setup() call" in capsys.readouterr().err
+
+
+def test_update_call_arg_in_source_no_keyword(capsys):
+    source_lines = textwrap.dedent("""\
+        setup()
+    """).splitlines(True)
+    result = update_call_arg_in_source(source_lines, "setup", "bar",
+                                       ["x", "y"])
+    assert result == source_lines
+    assert (
+        "Did not find bar= argument in setup() call"
+        in capsys.readouterr().err
+    )
+
+
+def test_update_call_arg_in_source_too_complicated(capsys):
+    source_lines = textwrap.dedent("""\
+        setup(
+          bar=bar)
+    """).splitlines(True)
+    result = update_call_arg_in_source(source_lines, "setup", "bar",
+                                       ["x", "y"])
+    assert result == source_lines
+    assert (
+        "Did not understand bar= formatting in setup() call"
+        in capsys.readouterr().err
+    )
 
 
 @pytest.mark.parametrize('code', [
