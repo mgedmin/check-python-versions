@@ -48,7 +48,7 @@ setup(
     license='GPL',
     python_requires=">=3.6",
     packages=find_packages('src'),
-    package_dir={'': 'src/'},
+    package_dir={'': 'src'},
     entry_points={
         'console_scripts': [
             'check-python-versions = check_python_versions.cli:main',
