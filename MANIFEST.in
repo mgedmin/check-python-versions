@@ -14,3 +14,7 @@ include *.yml
 # added by check_manifest.py
 include CLASSIFIERS
 include check-python-versions
+
+# added by check_manifest.py
+include pytest.ini
+recursive-include tests *.py
