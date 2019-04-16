@@ -8,13 +8,13 @@ from ..utils import warn, pipe, confirm_and_update_file
 from ..versions import MAX_MINOR_FOR_MAJOR
 
 
-def get_supported_python_versions(repo_path='.'):
-    setup_py = os.path.join(repo_path, 'setup.py')
-    classifiers = get_setup_py_keyword(setup_py, 'classifiers')
+def get_supported_python_versions(filename='setup.py'):
+    classifiers = get_setup_py_keyword(filename, 'classifiers')
     if classifiers is None:
         # AST parsing is complicated
-        classifiers = pipe("python", "setup.py", "-q", "--classifiers",
-                           cwd=repo_path).splitlines()
+        setup_py = os.path.basename(filename)
+        classifiers = pipe("python", setup_py, "-q", "--classifiers",
+                           cwd=os.path.dirname(filename)).splitlines()
     return get_versions_from_classifiers(classifiers)
 
 
@@ -87,13 +87,12 @@ def update_classifiers(classifiers, new_versions):
     return classifiers
 
 
-def update_supported_python_versions(repo_path, new_versions):
-    setup_py = os.path.join(repo_path, 'setup.py')
-    classifiers = get_setup_py_keyword(setup_py, 'classifiers')
+def update_supported_python_versions(filename, new_versions):
+    classifiers = get_setup_py_keyword(filename, 'classifiers')
     if classifiers is None:
         return
     new_classifiers = update_classifiers(classifiers, new_versions)
-    update_setup_py_keyword(setup_py, 'classifiers', new_classifiers)
+    update_setup_py_keyword(filename, 'classifiers', new_classifiers)
 
 
 def get_setup_py_keyword(setup_py, keyword):

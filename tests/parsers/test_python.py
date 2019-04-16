@@ -19,7 +19,8 @@ from check_python_versions.parsers.python import (
 
 
 def test_get_supported_python_versions(tmp_path):
-    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+    filename = tmp_path / "setup.py"
+    filename.write_text(textwrap.dedent("""\
         from setuptools import setup
         setup(
             name='foo',
@@ -29,11 +30,12 @@ def test_get_supported_python_versions(tmp_path):
             ],
         )
     """))
-    assert get_supported_python_versions(tmp_path) == ['2.7', '3.6']
+    assert get_supported_python_versions(filename) == ['2.7', '3.6']
 
 
 def test_get_supported_python_versions_computed(tmp_path):
-    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+    filename = tmp_path / "setup.py"
+    filename.write_text(textwrap.dedent("""\
         from setuptools import setup
         setup(
             name='foo',
@@ -43,7 +45,7 @@ def test_get_supported_python_versions_computed(tmp_path):
             ],
         )
     """))
-    assert get_supported_python_versions(tmp_path) == ['2.7', '3.7']
+    assert get_supported_python_versions(filename) == ['2.7', '3.7']
 
 
 def test_get_versions_from_classifiers():
@@ -190,7 +192,8 @@ def test_update_classifiers_none_were_present():
 
 
 def test_update_supported_python_versions(tmp_path, capsys):
-    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+    filename = tmp_path / "setup.py"
+    filename.write_text(textwrap.dedent("""\
         from setuptools import setup
         setup(
             name='foo',
@@ -200,7 +203,7 @@ def test_update_supported_python_versions(tmp_path, capsys):
             ],
         )
     """))
-    update_supported_python_versions(tmp_path, ['3.7', '3.8'])
+    update_supported_python_versions(filename, ['3.7', '3.8'])
     assert (
         'Non-literal classifiers= passed to setup()'
         in capsys.readouterr().err

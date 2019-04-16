@@ -107,7 +107,7 @@ def check_package(where='.', *, print=print):
 def check_versions(where='.', *, print=print, expect=None):
 
     sources = [
-        ('setup.py', get_supported_python_versions, None),
+        ('setup.py', get_supported_python_versions, 'setup.py'),
         ('- python_requires', get_python_requires, 'setup.py'),
         (TOX_INI, get_tox_ini_python_versions, TOX_INI),
         (TRAVIS_YML, get_travis_yml_python_versions, TRAVIS_YML),
@@ -121,10 +121,10 @@ def check_versions(where='.', *, print=print, expect=None):
     version_sets = []
 
     for (title, extractor, filename) in sources:
-        arg = os.path.join(where, filename) if filename else where
-        if not os.path.exists(arg):
+        pathname = os.path.join(where, filename)
+        if not os.path.exists(pathname):
             continue
-        versions = extractor(arg)
+        versions = extractor(pathname)
         if versions is None:
             continue
         print(f"{title} says:".ljust(width), ", ".join(versions) or "(empty)")
@@ -144,17 +144,17 @@ def check_versions(where='.', *, print=print, expect=None):
 def update_versions(where='.', *, add=None, drop=None, update=None):
 
     sources = [
-        (None, get_supported_python_versions,
+        ('setup.py', get_supported_python_versions,
          update_supported_python_versions),
         (TRAVIS_YML, get_travis_yml_python_versions,
          update_travis_yml_python_versions),
     ]
 
     for (filename, extractor, updater) in sources:
-        arg = os.path.join(where, filename) if filename else where
-        if not os.path.exists(arg):
+        pathname = os.path.join(where, filename)
+        if not os.path.exists(pathname):
             continue
-        versions = extractor(arg)
+        versions = extractor(pathname)
         if versions is None:
             continue
 
@@ -162,7 +162,7 @@ def update_versions(where='.', *, add=None, drop=None, update=None):
         new_versions = update_version_list(
             versions, add=add, drop=drop, update=update)
         if versions != new_versions:
-            updater(arg, new_versions)
+            updater(pathname, new_versions)
 
 
 def _main():
