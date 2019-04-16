@@ -51,36 +51,48 @@ def update_travis_yml_python_versions(filename, new_versions):
     with open(filename) as fp:
         orig_lines = fp.readlines()
 
+    # XXX: if python 3.7 was enabled via matrix.include, we'll add a
+    # second 3.7 entry directly to top-level python, without even
+    # checking for dist: xenial.
+
+    def keep_old(ver):
+        return not is_important(travis_normalize_py_version(ver))
+
+    new_lines = update_yaml_list(
+        orig_lines, "python", new_versions, filename=filename, keep=keep_old,
+    )
+    confirm_and_update_file(filename, orig_lines, new_lines)
+
+
+def update_yaml_list(
+    orig_lines, key, new_value, filename=TRAVIS_YML, keep=None,
+):
     lines = iter(enumerate(orig_lines))
     for n, line in lines:
-        if line == 'python:\n':
+        if line == f'{key}:\n':
             break
     else:
-        warn(f'Did not find python setting in {filename}')
+        warn(f'Did not find {key}: setting in {filename}')
         return
 
     start = end = n + 1
     indent = 2
-    keep = []
+    lines_to_keep = []
     for n, line in lines:
         stripped = line.lstrip()
         if stripped.startswith('- '):
             indent = len(line) - len(stripped)
             end = n + 1
-            ver = stripped[2:].strip()
-            if not is_important(travis_normalize_py_version(ver)):
-                keep.append(line)
+            if keep and keep(stripped[2:].strip()):
+                lines_to_keep.append(line)
         elif stripped.startswith('#'):
-            keep.append(line)
+            lines_to_keep.append(line)
             end = n + 1
         if line and line[0] != ' ':
             break
 
-    # XXX: if python 3.7 was enabled via matrix.include, we'll add a
-    # second 3.7 entry directly to top-level python, without even
-    # checking for dist: xenial.
     new_lines = orig_lines[:start] + [
-        f"{' ' * indent}- {ver}\n"
-        for ver in new_versions
-    ] + keep + orig_lines[end:]
-    confirm_and_update_file(filename, orig_lines, new_lines)
+        f"{' ' * indent}- {value}\n"
+        for value in new_value
+    ] + lines_to_keep + orig_lines[end:]
+    return new_lines

@@ -10,6 +10,7 @@ except ImportError:
 from check_python_versions.parsers.travis import (
     get_travis_yml_python_versions,
     travis_normalize_py_version,
+    update_yaml_list,
 )
 
 
@@ -68,3 +69,47 @@ def test_get_travis_yml_python_versions_no_python_only_matrix(tmp_path):
 ])
 def test_travis_normalize_py_version(s, expected):
     assert travis_normalize_py_version(s) == expected
+
+
+def test_update_yaml_list():
+    source_lines = textwrap.dedent("""\
+        language: python
+        python:
+          - 2.6
+          - 2.7
+        install: pip install -e .
+        script: pytest tests
+    """).splitlines(True)
+    result = update_yaml_list(source_lines, "python", ["2.7", "3.7"])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+          - 2.7
+          - 3.7
+        install: pip install -e .
+        script: pytest tests
+    """)
+
+
+def test_update_yaml_list_keep_indent_comments_and_pypy():
+    source_lines = textwrap.dedent("""\
+        language: python
+        python:
+           - 2.6
+          # XXX: should probably remove 2.6
+           - 2.7
+           - pypy
+           - 3.3
+        script: pytest tests
+    """).splitlines(True)
+    result = update_yaml_list(source_lines, "python", ["2.7", "3.7"],
+                              keep=lambda line: line == 'pypy')
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+           - 2.7
+           - 3.7
+          # XXX: should probably remove 2.6
+           - pypy
+        script: pytest tests
+    """)
