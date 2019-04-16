@@ -8,6 +8,8 @@ except ImportError:
     yaml = None
 
 from check_python_versions.parsers.travis import (
+    add_yaml_node,
+    drop_yaml_node,
     get_travis_yml_python_versions,
     travis_normalize_py_version,
     update_yaml_list,
@@ -112,4 +114,95 @@ def test_update_yaml_list_keep_indent_comments_and_pypy():
           # XXX: should probably remove 2.6
            - pypy
         script: pytest tests
+    """)
+
+
+def test_drop_yaml_node():
+    source_lines = textwrap.dedent("""\
+        language: python
+        python:
+           - 3.6
+        matrix:
+          include:
+            - python: 3.7
+              dist: xenial
+              sudo: required
+        script: pytest tests
+    """).splitlines(True)
+    result = drop_yaml_node(source_lines, 'matrix')
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+           - 3.6
+        script: pytest tests
+    """)
+
+
+def test_drop_yaml_node_when_empty():
+    source_lines = textwrap.dedent("""\
+        language: python
+        python:
+           - 3.6
+        matrix:
+        script: pytest tests
+    """).splitlines(True)
+    result = drop_yaml_node(source_lines, 'matrix')
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+           - 3.6
+        script: pytest tests
+    """)
+
+
+def test_drop_yaml_node_when_last_in_file():
+    source_lines = textwrap.dedent("""\
+        language: python
+        python:
+           - 3.6
+        matrix:
+          include:
+            - python: 3.7
+              dist: xenial
+              sudo: required
+    """).splitlines(True)
+    result = drop_yaml_node(source_lines, 'matrix')
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+           - 3.6
+    """)
+
+
+def test_add_yaml_node():
+    source_lines = textwrap.dedent("""\
+        language: python
+        python:
+           - 3.6
+        script: pytest tests
+    """).splitlines(True)
+    result = add_yaml_node(source_lines, 'dist', 'xenial', before='python')
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        dist: xenial
+        python:
+           - 3.6
+        script: pytest tests
+    """)
+
+
+def test_add_yaml_node_at_end():
+    source_lines = textwrap.dedent("""\
+        language: python
+        python:
+           - 3.6
+        script: pytest tests
+    """).splitlines(True)
+    result = add_yaml_node(source_lines, 'dist', 'xenial', before='sudo')
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+           - 3.6
+        script: pytest tests
+        dist: xenial
     """)
