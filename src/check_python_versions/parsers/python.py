@@ -148,10 +148,11 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
     start = n
     indent = first_indent + 4
     quote_style = '"'
+    fix_closing_bracket = False
     for n, line in lines:
         stripped = line.lstrip()
-        if stripped.startswith('],'):
-            end = n + 1
+        if stripped.startswith(']'):
+            end = n
             break
         elif stripped:
             if not must_fix_indents:
@@ -160,6 +161,7 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
                 quote_style = stripped[0]
             if line.rstrip().endswith('],'):
                 end = n + 1
+                fix_closing_bracket = True
                 break
     else:
         warn(f'Did not understand {keyword}= formatting in {function}() call')
@@ -170,9 +172,10 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
     ] + [
         f"{' ' * indent}{to_literal(value, quote_style)},\n"
         for value in new_value
-    ] + [
+    ] + ([
         f"{' ' * first_indent}],\n"
-    ] + source_lines[end:]
+    ] if fix_closing_bracket else [
+    ]) + source_lines[end:]
 
 
 def find_call_kwarg_in_ast(tree, funcname, keyword, filename='setup.py'):
@@ -197,7 +200,15 @@ def eval_ast_node(node, keyword):
         try:
             return ast.literal_eval(node)
         except ValueError:
-            pass
+            if any(isinstance(element, ast.Str) for element in node.elts):
+                # Let's try our best!!!
+                warn(f'Non-literal {keyword}= passed to setup(),'
+                     ' skipping some values')
+                return [
+                    eval_ast_node(element, keyword)
+                    for element in node.elts
+                    if isinstance(element, ast.Str)
+                ]
     if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
             and isinstance(node.func.value, ast.Str)
             and node.func.attr == 'join'):
@@ -205,6 +216,15 @@ def eval_ast_node(node, keyword):
             return node.func.value.s.join(ast.literal_eval(node.args[0]))
         except ValueError:
             pass
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        left = eval_ast_node(node.left, keyword)
+        right = eval_ast_node(node.right, keyword)
+        if left is not None and right is not None:
+            return left + right
+        if left is None and right is not None:
+            return right
+        if left is not None and right is None:
+            return left
     warn(f'Non-literal {keyword}= passed to setup()')
     return None
 
