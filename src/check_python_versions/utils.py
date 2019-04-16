@@ -23,16 +23,21 @@ def pipe(*cmd, **kwargs):
 
 
 def confirm_and_update_file(filename, new_lines):
-    with open(filename, 'r') as f:
-        old_lines = f.readlines()
-    print_diff(old_lines, new_lines, filename)
-    if new_lines != old_lines and confirm(f"Write changes to {filename}?"):
+    if (show_diff(filename, new_lines)
+            and confirm(f"Write changes to {filename}?")):
         mode = stat.S_IMODE(os.stat(filename).st_mode)
         tempfile = filename + '.tmp'
         with open(tempfile, 'w') as f:
             os.fchmod(f.fileno(), mode)
             f.writelines(new_lines)
         os.rename(tempfile, filename)
+
+
+def show_diff(filename, new_lines):
+    with open(filename, 'r') as f:
+        old_lines = f.readlines()
+    print_diff(old_lines, new_lines, filename)
+    return old_lines != new_lines
 
 
 def print_diff(a, b, filename):

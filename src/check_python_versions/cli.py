@@ -3,7 +3,7 @@ import os
 import sys
 
 from . import __version__
-from .utils import confirm_and_update_file
+from .utils import confirm_and_update_file, show_diff
 from .versions import (
     MAX_MINOR_FOR_MAJOR,
     important,
@@ -142,7 +142,8 @@ def check_versions(where='.', *, print=print, expect=None):
     )
 
 
-def update_versions(where='.', *, add=None, drop=None, update=None):
+def update_versions(where='.', *, add=None, drop=None, update=None,
+                    diff=False):
 
     sources = [
         ('setup.py', get_supported_python_versions,
@@ -165,7 +166,10 @@ def update_versions(where='.', *, add=None, drop=None, update=None):
         if versions != new_versions:
             new_lines = updater(pathname, new_versions)
             if new_lines is not None:
-                confirm_and_update_file(pathname, new_lines)
+                if diff:
+                    show_diff(pathname, new_lines)
+                else:
+                    confirm_and_update_file(pathname, new_lines)
 
 
 def _main():
@@ -186,6 +190,8 @@ def _main():
                              ' and other files is located')
     group = parser.add_argument_group(
         "updating supported version lists (EXPERIMENTAL)")
+    group.add_argument('--diff', action='store_true',
+                       help='show a diff of proposed changes')
     group.add_argument('--add', metavar='VERSIONS', type=parse_version_list,
                        help='add these versions to supported ones, e.g'
                             ' --add 3.8')
@@ -209,27 +215,29 @@ def _main():
     multiple = len(where) > 1
     mismatches = []
     for n, path in enumerate(where):
-        if multiple:
+        if multiple and not args.diff:
             if n:
                 print("\n")
             print(f"{path}:\n")
         if not check_package(path):
             mismatches.append(path)
             continue
-        if args.add or args.drop or args.update:
+        if args.add or args.drop or args.update or args.diff:
             update_versions(path, add=args.add, drop=args.drop,
-                            update=args.update)
-        if not check_versions(path, expect=args.expect):
-            mismatches.append(path)
-            continue
+                            update=args.update, diff=args.diff)
+        if not args.diff:
+            if not check_versions(path, expect=args.expect):
+                mismatches.append(path)
+                continue
 
-    if mismatches:
-        if multiple:
-            sys.exit(f"\n\nmismatch in {' '.join(mismatches)}!")
-        else:
-            sys.exit("\nmismatch!")
-    elif multiple:
-        print("\n\nall ok!")
+    if not args.diff:
+        if mismatches:
+            if multiple:
+                sys.exit(f"\n\nmismatch in {' '.join(mismatches)}!")
+            else:
+                sys.exit("\nmismatch!")
+        elif multiple:
+            print("\n\nall ok!")
 
 
 def main():
