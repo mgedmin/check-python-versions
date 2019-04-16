@@ -26,6 +26,7 @@ from .parsers.travis import (
 from .parsers.appveyor import (
     APPVEYOR_YML,
     get_appveyor_yml_python_versions,
+    update_appveyor_yml_python_versions,
 )
 from .parsers.manylinux import (
     MANYLINUX_INSTALL_SH,
@@ -150,6 +151,8 @@ def update_versions(where='.', *, add=None, drop=None, update=None,
          update_supported_python_versions),
         (TRAVIS_YML, get_travis_yml_python_versions,
          update_travis_yml_python_versions),
+        (APPVEYOR_YML, get_appveyor_yml_python_versions,
+         update_appveyor_yml_python_versions),
     ]
 
     for (filename, extractor, updater) in sources:

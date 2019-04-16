@@ -101,10 +101,13 @@ def update_yaml_list(
 
     start = end = n + 1
     indent = 2
-    lines_to_keep = []
+    keep_before = []
+    keep_after = []
+    lines_to_keep = keep_before
     for n, line in lines:
         stripped = line.lstrip()
         if stripped.startswith('- '):
+            lines_to_keep = keep_after
             indent = len(line) - len(stripped)
             end = n + 1
             if keep and keep(stripped[2:].strip()):
@@ -116,10 +119,10 @@ def update_yaml_list(
             break
     # TODO: else?
 
-    new_lines = orig_lines[:start] + [
+    new_lines = orig_lines[:start] + keep_before + [
         f"{' ' * indent}- {value}\n"
         for value in new_value
-    ] + lines_to_keep + orig_lines[end:]
+    ] + keep_after + orig_lines[end:]
     return new_lines
 
 
