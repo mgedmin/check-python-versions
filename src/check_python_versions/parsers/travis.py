@@ -81,9 +81,16 @@ def update_travis_yml_python_versions(filename, new_versions):
         new_lines = drop_yaml_node(new_lines, "matrix")
 
     # Make sure we're using dist: xenial if we want to use Python 3.7 or newer.
-    if any(map(needs_xenial, new_versions)) and conf.get('dist') != 'xenial':
-        new_lines = drop_yaml_node(new_lines, 'dist')
-        new_lines = add_yaml_node(new_lines, 'dist', 'xenial', before='python')
+    if any(map(needs_xenial, new_versions)):
+        if conf.get('dist') != 'xenial':
+            new_lines = drop_yaml_node(new_lines, 'dist')
+            new_lines = add_yaml_node(new_lines, 'dist', 'xenial',
+                                      before='python')
+        if conf.get('sudo') is False:
+            # sudo is ignored nowadays, but in earlier times
+            # you needed both dist: xenial and sudo: required
+            # to get Python 3.7
+            new_lines = drop_yaml_node(new_lines, "sudo")
 
     return new_lines
 
@@ -129,7 +136,7 @@ def update_yaml_list(
 def drop_yaml_node(orig_lines, key):
     lines = iter(enumerate(orig_lines))
     for n, line in lines:
-        if line == f'{key}:\n':
+        if line.startswith(f'{key}:'):
             break
     else:
         return orig_lines
