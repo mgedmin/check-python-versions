@@ -4,7 +4,7 @@ import re
 import string
 from functools import partial
 
-from ..utils import warn, pipe, confirm_and_update_file
+from ..utils import warn, pipe
 from ..versions import MAX_MINOR_FOR_MAJOR
 
 
@@ -90,9 +90,9 @@ def update_classifiers(classifiers, new_versions):
 def update_supported_python_versions(filename, new_versions):
     classifiers = get_setup_py_keyword(filename, 'classifiers')
     if classifiers is None:
-        return
+        return None
     new_classifiers = update_classifiers(classifiers, new_versions)
-    update_setup_py_keyword(filename, 'classifiers', new_classifiers)
+    return update_setup_py_keyword(filename, 'classifiers', new_classifiers)
 
 
 def get_setup_py_keyword(setup_py, keyword):
@@ -110,7 +110,7 @@ def update_setup_py_keyword(setup_py, keyword, new_value):
     with open(setup_py) as f:
         lines = f.readlines()
     new_lines = update_call_arg_in_source(lines, 'setup', keyword, new_value)
-    confirm_and_update_file(setup_py, lines, new_lines)
+    return new_lines
 
 
 def to_literal(value, quote_style='"'):

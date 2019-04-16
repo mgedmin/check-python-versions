@@ -3,6 +3,7 @@ import os
 import sys
 
 from . import __version__
+from .utils import confirm_and_update_file
 from .versions import (
     MAX_MINOR_FOR_MAJOR,
     important,
@@ -162,7 +163,9 @@ def update_versions(where='.', *, add=None, drop=None, update=None):
         new_versions = update_version_list(
             versions, add=add, drop=drop, update=update)
         if versions != new_versions:
-            updater(pathname, new_versions)
+            new_lines = updater(pathname, new_versions)
+            if new_lines is not None:
+                confirm_and_update_file(pathname, new_lines)
 
 
 def _main():

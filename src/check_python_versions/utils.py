@@ -22,7 +22,9 @@ def pipe(*cmd, **kwargs):
     return p.communicate()[0].decode('UTF-8', 'replace')
 
 
-def confirm_and_update_file(filename, old_lines, new_lines):
+def confirm_and_update_file(filename, new_lines):
+    with open(filename, 'r') as f:
+        old_lines = f.readlines()
     print_diff(old_lines, new_lines, filename)
     if new_lines != old_lines and confirm(f"Write changes to {filename}?"):
         mode = stat.S_IMODE(os.stat(filename).st_mode)

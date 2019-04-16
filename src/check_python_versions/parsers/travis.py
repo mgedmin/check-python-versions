@@ -4,7 +4,7 @@ except ImportError:  # pragma: nocover
     yaml = None
 
 from .tox import parse_envlist, tox_env_to_py_version
-from ..utils import warn, confirm_and_update_file
+from ..utils import warn
 from ..versions import is_important
 
 
@@ -85,7 +85,7 @@ def update_travis_yml_python_versions(filename, new_versions):
         new_lines = drop_yaml_node(new_lines, 'dist')
         new_lines = add_yaml_node(new_lines, 'dist', 'xenial', before='python')
 
-    confirm_and_update_file(filename, orig_lines, new_lines)
+    return new_lines
 
 
 def update_yaml_list(
