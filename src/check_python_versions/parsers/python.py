@@ -197,7 +197,15 @@ def eval_ast_node(node, keyword):
         try:
             return ast.literal_eval(node)
         except ValueError:
-            pass
+            if any(isinstance(element, ast.Str) for element in node.elts):
+                # Let's try our best!!!
+                warn(f'Non-literal {keyword}= passed to setup(),'
+                     ' skipping some values')
+                return [
+                    eval_ast_node(element, keyword)
+                    for element in node.elts
+                    if isinstance(element, ast.Str)
+                ]
     if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
             and isinstance(node.func.value, ast.Str)
             and node.func.attr == 'join'):
