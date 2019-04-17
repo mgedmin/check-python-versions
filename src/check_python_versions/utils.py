@@ -34,7 +34,12 @@ def confirm_and_update_file(filename, new_lines):
                 # Windows, what else?
                 os.chmod(tempfile, mode)
             f.writelines(new_lines)
-        os.rename(tempfile, filename)
+        try:
+            os.rename(tempfile, filename)
+        except FileExistsError:
+            # No atomic replace on Windows
+            os.unlink(filename)
+            os.rename(tempfile, filename)
 
 
 def show_diff(filename, new_lines):
