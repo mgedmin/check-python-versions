@@ -34,6 +34,7 @@ from .parsers.appveyor import (
 from .parsers.manylinux import (
     MANYLINUX_INSTALL_SH,
     get_manylinux_python_versions,
+    update_manylinux_python_versions,
 )
 
 try:
@@ -173,7 +174,8 @@ def update_versions(where='.', *, add=None, drop=None, update=None,
          update_travis_yml_python_versions),
         (APPVEYOR_YML, get_appveyor_yml_python_versions,
          update_appveyor_yml_python_versions),
-        # TODO: manylinux.sh
+        (MANYLINUX_INSTALL_SH, get_manylinux_python_versions,
+         update_manylinux_python_versions),
         # TODO: CHANGES.rst
     ]
     replacements = {}
