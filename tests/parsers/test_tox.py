@@ -94,9 +94,26 @@ def test_update_tox_ini_python_versions():
     """)
 
 
+def test_update_tox_ini_python_syntax_error(capsys):
+    fp = StringIO(textwrap.dedent("""\
+        [tox
+        envlist = py26, py27
+    """))
+    fp.name = 'tox.ini'
+    result = update_tox_ini_python_versions(fp, ['3.6', '3.7'])
+    assert "".join(result) == textwrap.dedent("""\
+        [tox
+        envlist = py26, py27
+    """)
+    assert (
+        "Could not parse tox.ini:"
+        in capsys.readouterr().err
+    )
+
+
 def test_update_tox_envlist():
-    result = update_tox_envlist('py26,py27,pypy', ['3.6', '3.7'])
-    assert result == 'py36,py37,pypy'
+    result = update_tox_envlist('py26,py27,pypy,flake8', ['3.6', '3.7'])
+    assert result == 'py36,py37,pypy,flake8'
 
 
 def test_update_tox_envlist_with_suffixes():
@@ -168,3 +185,33 @@ def test_update_ini_setting_multiline_with_comments():
             py36,py37
         usedevelop = true
     """)
+
+
+def test_update_ini_setting_no_section(capsys):
+    source_lines = textwrap.dedent("""\
+        [toxx]
+    """).splitlines(True)
+    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,py37')
+    assert "".join(result) == textwrap.dedent("""\
+        [toxx]
+    """)
+    assert (
+        "Did not find [tox] section in tox.ini"
+        in capsys.readouterr().err
+    )
+
+
+def test_update_ini_setting_no_key(capsys):
+    source_lines = textwrap.dedent("""\
+        [tox]
+        usedevelop = true
+    """).splitlines(True)
+    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,py37')
+    assert "".join(result) == textwrap.dedent("""\
+        [tox]
+        usedevelop = true
+    """)
+    assert (
+        "Did not find envlist= in [tox] in tox.ini"
+        in capsys.readouterr().err
+    )

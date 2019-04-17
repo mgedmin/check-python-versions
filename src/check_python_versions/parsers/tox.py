@@ -64,7 +64,8 @@ def update_tox_ini_python_versions(filename, new_versions):
         try:
             conf.read_file(fp)
             envlist = conf.get('tox', 'envlist')
-        except configparser.Error:
+        except configparser.Error as error:
+            warn(f"Could not parse {fp.name}: {error}")
             return orig_lines
 
     new_envlist = update_tox_envlist(envlist, new_versions)
@@ -108,7 +109,7 @@ def update_ini_setting(orig_lines, section, key, new_value, filename=TOX_INI):
         if line.startswith(f'[{section}]'):
             break
     else:
-        warn(f'Did not find [{section}] in {filename}')
+        warn(f'Did not find [{section}] section in {filename}')
         return orig_lines
 
     # TODO: use a regex to allow an arbitrary number of spaces around =
