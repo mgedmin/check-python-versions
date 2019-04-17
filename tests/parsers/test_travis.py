@@ -98,6 +98,84 @@ def test_update_travis_yml_python_versions():
     """)
 
 
+def test_update_travis_yml_python_versions_drops_sudo():
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        sudo: false
+        python:
+          - 2.7
+        install: pip install -e .
+        script: pytest tests
+    """))
+    travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        dist: xenial
+        python:
+          - 2.7
+          - 3.7
+        install: pip install -e .
+        script: pytest tests
+    """)
+
+
+def test_update_travis_yml_python_versions_drops_matrix():
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        python:
+          - 2.6
+          - 2.7
+        matrix:
+          include:
+            - python: 3.7
+              sudo: required
+              dist: xenial
+        install: pip install -e .
+        script: pytest tests
+    """))
+    travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        dist: xenial
+        python:
+          - 2.7
+          - 3.7
+        install: pip install -e .
+        script: pytest tests
+    """)
+
+
+def test_update_travis_yml_python_versions_keeps_matrix():
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        python:
+          - 2.7
+        matrix:
+          include:
+            - python: 2.7
+              env: MINIMAL=1
+        install: pip install -e .
+        script: pytest tests
+    """))
+    travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        dist: xenial
+        python:
+          - 2.7
+          - 3.7
+        matrix:
+          include:
+            - python: 2.7
+              env: MINIMAL=1
+        install: pip install -e .
+        script: pytest tests
+    """)
+
+
 def test_update_yaml_list():
     source_lines = textwrap.dedent("""\
         language: python
@@ -214,6 +292,37 @@ def test_drop_yaml_node_when_last_in_file():
         python:
            - 3.6
     """)
+
+
+def test_drop_yaml_node_when_duplicate(capsys):
+    source_lines = textwrap.dedent("""\
+        language: python
+        sudo: false
+        matrix:
+          include:
+            - python: 2.7
+        python:
+           - 3.6
+        matrix:
+          include:
+            - python: 3.7
+        script: pytest tests
+    """).splitlines(True)
+    result = drop_yaml_node(source_lines, 'matrix')
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        sudo: false
+        matrix:
+          include:
+            - python: 2.7
+        python:
+           - 3.6
+        script: pytest tests
+    """)
+    assert (
+        "Duplicate matrix: setting in .travis.yml (lines 3 and 8)"
+        in capsys.readouterr().err
+    )
 
 
 def test_add_yaml_node():

@@ -69,14 +69,14 @@ def update_travis_yml_python_versions(filename, new_versions):
     if any(map(needs_xenial, new_versions)):
         replacements.update(XENIAL_SUPPORTED_PYPY_VERSIONS)
         if conf.get('dist') != 'xenial':
-            new_lines = drop_yaml_node(new_lines, 'dist')
+            new_lines = drop_yaml_node(new_lines, 'dist', filename=fp.name)
             new_lines = add_yaml_node(new_lines, 'dist', 'xenial',
                                       before='python')
         if conf.get('sudo') is False:
             # sudo is ignored nowadays, but in earlier times
             # you needed both dist: xenial and sudo: required
             # to get Python 3.7
-            new_lines = drop_yaml_node(new_lines, "sudo")
+            new_lines = drop_yaml_node(new_lines, "sudo", filename=fp.name)
 
     def keep_old(ver):
         return not is_important(travis_normalize_py_version(ver))
@@ -95,11 +95,12 @@ def update_travis_yml_python_versions(filename, new_versions):
             and 'include' in conf['matrix']
             and all(
                 job.get('dist') == 'xenial'
+                and set(job) <= {'python', 'dist', 'sudo'}
                 for job in conf['matrix']['include']
             )
     ):
         # XXX: this may drop too much or too little!
-        new_lines = drop_yaml_node(new_lines, "matrix")
+        new_lines = drop_yaml_node(new_lines, "matrix", filename=fp.name)
 
     return new_lines
 
@@ -149,22 +150,31 @@ def update_yaml_list(
     return new_lines
 
 
-def drop_yaml_node(orig_lines, key):
+def drop_yaml_node(orig_lines, key, filename=TRAVIS_YML):
     lines = iter(enumerate(orig_lines))
+    where = None
     for n, line in lines:
         if line.startswith(f'{key}:'):
-            break
-    else:
+            if where is not None:
+                warn(
+                    f"Duplicate {key}: setting in {filename}"
+                    f" (lines {where + 1} and {n + 1})"
+                )
+            where = n
+    if where is None:
         return orig_lines
 
-    start = n
-    end = n + 1
+    lines = iter(enumerate(orig_lines[where + 1:], where + 1))
+
+    start = where
+    end = start + 1
     for n, line in lines:
         if line and line[0] != ' ':
             break
         else:
             end = n + 1
     new_lines = orig_lines[:start] + orig_lines[end:]
+
     return new_lines
 
 
