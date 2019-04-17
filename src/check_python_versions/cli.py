@@ -253,7 +253,7 @@ def _main():
     multiple = len(where) > 1
     mismatches = []
     for n, path in enumerate(where):
-        if multiple and not args.diff:
+        if multiple and (not args.diff or args.dry_run):
             if n:
                 print("\n")
             print(f"{path}:\n")
