@@ -2,6 +2,7 @@ import configparser
 import re
 
 from ..utils import warn, open_file, get_indent
+from ..versions import is_important
 
 
 TOX_INI = 'tox.ini'
@@ -66,19 +67,32 @@ def update_tox_ini_python_versions(filename, new_versions):
         except configparser.Error:
             return orig_lines
 
-    sep = ','
-    if ', ' in envlist:
-        sep = ', '
-
-    new_envlist = sep.join(
-        f"py{ver.replace('.', '')}"
-        for ver in new_versions
-    )
+    new_envlist = update_tox_envlist(envlist, new_versions)
 
     new_lines = update_ini_setting(
         orig_lines, 'tox', 'envlist', new_envlist,
     )
     return new_lines
+
+
+def update_tox_envlist(envlist, new_versions):
+    sep = ','
+    if ', ' in envlist:
+        sep = ', '
+
+    envlist = parse_envlist(envlist)
+    keep = []
+    for env in envlist:
+        if (not env.startswith('py')
+                or not is_important(tox_env_to_py_version(env))):
+            keep.append(env)
+
+    new_envlist = sep.join([
+        f"py{ver.replace('.', '')}"
+        for ver in new_versions
+    ] + keep)
+
+    return new_envlist
 
 
 def update_ini_setting(orig_lines, section, key, new_value, filename=TOX_INI):

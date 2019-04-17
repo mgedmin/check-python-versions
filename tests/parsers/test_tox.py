@@ -9,6 +9,7 @@ from check_python_versions.parsers.tox import (
     parse_envlist,
     tox_env_to_py_version,
     update_ini_setting,
+    update_tox_envlist,
     update_tox_ini_python_versions,
 )
 
@@ -91,6 +92,11 @@ def test_update_tox_ini_python_versions():
         [tox]
         envlist = py36, py37
     """)
+
+
+def test_update_tox_envlist():
+    result = update_tox_envlist('py26,py27,pypy', ['3.6', '3.7'])
+    assert result == 'py36,py37,pypy'
 
 
 def test_update_ini_setting():
