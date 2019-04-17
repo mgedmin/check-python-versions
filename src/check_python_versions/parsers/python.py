@@ -4,13 +4,13 @@ import re
 import string
 from functools import partial
 
-from ..utils import warn, pipe, open_file
+from ..utils import warn, pipe, open_file, is_file_object
 from ..versions import MAX_MINOR_FOR_MAJOR
 
 
 def get_supported_python_versions(filename='setup.py'):
     classifiers = get_setup_py_keyword(filename, 'classifiers')
-    if classifiers is None and isinstance(filename, str):
+    if classifiers is None and not is_file_object(filename):
         # AST parsing is complicated
         setup_py = os.path.basename(filename)
         classifiers = pipe("python", setup_py, "-q", "--classifiers",

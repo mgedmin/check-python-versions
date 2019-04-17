@@ -127,7 +127,7 @@ def check_versions(where='.', *, print=print, expect=None, replacements=None):
         pathname = os.path.join(where, filename)
         if not os.path.exists(pathname):
             continue
-        if pathname in replacements:
+        if replacements and pathname in replacements:
             new_lines = replacements[pathname]
             buf = StringIO("\n".join(new_lines))
             buf.name = f'pathname (updated)'

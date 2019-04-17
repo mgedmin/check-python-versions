@@ -19,11 +19,6 @@ def test_get_tox_ini_python_versions(tmp_path):
     assert get_tox_ini_python_versions(tox_ini) == ['2.7', '3.6']
 
 
-def test_get_tox_ini_python_versions_no_tox_ini(tmp_path):
-    tox_ini = tmp_path / "tox.ini"
-    assert get_tox_ini_python_versions(tox_ini) == []
-
-
 def test_get_tox_ini_python_versions_syntax_error(tmp_path):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
