@@ -239,6 +239,7 @@ def test_update_travis_yml_python_versions_matrix():
           include:
             - python: 2.7
             - python: 3.3
+            - python: pypy
         install: pip install -e .
         script: pytest tests
     """))
@@ -253,6 +254,7 @@ def test_update_travis_yml_python_versions_matrix():
           include:
             - python: 2.7
             - python: 3.4
+            - python: pypy
         install: pip install -e .
         script: pytest tests
     """)

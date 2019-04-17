@@ -84,6 +84,13 @@ def update_travis_yml_python_versions(filename, new_versions):
     def keep_old(ver):
         return not is_important(travis_normalize_py_version(ver))
 
+    def keep_old_job(job):
+        if job.startswith('python:'):
+            ver = job[len('python:'):].strip()
+            return not is_important(travis_normalize_py_version(ver))
+        else:
+            return True
+
     if conf.get('python'):
         new_lines = update_yaml_list(
             new_lines, "python", new_versions, filename=fp.name, keep=keep_old,
@@ -99,6 +106,7 @@ def update_travis_yml_python_versions(filename, new_versions):
             ]
             new_lines = update_yaml_list(
                 new_lines, (toplevel, "include"), new_jobs, filename=fp.name,
+                keep=keep_old_job
             )
 
     # If python 3.7 was enabled via matrix.include, we've just added a
