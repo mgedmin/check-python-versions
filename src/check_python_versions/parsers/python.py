@@ -405,6 +405,8 @@ def parse_python_requires(s):
 
 def compute_python_requires(new_versions):
     new_versions = set(new_versions)
+    if len(new_versions) == 1:
+        return f'=={new_versions.pop()}.*'
     # XXX assumes all versions are X.Y and 3.10 will never be released
     min_version = min(new_versions)
     specifiers = [f'>={min_version}']

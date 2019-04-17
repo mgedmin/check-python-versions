@@ -1,9 +1,11 @@
 import ast
 import textwrap
+from io import StringIO
 
 import pytest
 
 from check_python_versions.parsers.python import (
+    compute_python_requires,
     eval_ast_node,
     find_call_kwarg_in_ast,
     get_python_requires,
@@ -46,6 +48,21 @@ def test_get_supported_python_versions_computed(tmp_path):
         )
     """))
     assert get_supported_python_versions(filename) == ['2.7', '3.7']
+
+
+def test_get_supported_python_versions_from_file_object_cannot_run_setup_py():
+    fp = StringIO(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: %s' % v
+                for v in ['2.7', '3.7']
+            ],
+        )
+    """))
+    fp.name = 'setup.py'
+    assert get_supported_python_versions(fp) == []
 
 
 def test_get_versions_from_classifiers():
@@ -277,12 +294,28 @@ def test_find_call_kwarg_in_ast_no_call(capsys):
     ('["a", "b"]', ["a", "b"]),
     ('("a", "b")', ("a", "b")),
     ('"-".join(["a", "b"])', "a-b"),
+    ('["a", "b"] + ["c"]', ["a", "b", "c"]),
+    ('["a", "b"] + extra', ["a", "b"]),
+    ('extra + ["a", "b"]', ["a", "b"]),
+    ('["a", "b", extra]', ["a", "b"]),
 ])
 def test_eval_ast_node(code, expected):
     tree = ast.parse(f'foo(bar={code})')
     node = find_call_kwarg_in_ast(tree, 'foo', 'bar')
     assert node is not None
     assert eval_ast_node(node, 'bar') == expected
+
+
+@pytest.mark.parametrize('code', [
+    '[2 * 2]',
+    '"".join([2 * 2])',
+    'extra + more',
+])
+def test_eval_ast_node_failures(code, capsys):
+    tree = ast.parse(f'foo(bar={code})')
+    node = find_call_kwarg_in_ast(tree, 'foo', 'bar')
+    assert eval_ast_node(node, 'bar') is None
+    assert 'Non-literal bar= passed to setup()' in capsys.readouterr().err
 
 
 def test_to_literal():
@@ -331,7 +364,7 @@ def test_update_call_arg_in_source_string_spaces():
     source_lines = textwrap.dedent("""\
         setup (
             foo = 1,
-            bar = "x",
+            bar = 'x',
             baz = 2,
         )
     """).splitlines(True)
@@ -339,7 +372,7 @@ def test_update_call_arg_in_source_string_spaces():
     assert "".join(result) == textwrap.dedent("""\
         setup (
             foo = 1,
-            bar = "y",
+            bar = 'y',
             baz = 2,
         )
     """)
@@ -495,17 +528,6 @@ def test_update_call_arg_in_source_too_complicated(capsys):
     )
 
 
-@pytest.mark.parametrize('code', [
-    '[2 * 2]',
-    '"".join([2 * 2])',
-])
-def test_eval_ast_node_failures(code, capsys):
-    tree = ast.parse(f'foo(bar={code})')
-    node = find_call_kwarg_in_ast(tree, 'foo', 'bar')
-    assert eval_ast_node(node, 'bar') is None
-    assert 'Non-literal bar= passed to setup()' in capsys.readouterr().err
-
-
 @pytest.mark.parametrize('constraint, result', [
     ('~= 2.7', ['2.7']),
     ('~= 2.7.12', ['2.7']),
@@ -608,3 +630,16 @@ def test_parse_python_requires_syntax_errors(capsys, specifier):
         f'Bad python_requires specifier: {specifier}'
         in capsys.readouterr().err
     )
+
+
+@pytest.mark.parametrize('versions, expected', [
+    (['2.7'], '==2.7.*'),
+    (['3.6', '3.7'], '>=3.6'),
+    (['2.7', '3.4', '3.5', '3.6', '3.7'],
+     '>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*'),
+])
+def test_compute_python_requires(versions, expected, fix_max_python_3_version):
+    fix_max_python_3_version(7)
+    result = compute_python_requires(versions)
+    assert result == expected
+    assert parse_python_requires(result) == versions
