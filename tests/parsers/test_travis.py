@@ -46,6 +46,17 @@ def test_get_travis_yml_python_versions(tmp_path):
 
 
 @needs_pyyaml
+def test_get_travis_yml_python_versions_no_list(tmp_path):
+    travis_yml = StringIO(textwrap.dedent("""\
+        python: 3.7
+    """))
+    travis_yml.name = '.travis.yml'
+    assert get_travis_yml_python_versions(travis_yml) == [
+        '3.7',
+    ]
+
+
+@needs_pyyaml
 def test_get_travis_yml_python_versions_no_python_only_matrix(tmp_path):
     travis_yml = tmp_path / ".travis.yml"
     travis_yml.write_text(textwrap.dedent("""\
@@ -85,6 +96,28 @@ def test_update_travis_yml_python_versions():
         script: pytest tests
     """))
     travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.4"])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+          - 2.7
+          - 3.4
+          - pypy
+        install: pip install -e .
+        script: pytest tests
+    """)
+
+
+def test_update_travis_yml_python_versions_adds_dist_xenial():
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        python:
+          - 2.7
+          - pypy
+        install: pip install -e .
+        script: pytest tests
+    """))
+    travis_yml.name = '.travis.yml'
     result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
     assert "".join(result) == textwrap.dedent("""\
         language: python
@@ -102,6 +135,7 @@ def test_update_travis_yml_python_versions_drops_sudo():
     travis_yml = StringIO(textwrap.dedent("""\
         language: python
         sudo: false
+        dist: xenial
         python:
           - 2.7
         install: pip install -e .
@@ -220,6 +254,24 @@ def test_update_yaml_list_keep_indent_comments_and_pypy():
     """)
 
 
+def test_update_yaml_not_found(capsys):
+    source_lines = textwrap.dedent("""\
+        language: python
+        install: pip install -e .
+        script: pytest tests
+    """).splitlines(True)
+    result = update_yaml_list(source_lines, "python", ["2.7", "3.7"])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        install: pip install -e .
+        script: pytest tests
+    """)
+    assert (
+        "Did not find python: setting in .travis.yml"
+        in capsys.readouterr().err
+    )
+
+
 def test_drop_yaml_node():
     source_lines = textwrap.dedent("""\
         language: python
@@ -323,6 +375,23 @@ def test_drop_yaml_node_when_duplicate(capsys):
         "Duplicate matrix: setting in .travis.yml (lines 3 and 8)"
         in capsys.readouterr().err
     )
+
+
+def test_add_yaml_node_before():
+    source_lines = textwrap.dedent("""\
+        language: python
+        python:
+           - 3.6
+        script: pytest tests
+    """).splitlines(True)
+    result = add_yaml_node(source_lines, 'dist', 'xenial')
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+           - 3.6
+        script: pytest tests
+        dist: xenial
+    """)
 
 
 def test_add_yaml_node():

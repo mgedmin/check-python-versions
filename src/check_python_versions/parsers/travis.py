@@ -21,7 +21,10 @@ def get_travis_yml_python_versions(filename=TRAVIS_YML):
         conf = yaml.safe_load(fp)
     versions = []
     if conf.get('python'):
-        versions += map(travis_normalize_py_version, conf['python'])
+        if isinstance(conf['python'], list):
+            versions += map(travis_normalize_py_version, conf['python'])
+        else:
+            versions.append(travis_normalize_py_version(conf['python']))
     if 'matrix' in conf and 'include' in conf['matrix']:
         for job in conf['matrix']['include']:
             if 'python' in job:
