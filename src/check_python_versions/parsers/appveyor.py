@@ -70,17 +70,35 @@ def update_appveyor_yml_python_versions(filename, new_versions):
         conf = yaml.safe_load(fp)
 
     varname = 'PYTHON'
-    pattern = '{}{}'
+    patterns = set()
     for env in conf['environment']['matrix']:
         for var, value in env.items():
             if var.lower() == 'python':
                 varname = var
-                pattern = appveyor_detect_py_version_pattern(value)
+                patterns.add(appveyor_detect_py_version_pattern(value))
                 break
+    if not patterns:
+        patterns.add('{}{}')
 
-    new_environments = [
-        f'{varname}: "{escape(pattern.format(*ver.split(".", 1)))}"'
+    quote = any(f'{varname}: "' in line for line in orig_lines)
+
+    patterns = sorted(patterns)
+
+    new_pythons = [
+        pattern.format(*ver.split(".", 1))
         for ver in new_versions
+        for pattern in patterns
     ]
+
+    if quote:
+        new_environments = [
+            f'{varname}: "{escape(python)}"'
+            for python in new_pythons
+        ]
+    else:
+        new_environments = [
+            f'{varname}: {python}'
+            for python in new_pythons
+        ]
     new_lines = update_yaml_list(orig_lines, '  matrix', new_environments)
     return new_lines

@@ -1,4 +1,5 @@
 import textwrap
+from io import StringIO
 
 import pytest
 
@@ -10,6 +11,7 @@ except ImportError:
 from check_python_versions.parsers.appveyor import (
     appveyor_normalize_py_version,
     get_appveyor_yml_python_versions,
+    update_appveyor_yml_python_versions,
 )
 
 
@@ -56,3 +58,39 @@ def test_get_appveyor_yml_python_versions_using_toxenv(tmp_path):
 ])
 def test_appveyor_normalize_py_version(s, expected):
     assert appveyor_normalize_py_version(s) == expected
+
+
+def test_update_appveyor_yml_python_versions():
+    appveyor_yml = StringIO(textwrap.dedent(r"""
+        environment:
+          matrix:
+            - PYTHON: "c:\\python27"
+            - PYTHON: "c:\\python36"
+    """).lstrip('\n'))
+    result = update_appveyor_yml_python_versions(appveyor_yml, ['2.7', '3.7'])
+    assert ''.join(result) == textwrap.dedent(r"""
+        environment:
+          matrix:
+            - PYTHON: "c:\\python27"
+            - PYTHON: "c:\\python37"
+    """.lstrip('\n'))
+
+
+def test_update_appveyor_yml_python_versions_multiple_of_each():
+    appveyor_yml = StringIO(textwrap.dedent("""\
+        environment:
+          matrix:
+            - PYTHON: c:\\python27
+            - PYTHON: c:\\python27-x64
+            - PYTHON: c:\\python36
+            - PYTHON: c:\\python36-x64
+    """))
+    result = update_appveyor_yml_python_versions(appveyor_yml, ['2.7', '3.7'])
+    assert ''.join(result) == textwrap.dedent("""\
+        environment:
+          matrix:
+            - PYTHON: c:\\python27
+            - PYTHON: c:\\python27-x64
+            - PYTHON: c:\\python37
+            - PYTHON: c:\\python37-x64
+    """)
