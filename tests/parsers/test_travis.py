@@ -1,4 +1,5 @@
 import textwrap
+from io import StringIO
 
 import pytest
 
@@ -12,6 +13,7 @@ from check_python_versions.parsers.travis import (
     drop_yaml_node,
     get_travis_yml_python_versions,
     travis_normalize_py_version,
+    update_travis_yml_python_versions,
     update_yaml_list,
 )
 
@@ -71,6 +73,29 @@ def test_get_travis_yml_python_versions_no_python_only_matrix(tmp_path):
 ])
 def test_travis_normalize_py_version(s, expected):
     assert travis_normalize_py_version(s) == expected
+
+
+def test_update_travis_yml_python_versions():
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        python:
+          - 2.7
+          - pypy
+        install: pip install -e .
+        script: pytest tests
+    """))
+    travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        dist: xenial
+        python:
+          - 2.7
+          - 3.7
+          - pypy2.7-6.0.0
+        install: pip install -e .
+        script: pytest tests
+    """)
 
 
 def test_update_yaml_list():

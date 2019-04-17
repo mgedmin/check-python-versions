@@ -10,6 +10,11 @@ from ..versions import is_important
 
 TRAVIS_YML = '.travis.yml'
 
+XENIAL_SUPPORTED_PYPY_VERSIONS = {
+    'pypy': 'pypy2.7-6.0.0',
+    'pypy3': 'pypy3.5-6.0.0',
+}
+
 
 def get_travis_yml_python_versions(filename=TRAVIS_YML):
     with open_file(filename) as fp:
@@ -57,12 +62,28 @@ def update_travis_yml_python_versions(filename, new_versions):
         orig_lines = fp.readlines()
         fp.seek(0)
         conf = yaml.safe_load(fp)
+    new_lines = orig_lines
+
+    # Make sure we're using dist: xenial if we want to use Python 3.7 or newer.
+    replacements = {}
+    if any(map(needs_xenial, new_versions)):
+        replacements.update(XENIAL_SUPPORTED_PYPY_VERSIONS)
+        if conf.get('dist') != 'xenial':
+            new_lines = drop_yaml_node(new_lines, 'dist')
+            new_lines = add_yaml_node(new_lines, 'dist', 'xenial',
+                                      before='python')
+        if conf.get('sudo') is False:
+            # sudo is ignored nowadays, but in earlier times
+            # you needed both dist: xenial and sudo: required
+            # to get Python 3.7
+            new_lines = drop_yaml_node(new_lines, "sudo")
 
     def keep_old(ver):
         return not is_important(travis_normalize_py_version(ver))
 
     new_lines = update_yaml_list(
-        orig_lines, "python", new_versions, filename=fp.name, keep=keep_old,
+        new_lines, "python", new_versions, filename=fp.name, keep=keep_old,
+        replacements=replacements,
     )
 
     # If python 3.7 was enabled via matrix.include, we've just added a
@@ -80,23 +101,12 @@ def update_travis_yml_python_versions(filename, new_versions):
         # XXX: this may drop too much or too little!
         new_lines = drop_yaml_node(new_lines, "matrix")
 
-    # Make sure we're using dist: xenial if we want to use Python 3.7 or newer.
-    if any(map(needs_xenial, new_versions)):
-        if conf.get('dist') != 'xenial':
-            new_lines = drop_yaml_node(new_lines, 'dist')
-            new_lines = add_yaml_node(new_lines, 'dist', 'xenial',
-                                      before='python')
-        if conf.get('sudo') is False:
-            # sudo is ignored nowadays, but in earlier times
-            # you needed both dist: xenial and sudo: required
-            # to get Python 3.7
-            new_lines = drop_yaml_node(new_lines, "sudo")
-
     return new_lines
 
 
 def update_yaml_list(
     orig_lines, key, new_value, filename=TRAVIS_YML, keep=None,
+    replacements=None,
 ):
     lines = iter(enumerate(orig_lines))
     for n, line in lines:
@@ -117,8 +127,14 @@ def update_yaml_list(
             lines_to_keep = keep_after
             indent = len(line) - len(stripped)
             end = n + 1
-            if keep and keep(stripped[2:].strip()):
-                lines_to_keep.append(line)
+            value = stripped[2:].strip()
+            if keep and keep(value):
+                if replacements and value in replacements:
+                    lines_to_keep.append(
+                        f"{' '* indent}- {replacements[value]}\n"
+                    )
+                else:
+                    lines_to_keep.append(line)
         elif stripped.startswith('#'):
             lines_to_keep.append(line)
             end = n + 1
