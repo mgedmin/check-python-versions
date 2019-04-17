@@ -307,7 +307,25 @@ def test_to_literal_all_the_classifiers():
             assert ast.literal_eval(literal) == classifier
 
 
-def test_update_call_arg_in_source():
+def test_update_call_arg_in_source_string():
+    source_lines = textwrap.dedent("""\
+        setup(
+            foo=1,
+            bar="x",
+            baz=2,
+        )
+    """).splitlines(True)
+    result = update_call_arg_in_source(source_lines, "setup", "bar", "y")
+    assert "".join(result) == textwrap.dedent("""\
+        setup(
+            foo=1,
+            bar="y",
+            baz=2,
+        )
+    """)
+
+
+def test_update_call_arg_in_source_list():
     source_lines = textwrap.dedent("""\
         setup(
             foo=1,

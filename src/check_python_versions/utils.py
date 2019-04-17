@@ -60,10 +60,10 @@ def confirm_and_update_file(filename, new_lines):
             os.rename(tempfile, filename)
 
 
-def show_diff(filename, new_lines):
-    with open(filename, 'r') as f:
+def show_diff(filename_or_file_object, new_lines):
+    with open_file(filename_or_file_object) as f:
         old_lines = f.readlines()
-    print_diff(old_lines, new_lines, filename)
+    print_diff(old_lines, new_lines, f.name)
     return old_lines != new_lines
 
 

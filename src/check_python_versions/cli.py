@@ -13,6 +13,7 @@ from .versions import (
 from .parsers.python import (
     get_supported_python_versions,
     get_python_requires,
+    update_python_requires,
     update_supported_python_versions,
 )
 from .parsers.tox import (
@@ -108,6 +109,16 @@ def check_package(where='.', *, print=print):
     return True
 
 
+def filename_or_replacement(pathname, replacements):
+    if replacements and pathname in replacements:
+        new_lines = replacements[pathname]
+        buf = StringIO("".join(new_lines))
+        buf.name = pathname
+        return buf
+    else:
+        return pathname
+
+
 def check_versions(where='.', *, print=print, expect=None, replacements=None):
 
     sources = [
@@ -128,13 +139,7 @@ def check_versions(where='.', *, print=print, expect=None, replacements=None):
         pathname = os.path.join(where, filename)
         if not os.path.exists(pathname):
             continue
-        if replacements and pathname in replacements:
-            new_lines = replacements[pathname]
-            buf = StringIO("\n".join(new_lines))
-            buf.name = f'pathname (updated)'
-            versions = extractor(buf)
-        else:
-            versions = extractor(pathname)
+        versions = extractor(filename_or_replacement(pathname, replacements))
         if versions is None:
             continue
         print(f"{title} says:".ljust(width), ", ".join(versions) or "(empty)")
@@ -157,6 +162,8 @@ def update_versions(where='.', *, add=None, drop=None, update=None,
     sources = [
         ('setup.py', get_supported_python_versions,
          update_supported_python_versions),
+        ('setup.py', get_python_requires,
+         update_python_requires),
         (TOX_INI, get_tox_ini_python_versions,
          update_tox_ini_python_versions),
         (TRAVIS_YML, get_travis_yml_python_versions,
@@ -172,7 +179,7 @@ def update_versions(where='.', *, add=None, drop=None, update=None,
         pathname = os.path.join(where, filename)
         if not os.path.exists(pathname):
             continue
-        versions = extractor(pathname)
+        versions = extractor(filename_or_replacement(pathname, replacements))
         if versions is None:
             continue
 
@@ -180,10 +187,12 @@ def update_versions(where='.', *, add=None, drop=None, update=None,
         new_versions = update_version_list(
             versions, add=add, drop=drop, update=update)
         if versions != new_versions:
-            new_lines = updater(pathname, new_versions)
+            fp = filename_or_replacement(pathname, replacements)
+            new_lines = updater(fp, new_versions)
             if new_lines is not None:
                 if diff:
-                    show_diff(pathname, new_lines)
+                    fp = filename_or_replacement(pathname, replacements)
+                    show_diff(fp, new_lines)
                 if dry_run:
                     replacements[pathname] = new_lines
                 if not diff and not dry_run:

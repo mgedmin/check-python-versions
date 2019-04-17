@@ -15,6 +15,8 @@ def get_supported_python_versions(filename='setup.py'):
         setup_py = os.path.basename(filename)
         classifiers = pipe("python", setup_py, "-q", "--classifiers",
                            cwd=os.path.dirname(filename)).splitlines()
+    if classifiers is None:
+        return []
     return get_versions_from_classifiers(classifiers)
 
 
@@ -95,6 +97,17 @@ def update_supported_python_versions(filename, new_versions):
     return update_setup_py_keyword(filename, 'classifiers', new_classifiers)
 
 
+def update_python_requires(filename, new_versions):
+    python_requires = get_setup_py_keyword(filename, 'python_requires')
+    if python_requires is None:
+        return None
+    new_python_requires = compute_python_requires(new_versions)
+    if is_file_object(filename):
+        filename.seek(0)
+    return update_setup_py_keyword(filename, 'python_requires',
+                                   new_python_requires)
+
+
 def get_setup_py_keyword(setup_py, keyword):
     with open_file(setup_py) as f:
         try:
@@ -117,9 +130,10 @@ def to_literal(value, quote_style='"'):
     # Because I don't want to deal with quoting, I'll require all values
     # to contain only safe characters (i.e. no ' or " or \).  Except some
     # PyPI classifiers do include ' so I need to handle that at least.
-    safe_characters = string.ascii_letters + string.digits + " .:,-=><()/+'#"
+    # And python_requires uses all sorts of comparisons like ~= 3.7.*
+    safe_chars = string.ascii_letters + string.digits + " .:,-=><!~*()/+'#"
     assert all(
-        c in safe_characters for c in value
+        c in safe_chars for c in value
     ), f'{value!r} has unexpected characters'
     if quote_style == "'" and quote_style in value:
         quote_style = '"'
@@ -145,37 +159,53 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
         warn(f'Did not find {keyword}= argument in {function}() call')
         return source_lines
 
-    start = n
-    indent = first_indent + 4
     quote_style = '"'
-    fix_closing_bracket = False
-    for n, line in lines:
-        stripped = line.lstrip()
-        if stripped.startswith(']'):
-            end = n
-            break
-        elif stripped:
-            if not must_fix_indents:
-                indent = len(line) - len(stripped)
-            if stripped[0] in ('"', "'"):
-                quote_style = stripped[0]
-            if line.rstrip().endswith('],'):
-                end = n + 1
-                fix_closing_bracket = True
-                break
-    else:
-        warn(f'Did not understand {keyword}= formatting in {function}() call')
-        return source_lines
 
-    return source_lines[:start] + [
-        f"{' ' * first_indent}{keyword}=[\n"
-    ] + [
-        f"{' ' * indent}{to_literal(value, quote_style)},\n"
-        for value in new_value
-    ] + ([
-        f"{' ' * first_indent}],\n"
-    ] if fix_closing_bracket else [
-    ]) + source_lines[end:]
+    if isinstance(new_value, list):
+        start = n
+        indent = first_indent + 4
+        fix_closing_bracket = False
+        for n, line in lines:
+            stripped = line.lstrip()
+            if stripped.startswith(']'):
+                end = n
+                break
+            elif stripped:
+                if not must_fix_indents:
+                    indent = len(line) - len(stripped)
+                if stripped[0] in ('"', "'"):
+                    quote_style = stripped[0]
+                if line.rstrip().endswith('],'):
+                    end = n + 1
+                    fix_closing_bracket = True
+                    break
+        else:
+            warn(
+                f'Did not understand {keyword}= formatting'
+                f' in {function}() call'
+            )
+            return source_lines
+    else:
+        start = n
+        end = n + 1
+
+    if isinstance(new_value, list):
+        return source_lines[:start] + [
+            f"{' ' * first_indent}{keyword}=[\n"
+        ] + [
+            f"{' ' * indent}{to_literal(value, quote_style)},\n"
+            for value in new_value
+        ] + ([
+            f"{' ' * first_indent}],\n"
+        ] if fix_closing_bracket else [
+        ]) + source_lines[end:]
+    else:
+        if line.lstrip().startswith(f"{keyword}='"):
+            quote_style = "'"
+        new_value_quoted = to_literal(new_value, quote_style)
+        return source_lines[:start] + [
+            f"{' ' * first_indent}{keyword}={new_value_quoted},\n"
+        ] + source_lines[end:]
 
 
 def find_call_kwarg_in_ast(tree, funcname, keyword, filename='setup.py'):
@@ -360,3 +390,16 @@ def parse_python_requires(s):
             if all(constraint((major, minor)) for constraint in constraints):
                 versions.append(f'{major}.{minor}')
     return versions
+
+
+def compute_python_requires(new_versions):
+    new_versions = set(new_versions)
+    # XXX assumes all versions are X.Y and 3.10 will never be released
+    min_version = min(new_versions)
+    specifiers = [f'>={min_version}']
+    for major in sorted(MAX_MINOR_FOR_MAJOR):
+        for minor in range(0, MAX_MINOR_FOR_MAJOR[major] + 1):
+            ver = f'{major}.{minor}'
+            if ver >= min_version and ver not in new_versions:
+                specifiers.append(f'!={ver}.*')
+    return ', '.join(specifiers)
