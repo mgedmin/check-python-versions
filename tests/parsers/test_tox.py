@@ -148,3 +148,23 @@ def test_update_ini_setting_multiline():
             py36,py37
         usedevelop = true
     """)
+
+
+def test_update_ini_setting_multiline_with_comments():
+    source_lines = textwrap.dedent("""\
+        [tox]
+        envlist =
+        # blah blah
+        #   py26,py27,pypy
+            py26,py27
+        usedevelop = true
+    """).splitlines(True)
+    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,py37')
+    assert "".join(result) == textwrap.dedent("""\
+        [tox]
+        envlist =
+        # blah blah
+        #   py26,py27,pypy
+            py36,py37
+        usedevelop = true
+    """)

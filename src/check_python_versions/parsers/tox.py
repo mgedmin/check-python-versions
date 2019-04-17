@@ -121,9 +121,14 @@ def update_ini_setting(orig_lines, section, key, new_value, filename=TOX_INI):
         return orig_lines
 
     end = start + 1
+    comments = []
+    indent = '  '
     for n, line in lines:
         if line.startswith(' '):
+            indent = get_indent(line)
             end = n + 1
+        elif line.lstrip().startswith('#'):
+            comments.append(line)
         else:
             break
 
@@ -131,8 +136,7 @@ def update_ini_setting(orig_lines, section, key, new_value, filename=TOX_INI):
     firstline = orig_lines[start].strip().expandtabs().replace(' ', '')
     if firstline == f'{key}=':
         if end > start + 1:
-            indent = get_indent(orig_lines[start + 1])
-            prefix = f'\n{indent}'
+            prefix = f'\n{"".join(comments)}{indent}'
 
     new_lines = orig_lines[:start] + (
         f"{key} ={prefix}{new_value}\n"
