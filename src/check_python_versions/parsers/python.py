@@ -4,13 +4,13 @@ import re
 import string
 from functools import partial
 
-from ..utils import warn, pipe
+from ..utils import warn, pipe, open_file
 from ..versions import MAX_MINOR_FOR_MAJOR
 
 
 def get_supported_python_versions(filename='setup.py'):
     classifiers = get_setup_py_keyword(filename, 'classifiers')
-    if classifiers is None:
+    if classifiers is None and isinstance(filename, str):
         # AST parsing is complicated
         setup_py = os.path.basename(filename)
         classifiers = pipe("python", setup_py, "-q", "--classifiers",
@@ -96,18 +96,18 @@ def update_supported_python_versions(filename, new_versions):
 
 
 def get_setup_py_keyword(setup_py, keyword):
-    with open(setup_py) as f:
+    with open_file(setup_py) as f:
         try:
-            tree = ast.parse(f.read(), setup_py)
+            tree = ast.parse(f.read(), f.name)
         except SyntaxError as error:
-            warn(f'Could not parse {setup_py}: {error}')
+            warn(f'Could not parse {f.name}: {error}')
             return None
     node = find_call_kwarg_in_ast(tree, 'setup', keyword)
     return node and eval_ast_node(node, keyword)
 
 
 def update_setup_py_keyword(setup_py, keyword, new_value):
-    with open(setup_py) as f:
+    with open_file(setup_py) as f:
         lines = f.readlines()
     new_lines = update_call_arg_in_source(lines, 'setup', keyword, new_value)
     return new_lines

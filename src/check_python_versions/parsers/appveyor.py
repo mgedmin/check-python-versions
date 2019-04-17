@@ -5,13 +5,14 @@ except ImportError:  # pragma: nocover
 
 from .tox import parse_envlist, tox_env_to_py_version
 from .travis import update_yaml_list
+from ..utils import open_file
 
 
 APPVEYOR_YML = 'appveyor.yml'
 
 
 def get_appveyor_yml_python_versions(filename=APPVEYOR_YML):
-    with open(filename) as fp:
+    with open_file(filename) as fp:
         conf = yaml.safe_load(fp)
     # There's more than one way of doing this, I'm setting %PYTHON% to
     # the directory that has a Python interpreter (C:\PythonXY)
@@ -63,7 +64,7 @@ def escape(s):
 
 
 def update_appveyor_yml_python_versions(filename, new_versions):
-    with open(filename) as fp:
+    with open_file(filename) as fp:
         orig_lines = fp.readlines()
         fp.seek(0)
         conf = yaml.safe_load(fp)

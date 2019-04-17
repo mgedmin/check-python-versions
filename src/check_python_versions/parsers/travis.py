@@ -4,7 +4,7 @@ except ImportError:  # pragma: nocover
     yaml = None
 
 from .tox import parse_envlist, tox_env_to_py_version
-from ..utils import warn
+from ..utils import warn, open_file
 from ..versions import is_important
 
 
@@ -12,7 +12,7 @@ TRAVIS_YML = '.travis.yml'
 
 
 def get_travis_yml_python_versions(filename=TRAVIS_YML):
-    with open(filename) as fp:
+    with open_file(filename) as fp:
         conf = yaml.safe_load(fp)
     versions = []
     if 'python' in conf:
@@ -53,7 +53,7 @@ def needs_xenial(v):
 
 
 def update_travis_yml_python_versions(filename, new_versions):
-    with open(filename) as fp:
+    with open_file(filename) as fp:
         orig_lines = fp.readlines()
         fp.seek(0)
         conf = yaml.safe_load(fp)
@@ -62,7 +62,7 @@ def update_travis_yml_python_versions(filename, new_versions):
         return not is_important(travis_normalize_py_version(ver))
 
     new_lines = update_yaml_list(
-        orig_lines, "python", new_versions, filename=filename, keep=keep_old,
+        orig_lines, "python", new_versions, filename=fp.name, keep=keep_old,
     )
 
     # If python 3.7 was enabled via matrix.include, we've just added a

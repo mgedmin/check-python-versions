@@ -4,6 +4,7 @@ import os
 import stat
 import subprocess
 import sys
+from contextlib import contextmanager
 
 
 log = logging.getLogger('check-python-versions')
@@ -11,6 +12,15 @@ log = logging.getLogger('check-python-versions')
 
 def warn(msg):
     print(msg, file=sys.stderr)
+
+
+@contextmanager
+def open_file(filename_or_file_object):
+    if isinstance(filename_or_file_object, str):
+        with open(filename_or_file_object) as fp:
+            yield fp
+    else:
+        yield filename_or_file_object
 
 
 def pipe(*cmd, **kwargs):

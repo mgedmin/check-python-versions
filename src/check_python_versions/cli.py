@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+from io import StringIO
 
 from . import __version__
 from .utils import confirm_and_update_file, show_diff
@@ -106,7 +107,7 @@ def check_package(where='.', *, print=print):
     return True
 
 
-def check_versions(where='.', *, print=print, expect=None):
+def check_versions(where='.', *, print=print, expect=None, replacements=None):
 
     sources = [
         ('setup.py', get_supported_python_versions, 'setup.py'),
@@ -126,7 +127,13 @@ def check_versions(where='.', *, print=print, expect=None):
         pathname = os.path.join(where, filename)
         if not os.path.exists(pathname):
             continue
-        versions = extractor(pathname)
+        if pathname in replacements:
+            new_lines = replacements[pathname]
+            buf = StringIO("\n".join(new_lines))
+            buf.name = f'pathname (updated)'
+            versions = extractor(buf)
+        else:
+            versions = extractor(pathname)
         if versions is None:
             continue
         print(f"{title} says:".ljust(width), ", ".join(versions) or "(empty)")
@@ -144,7 +151,7 @@ def check_versions(where='.', *, print=print, expect=None):
 
 
 def update_versions(where='.', *, add=None, drop=None, update=None,
-                    diff=False):
+                    diff=False, dry_run=False):
 
     sources = [
         ('setup.py', get_supported_python_versions,
@@ -154,6 +161,7 @@ def update_versions(where='.', *, add=None, drop=None, update=None,
         (APPVEYOR_YML, get_appveyor_yml_python_versions,
          update_appveyor_yml_python_versions),
     ]
+    replacements = {}
 
     for (filename, extractor, updater) in sources:
         pathname = os.path.join(where, filename)
@@ -171,8 +179,12 @@ def update_versions(where='.', *, add=None, drop=None, update=None,
             if new_lines is not None:
                 if diff:
                     show_diff(pathname, new_lines)
-                else:
+                if dry_run:
+                    replacements[pathname] = new_lines
+                if not diff and not dry_run:
                     confirm_and_update_file(pathname, new_lines)
+
+    return replacements
 
 
 def _main():
@@ -193,8 +205,6 @@ def _main():
                              ' and other files is located')
     group = parser.add_argument_group(
         "updating supported version lists (EXPERIMENTAL)")
-    group.add_argument('--diff', action='store_true',
-                       help='show a diff of proposed changes')
     group.add_argument('--add', metavar='VERSIONS', type=parse_version_list,
                        help='add these versions to supported ones, e.g'
                             ' --add 3.8')
@@ -204,12 +214,23 @@ def _main():
     group.add_argument('--update', metavar='VERSIONS', type=parse_version_list,
                        help='update the set of supported versions, e.g.'
                             ' --update 2.7,3.5-3.7')
+    group.add_argument('--diff', action='store_true',
+                       help='show a diff of proposed changes')
+    group.add_argument('--dry-run', action='store_true',
+                       help='verify proposed changes without'
+                            ' writing them to disk')
     args = parser.parse_args()
 
     if args.update and args.add:
         parser.error("argument --add: not allowed with argument --update")
     if args.update and args.drop:
         parser.error("argument --drop: not allowed with argument --update")
+    if args.diff and not (args.update or args.add or args.drop):
+        parser.error(
+            "argument --diff: not allowed without --update/--add/--drop")
+    if args.dry_run and not (args.update or args.add or args.drop):
+        parser.error(
+            "argument --dry-run: not allowed without --update/--add/--drop")
 
     where = args.where or ['.']
     if args.skip_non_packages:
@@ -225,15 +246,19 @@ def _main():
         if not check_package(path):
             mismatches.append(path)
             continue
-        if args.add or args.drop or args.update or args.diff:
-            update_versions(path, add=args.add, drop=args.drop,
-                            update=args.update, diff=args.diff)
-        if not args.diff:
-            if not check_versions(path, expect=args.expect):
+        replacements = {}
+        if args.add or args.drop or args.update:
+            replacements = update_versions(
+                path, add=args.add, drop=args.drop,
+                update=args.update, diff=args.diff,
+                dry_run=args.dry_run)
+        if not args.diff or args.dry_run:
+            if not check_versions(path, expect=args.expect,
+                                  replacements=replacements):
                 mismatches.append(path)
                 continue
 
-    if not args.diff:
+    if not args.diff or args.dry_run:
         if mismatches:
             if multiple:
                 sys.exit(f"\n\nmismatch in {' '.join(mismatches)}!")
