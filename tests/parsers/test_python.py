@@ -16,6 +16,7 @@ from check_python_versions.parsers.python import (
     to_literal,
     update_call_arg_in_source,
     update_classifiers,
+    update_python_requires,
     update_supported_python_versions,
 )
 
@@ -262,6 +263,59 @@ def test_get_setup_py_keyword_syntax_error(tmp_path, capsys):
     """))
     assert get_setup_py_keyword(setup_py, 'name') is None
     assert 'Could not parse' in capsys.readouterr().err
+
+
+def test_update_python_requires(tmp_path, fix_max_python_3_version):
+    fix_max_python_3_version(7)
+    filename = tmp_path / "setup.py"
+    filename.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            python_requires='>= 3.4',
+        )
+    """))
+    result = update_python_requires(filename, ['3.5', '3.6', '3.7'])
+    assert "".join(result) == textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            python_requires='>=3.5',
+        )
+    """)
+
+
+def test_update_python_requires_file_object(fix_max_python_3_version):
+    fix_max_python_3_version(7)
+    fp = StringIO(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            python_requires='>= 3.4',
+        )
+    """))
+    fp.name = "setup.py"
+    result = update_python_requires(fp, ['3.5', '3.6', '3.7'])
+    assert "".join(result) == textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            python_requires='>=3.5',
+        )
+    """)
+
+
+def test_update_python_requires_when_missing(capsys):
+    fp = StringIO(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+        )
+    """))
+    fp.name = "setup.py"
+    result = update_python_requires(fp, ['3.5', '3.6', '3.7'])
+    assert result is None
+    assert capsys.readouterr().err == ""
 
 
 def test_find_call_kwarg_in_ast():
