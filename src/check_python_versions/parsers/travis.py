@@ -114,13 +114,14 @@ def update_yaml_list(
 ):
     lines = iter(enumerate(orig_lines))
     for n, line in lines:
-        if line == f'{key}:\n':
+        if line.startswith(f'{key}:'):
             break
     else:
         warn(f'Did not find {key}: setting in {filename}')
         return orig_lines
 
-    start = end = n + 1
+    start = n
+    end = n + 1
     indent = 2
     keep_before = []
     keep_after = []
@@ -144,9 +145,10 @@ def update_yaml_list(
             end = n + 1
         if line and line[0] != ' ':
             break
-    # TODO: else?
 
-    new_lines = orig_lines[:start] + keep_before + [
+    new_lines = orig_lines[:start] + [
+        f"{key}:\n"
+    ] + keep_before + [
         f"{' ' * indent}- {value}\n"
         for value in new_value
     ] + keep_after + orig_lines[end:]

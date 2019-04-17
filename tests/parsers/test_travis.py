@@ -210,6 +210,25 @@ def test_update_travis_yml_python_versions_keeps_matrix():
     """)
 
 
+def test_update_travis_yml_python_versions_one_to_many():
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        python: 2.7
+        install: pip install -e .
+        script: pytest tests
+    """))
+    travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.4"])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+          - 2.7
+          - 3.4
+        install: pip install -e .
+        script: pytest tests
+    """)
+
+
 def test_update_yaml_list():
     source_lines = textwrap.dedent("""\
         language: python
