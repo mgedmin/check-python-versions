@@ -255,6 +255,10 @@ def _main():
     if args.dry_run and not (args.update or args.add or args.drop):
         parser.error(
             "argument --dry-run: not allowed without --update/--add/--drop")
+    if args.expect and args.diff and not args.dry_run:
+        parser.error(
+            "argument --expect: not allowed with --diff,"
+            " unless you also add --dry-run")
 
     where = args.where or ['.']
     if args.skip_non_packages:

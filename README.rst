@@ -136,7 +136,7 @@ ones, for a faster turnabout.
 There's also experimental support for updating supported Python versions
 so you can do things like ::
 
-    check-python-versions ~/projects/* --add 3.8 --dry-run
+    check-python-versions ~/projects/* --add 3.8 --dry-run --expect 2.7,3.5-3.8
     check-python-versions ~/projects/* --drop 3.4 --diff
     check-python-versions ~/projects/* --update 2.7,3.4- --dry-run --diff
     check-python-versions ~/projects/* --add 3.8 --drop=-2.6,-3.4

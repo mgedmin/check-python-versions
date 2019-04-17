@@ -429,6 +429,23 @@ def test_main_required_args(monkeypatch, tmp_path, capsys, arg):
     )
 
 
+def test_main_diff_and_expect_and_dry_run_oh_my(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions',
+        str(tmp_path),
+        '--expect', '3.6-3.7',
+        '--update', '3.6-3.7',
+        '--diff',
+    ])
+    with pytest.raises(SystemExit):
+        cpv.main()
+    assert (
+        'argument --expect: not allowed with --diff,'
+        ' unless you also add --dry-run'
+        in capsys.readouterr().err
+    )
+
+
 def test_main_here(monkeypatch, capsys):
     monkeypatch.setattr(sys, 'argv', [
         'check-python-versions',
