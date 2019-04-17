@@ -157,6 +157,172 @@ def test_check_expectation(tmp_path, capsys):
     """)
 
 
+def test_check_only(tmp_path, capsys):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        envlist = py27
+    """))
+    assert cpv.check_versions(tmp_path, only='tox.ini')
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        tox.ini says:               2.7
+    """)
+
+
+def test_update_versions(tmp_path, monkeypatch):
+    monkeypatch.setattr(sys, 'stdin', StringIO('y\n'))
+    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    cpv.update_versions(tmp_path, add=['3.7'])
+    assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+                'Programming Language :: Python :: 3.7',
+            ],
+        )
+    """)
+
+
+def test_update_versions_dry_run(tmp_path):
+    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    replacements = cpv.update_versions(tmp_path, add=['3.7'], dry_run=True)
+    assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """)
+    filename = str(tmp_path / "setup.py")
+    assert "".join(replacements[filename]) == textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+                'Programming Language :: Python :: 3.7',
+            ],
+        )
+    """)
+
+
+def test_update_versions_dry_run_two_updaters_one_file(tmp_path):
+    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            python_requires='>= 2.7',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    replacements = cpv.update_versions(
+        tmp_path, update=['2.7', '3.4', '3.5', '3.6', '3.7'], dry_run=True,
+    )
+    assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            python_requires='>= 2.7',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """)
+    filename = str(tmp_path / "setup.py")
+    assert "".join(replacements[filename]) == textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.4',
+                'Programming Language :: Python :: 3.5',
+                'Programming Language :: Python :: 3.6',
+                'Programming Language :: Python :: 3.7',
+            ],
+        )
+    """)
+
+
+def test_update_versions_diff(tmp_path, capsys):
+    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    cpv.update_versions(tmp_path, add=['3.7'], diff=True)
+    assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """)
+    assert (
+        capsys.readouterr().out.replace(str(tmp_path), 'tmp').expandtabs()
+    ) == textwrap.dedent("""\
+        --- tmp/setup.py        (original)
+        +++ tmp/setup.py        (updated)
+        @@ -4,5 +4,6 @@
+             classifiers=[
+                 'Programming Language :: Python :: 2.7',
+                 'Programming Language :: Python :: 3.6',
+        +        'Programming Language :: Python :: 3.7',
+             ],
+         )
+
+    """)
+
+
 def test_update_versions_no_change(tmp_path):
     (tmp_path / "setup.py").write_text(textwrap.dedent("""\
         from setuptools import setup
@@ -169,6 +335,44 @@ def test_update_versions_no_change(tmp_path):
         )
     """))
     cpv.update_versions(tmp_path, add=['3.6'])
+
+
+def test_update_versions_only(tmp_path):
+    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+            ],
+        )
+    """))
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        envlist = py27
+    """))
+    replacements = cpv.update_versions(
+        tmp_path, add=['3.6'], only='tox.ini', dry_run=True,
+    )
+    assert set(replacements) == {str(tmp_path / 'tox.ini')}
+
+
+def test_update_versions_computed(tmp_path):
+    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: %s' % v
+                for v in ['2.7']
+            ],
+        )
+    """))
+    replacements = cpv.update_versions(
+        tmp_path, add=['3.6'], dry_run=True,
+    )
+    assert set(replacements) == set()
 
 
 def test_main_help(monkeypatch):
@@ -210,6 +414,21 @@ def test_main_conflicting_args(monkeypatch, tmp_path, capsys, arg):
     )
 
 
+@pytest.mark.parametrize('arg', ['--diff', '--dry-run'])
+def test_main_required_args(monkeypatch, tmp_path, capsys, arg):
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions',
+        str(tmp_path),
+        arg,
+    ])
+    with pytest.raises(SystemExit):
+        cpv.main()
+    assert (
+        f'argument {arg}: not allowed without --update/--add/--drop'
+        in capsys.readouterr().err
+    )
+
+
 def test_main_here(monkeypatch, capsys):
     monkeypatch.setattr(sys, 'argv', [
         'check-python-versions',
@@ -239,6 +458,44 @@ def test_main_single(monkeypatch, capsys, tmp_path):
         not a directory
 
         mismatch!
+    """)
+
+
+def test_main_only(monkeypatch, capsys, tmp_path):
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions',
+        str(tmp_path),
+        '--only', 'tox.ini,setup.py',
+    ])
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        envlist = py27,py36
+    """))
+    travis_yml = tmp_path / ".travis.yml"
+    travis_yml.write_text(textwrap.dedent("""\
+        python:
+          - 2.7
+          - 3.5
+    """))
+    cpv.main()
+    assert (
+        capsys.readouterr().out + '\n'
+    ).replace(str(tmp_path) + os.path.sep, 'tmp/') == textwrap.dedent("""\
+        setup.py says:              2.7, 3.6
+        tox.ini says:               2.7, 3.6
+
     """)
 
 
@@ -381,6 +638,92 @@ def test_main_update_rejected(monkeypatch, capsys, tmp_path):
         Write changes to tmp/setup.py? [y/N]
 
         setup.py says:              2.7, 3.6
+    """)
+    assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """)
+
+
+def test_main_update_diff(monkeypatch, capsys, tmp_path):
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions',
+        str(tmp_path),
+        '--add', '3.7,3.8',
+        '--diff',
+    ])
+    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    cpv.main()
+    assert (
+        capsys.readouterr().out
+        .replace(str(tmp_path) + os.path.sep, 'tmp/')
+        .expandtabs()
+        .replace(' \n', '\n\n')
+    ) == textwrap.dedent("""\
+        --- tmp/setup.py        (original)
+        +++ tmp/setup.py        (updated)
+        @@ -4,5 +4,7 @@
+             classifiers=[
+                 'Programming Language :: Python :: 2.7',
+                 'Programming Language :: Python :: 3.6',
+        +        'Programming Language :: Python :: 3.7',
+        +        'Programming Language :: Python :: 3.8',
+             ],
+         )
+
+    """)
+    assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """)
+
+
+def test_main_update_dry_run(monkeypatch, capsys, tmp_path):
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions',
+        str(tmp_path),
+        '--add', '3.7,3.8',
+        '--dry-run',
+    ])
+    (tmp_path / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    cpv.main()
+    assert (
+        capsys.readouterr().out
+        .replace(str(tmp_path) + os.path.sep, 'tmp/')
+        .expandtabs()
+        .replace(' \n', '\n\n')
+    ) == textwrap.dedent("""\
+        setup.py says:              2.7, 3.6, 3.7, 3.8
     """)
     assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
         from setuptools import setup
