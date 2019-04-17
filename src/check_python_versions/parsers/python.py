@@ -150,13 +150,15 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
         warn(f'Did not find {function}() call')
         return source_lines
     eq = '='
-    rx = re.compile(f'^(?P<indent>\\s*){re.escape(keyword)}(?P<eq>\\s*=\\s*)')
+    rx = re.compile(
+        f'^(?P<indent>\\s*){re.escape(keyword)}(?P<eq>\\s*=\\s*)(?P<rest>.*)'
+    )
     for n, line in lines:
         m = rx.match(line)
         if m:
+            first_match = m
             eq = m.group('eq')
             first_indent = m.group('indent')
-            must_fix_indents = not line.rstrip().endswith('[')
             break
     else:
         warn(f'Did not find {keyword}= argument in {function}() call')
@@ -167,6 +169,7 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
     if isinstance(new_value, list):
         start = n
         indent = first_indent + ' ' * 4
+        must_fix_indents = first_match.group('rest').rstrip() != '['
         fix_closing_bracket = False
         for n, line in lines:
             stripped = line.lstrip()
@@ -203,7 +206,7 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
         ] if fix_closing_bracket else [
         ]) + source_lines[end:]
     else:
-        if line.lstrip().startswith(f"{keyword}='"):
+        if first_match.group('rest').startswith("'"):
             quote_style = "'"
         new_value_quoted = to_literal(new_value, quote_style)
         return source_lines[:start] + [
