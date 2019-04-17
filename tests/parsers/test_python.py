@@ -325,6 +325,26 @@ def test_update_call_arg_in_source_string():
     """)
 
 
+def test_update_call_arg_in_source_string_spaces():
+    # This is against PEP-8 but there are setup.py files out there that do
+    # not follow PEP-8.
+    source_lines = textwrap.dedent("""\
+        setup(
+            foo = 1,
+            bar = "x",
+            baz = 2,
+        )
+    """).splitlines(True)
+    result = update_call_arg_in_source(source_lines, "setup", "bar", "y")
+    assert "".join(result) == textwrap.dedent("""\
+        setup(
+            foo = 1,
+            bar = "y",
+            baz = 2,
+        )
+    """)
+
+
 def test_update_call_arg_in_source_list():
     source_lines = textwrap.dedent("""\
         setup(

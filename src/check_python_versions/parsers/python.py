@@ -4,7 +4,7 @@ import re
 import string
 from functools import partial
 
-from ..utils import warn, pipe, open_file, is_file_object
+from ..utils import warn, pipe, open_file, is_file_object, get_indent
 from ..versions import MAX_MINOR_FOR_MAJOR
 
 
@@ -149,11 +149,14 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
     else:
         warn(f'Did not find {function}() call')
         return source_lines
+    eq = '='
+    rx = re.compile(f'^(?P<indent>\\s*){re.escape(keyword)}(?P<eq>\\s*=\\s*)')
     for n, line in lines:
-        stripped = line.lstrip()
-        if stripped.startswith(f'{keyword}='):
-            first_indent = len(line) - len(stripped)
-            must_fix_indents = not line.rstrip().endswith('=[')
+        m = rx.match(line)
+        if m:
+            eq = m.group('eq')
+            first_indent = m.group('indent')
+            must_fix_indents = not line.rstrip().endswith('[')
             break
     else:
         warn(f'Did not find {keyword}= argument in {function}() call')
@@ -163,7 +166,7 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
 
     if isinstance(new_value, list):
         start = n
-        indent = first_indent + 4
+        indent = first_indent + ' ' * 4
         fix_closing_bracket = False
         for n, line in lines:
             stripped = line.lstrip()
@@ -172,7 +175,7 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
                 break
             elif stripped:
                 if not must_fix_indents:
-                    indent = len(line) - len(stripped)
+                    indent = get_indent(line)
                 if stripped[0] in ('"', "'"):
                     quote_style = stripped[0]
                 if line.rstrip().endswith('],'):
@@ -191,12 +194,12 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
 
     if isinstance(new_value, list):
         return source_lines[:start] + [
-            f"{' ' * first_indent}{keyword}=[\n"
+            f"{first_indent}{keyword}{eq}[\n"
         ] + [
-            f"{' ' * indent}{to_literal(value, quote_style)},\n"
+            f"{indent}{to_literal(value, quote_style)},\n"
             for value in new_value
         ] + ([
-            f"{' ' * first_indent}],\n"
+            f"{first_indent}],\n"
         ] if fix_closing_bracket else [
         ]) + source_lines[end:]
     else:
@@ -204,7 +207,7 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
             quote_style = "'"
         new_value_quoted = to_literal(new_value, quote_style)
         return source_lines[:start] + [
-            f"{' ' * first_indent}{keyword}={new_value_quoted},\n"
+            f"{first_indent}{keyword}{eq}{new_value_quoted},\n"
         ] + source_lines[end:]
 
 
