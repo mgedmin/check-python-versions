@@ -143,8 +143,9 @@ def to_literal(value, quote_style='"'):
 
 def update_call_arg_in_source(source_lines, function, keyword, new_value):
     lines = iter(enumerate(source_lines))
+    rx = re.compile(f'^{re.escape(function)}\\s*\\(')
     for n, line in lines:
-        if line.startswith(f'{function}('):
+        if rx.match(line):
             break
     else:
         warn(f'Did not find {function}() call')
