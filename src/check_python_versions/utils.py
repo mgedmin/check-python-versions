@@ -28,7 +28,11 @@ def confirm_and_update_file(filename, new_lines):
         mode = stat.S_IMODE(os.stat(filename).st_mode)
         tempfile = filename + '.tmp'
         with open(tempfile, 'w') as f:
-            os.fchmod(f.fileno(), mode)
+            if hasattr(os, 'fchmod'):
+                os.fchmod(f.fileno(), mode)
+            else:
+                # Windows, what else?
+                os.chmod(tempfile, mode)
             f.writelines(new_lines)
         os.rename(tempfile, filename)
 
