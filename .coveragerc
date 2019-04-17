@@ -6,4 +6,5 @@ branch = True
 [report]
 exclude_lines =
     pragma: nocover
+    pragma: windows
     if __name__ == .__main__.:

@@ -48,13 +48,13 @@ def confirm_and_update_file(filename, new_lines):
         with open(tempfile, 'w') as f:
             if hasattr(os, 'fchmod'):
                 os.fchmod(f.fileno(), mode)
-            else:
+            else:  # pragma: windows
                 # Windows, what else?
                 os.chmod(tempfile, mode)
             f.writelines(new_lines)
         try:
             os.rename(tempfile, filename)
-        except FileExistsError:
+        except FileExistsError:  # pragma: windows
             # No atomic replace on Windows
             os.unlink(filename)
             os.rename(tempfile, filename)
