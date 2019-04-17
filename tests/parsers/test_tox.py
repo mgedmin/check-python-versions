@@ -99,6 +99,13 @@ def test_update_tox_envlist():
     assert result == 'py36,py37,pypy'
 
 
+def test_update_tox_envlist_with_suffixes():
+    result = update_tox_envlist(
+        'py27,py34,py35,py36,py37,py27-numpy,py37-numpy,pypy,pypy3',
+        ['3.6', '3.7'])
+    assert result == 'py36,py37,py37-numpy,pypy,pypy3'
+
+
 def test_update_ini_setting():
     source_lines = textwrap.dedent("""\
         [tox]

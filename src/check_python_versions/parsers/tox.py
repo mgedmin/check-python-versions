@@ -83,9 +83,16 @@ def update_tox_envlist(envlist, new_versions):
     envlist = parse_envlist(envlist)
     keep = []
     for env in envlist:
-        if (not env.startswith('py')
-                or not is_important(tox_env_to_py_version(env))):
+        if not env.startswith('py'):
             keep.append(env)
+            continue
+        if not is_important(tox_env_to_py_version(env)):
+            keep.append(env)
+            continue
+        if '-' in env:
+            baseversion = tox_env_to_py_version(env)
+            if baseversion in new_versions:
+                keep.append(env)
 
     new_envlist = sep.join([
         f"py{ver.replace('.', '')}"
