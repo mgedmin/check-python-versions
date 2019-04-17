@@ -240,6 +240,10 @@ def test_update_travis_yml_python_versions_matrix():
             - python: 2.7
             - python: 3.3
             - python: pypy
+            - name: flake8
+              python: 2.7
+              install: pip install flake8
+              script: flake8 .
         install: pip install -e .
         script: pytest tests
     """))
@@ -255,6 +259,10 @@ def test_update_travis_yml_python_versions_matrix():
             - python: 2.7
             - python: 3.4
             - python: pypy
+            - name: flake8
+              python: 2.7
+              install: pip install flake8
+              script: flake8 .
         install: pip install -e .
         script: pytest tests
     """)
