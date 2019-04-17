@@ -115,6 +115,8 @@ def update_appveyor_yml_python_versions(filename, new_versions):
                         return True
         return False
 
-    new_lines = update_yaml_list(orig_lines, '  matrix', new_environments,
-                                 keep=keep_complicated)
+    new_lines = update_yaml_list(
+        orig_lines, ('environment', 'matrix'), new_environments,
+        keep=keep_complicated,
+    )
     return new_lines

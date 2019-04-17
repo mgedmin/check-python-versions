@@ -229,6 +229,35 @@ def test_update_travis_yml_python_versions_one_to_many():
     """)
 
 
+def test_update_travis_yml_python_versions_matrix():
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        matrix:
+          exclude:
+            - python: 2.6
+          # this is where the fun begins!
+          include:
+            - python: 2.7
+            - python: 3.3
+        install: pip install -e .
+        script: pytest tests
+    """))
+    travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.4"])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        matrix:
+          exclude:
+            - python: 2.6
+          # this is where the fun begins!
+          include:
+            - python: 2.7
+            - python: 3.4
+        install: pip install -e .
+        script: pytest tests
+    """)
+
+
 def test_update_yaml_list():
     source_lines = textwrap.dedent("""\
         language: python
@@ -289,6 +318,32 @@ def test_update_yaml_not_found(capsys):
         "Did not find python: setting in .travis.yml"
         in capsys.readouterr().err
     )
+
+
+def test_update_yaml_nested_keys_not_found(capsys):
+    source_lines = textwrap.dedent("""\
+        language: python
+        matrix:
+          allow_failures:
+            - python: 3.8
+        install: pip install -e .
+        script: pytest tests
+    """).splitlines(True)
+    result = update_yaml_list(
+        source_lines, ("matrix", "include"), ["python: 2.7"])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        matrix:
+          allow_failures:
+            - python: 3.8
+        install: pip install -e .
+        script: pytest tests
+    """)
+    assert (
+        "Did not find matrix.include: setting in .travis.yml"
+        in capsys.readouterr().err
+    )
+
 
 
 def test_drop_yaml_node():

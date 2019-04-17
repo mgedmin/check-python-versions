@@ -75,14 +75,14 @@ def test_appveyor_detect_py_version_pattern(s, expected):
 def test_update_appveyor_yml_python_versions():
     appveyor_yml = StringIO(textwrap.dedent(r"""
         environment:
-          matrix:
+           matrix:
             - PYTHON: "c:\\python27"
             - PYTHON: "c:\\python36"
     """).lstrip('\n'))
     result = update_appveyor_yml_python_versions(appveyor_yml, ['2.7', '3.7'])
     assert ''.join(result) == textwrap.dedent(r"""
         environment:
-          matrix:
+           matrix:
             - PYTHON: "c:\\python27"
             - PYTHON: "c:\\python37"
     """.lstrip('\n'))

@@ -84,18 +84,30 @@ def update_travis_yml_python_versions(filename, new_versions):
     def keep_old(ver):
         return not is_important(travis_normalize_py_version(ver))
 
-    new_lines = update_yaml_list(
-        new_lines, "python", new_versions, filename=fp.name, keep=keep_old,
-        replacements=replacements,
-    )
+    if conf.get('python'):
+        new_lines = update_yaml_list(
+            new_lines, "python", new_versions, filename=fp.name, keep=keep_old,
+            replacements=replacements,
+        )
+    else:
+        for toplevel in 'matrix', 'jobs':
+            if 'include' not in conf.get(toplevel, {}):
+                continue
+            new_jobs = [
+                f'python: {ver}'
+                for ver in new_versions
+            ]
+            new_lines = update_yaml_list(
+                new_lines, (toplevel, "include"), new_jobs, filename=fp.name,
+            )
 
     # If python 3.7 was enabled via matrix.include, we've just added a
     # second 3.7 entry directly to top-level python by the above code.
     # So let's drop the matrix.
 
     if (
-        'matrix' in conf
-            and 'include' in conf['matrix']
+        conf.get('python')
+            and 'include' in conf.get('matrix', {})
             and all(
                 job.get('dist') == 'xenial'
                 and set(job) <= {'python', 'dist', 'sudo'}
@@ -112,12 +124,31 @@ def update_yaml_list(
     orig_lines, key, new_value, filename=TRAVIS_YML, keep=None,
     replacements=None,
 ):
+    if not isinstance(key, tuple):
+        key = (key,)
+
     lines = iter(enumerate(orig_lines))
+    current = 0
+    indents = [0]
     for n, line in lines:
-        if line.startswith(f'{key}:'):
-            break
+        stripped = line.lstrip()
+        if not stripped or stripped.startswith('#'):
+            continue
+        indent = len(line) - len(stripped)
+        if current >= len(indents):
+            indents.append(indent)
+        elif indent > indents[current]:
+            continue
+        else:
+            while current > 0 and indent < indents[current]:
+                del indents[current]
+                current -= 1
+        if stripped.startswith(f'{key[current]}:'):
+            current += 1
+            if current == len(key):
+                break
     else:
-        warn(f'Did not find {key}: setting in {filename}')
+        warn(f'Did not find {".".join(key)}: setting in {filename}')
         return orig_lines
 
     start = n
@@ -147,7 +178,7 @@ def update_yaml_list(
             break
 
     new_lines = orig_lines[:start] + [
-        f"{key}:\n"
+        f"{' ' * indents[-1]}{key[-1]}:\n"
     ] + keep_before + [
         f"{' ' * indent}- {value}\n"
         for value in new_value
