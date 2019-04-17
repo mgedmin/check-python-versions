@@ -94,3 +94,21 @@ def test_update_appveyor_yml_python_versions_multiple_of_each():
             - PYTHON: c:\\python37
             - PYTHON: c:\\python37-x64
     """)
+
+
+def test_update_appveyor_yml_python_complicated_but_oneline():
+    appveyor_yml = StringIO(textwrap.dedent("""\
+        environment:
+          matrix:
+            - PYTHON: c:\\python27
+            - PYTHON: c:\\python36
+            - { PYTHON: c:\\python27, EXTRA_FEATURE: 1 }
+            - { PYTHON: c:\\python36, EXTRA_FEATURE: 1 }
+    """))
+    result = update_appveyor_yml_python_versions(appveyor_yml, ['3.6'])
+    assert ''.join(result) == textwrap.dedent("""\
+        environment:
+          matrix:
+            - PYTHON: c:\\python36
+            - { PYTHON: c:\\python36, EXTRA_FEATURE: 1 }
+    """)

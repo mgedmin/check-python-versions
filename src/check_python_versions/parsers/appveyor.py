@@ -1,3 +1,5 @@
+from io import StringIO
+
 try:
     import yaml
 except ImportError:  # pragma: nocover
@@ -100,5 +102,17 @@ def update_appveyor_yml_python_versions(filename, new_versions):
             f'{varname}: {python}'
             for python in new_pythons
         ]
-    new_lines = update_yaml_list(orig_lines, '  matrix', new_environments)
+
+    def keep_complicated(value):
+        if value.startswith('{') and value.endswith('}'):
+            env = yaml.safe_load(StringIO(value))
+            for var, value in env.items():
+                if var.lower() == 'python':
+                    ver = appveyor_normalize_py_version(value)
+                    if ver in new_versions:
+                        return True
+        return False
+
+    new_lines = update_yaml_list(orig_lines, '  matrix', new_environments,
+                                 keep=keep_complicated)
     return new_lines
