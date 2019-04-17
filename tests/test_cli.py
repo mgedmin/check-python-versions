@@ -308,8 +308,8 @@ def test_update_versions_diff(tmp_path, capsys):
         )
     """)
     assert (
-        capsys.readouterr().out.replace(str(tmp_path), 'tmp').expandtabs()
-    ) == textwrap.dedent("""\
+        capsys.readouterr().out.replace(str(tmp_path) + os.path.sep, 'tmp/')
+    ).expandtabs() == textwrap.dedent("""\
         --- tmp/setup.py        (original)
         +++ tmp/setup.py        (updated)
         @@ -4,5 +4,6 @@
