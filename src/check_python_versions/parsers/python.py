@@ -169,28 +169,32 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
     if isinstance(new_value, list):
         start = n
         indent = first_indent + ' ' * 4
-        must_fix_indents = first_match.group('rest').rstrip() != '['
-        fix_closing_bracket = False
-        for n, line in lines:
-            stripped = line.lstrip()
-            if stripped.startswith(']'):
-                end = n
-                break
-            elif stripped:
-                if not must_fix_indents:
-                    indent = get_indent(line)
-                if stripped[0] in ('"', "'"):
-                    quote_style = stripped[0]
-                if line.rstrip().endswith('],'):
-                    end = n + 1
-                    fix_closing_bracket = True
-                    break
+        if first_match.group('rest').startswith('[]'):
+            fix_closing_bracket = True
+            end = n + 1
         else:
-            warn(
-                f'Did not understand {keyword}= formatting'
-                f' in {function}() call'
-            )
-            return source_lines
+            must_fix_indents = first_match.group('rest').rstrip() != '['
+            fix_closing_bracket = False
+            for n, line in lines:
+                stripped = line.lstrip()
+                if stripped.startswith(']'):
+                    end = n
+                    break
+                elif stripped:
+                    if not must_fix_indents:
+                        indent = get_indent(line)
+                    if stripped[0] in ('"', "'"):
+                        quote_style = stripped[0]
+                    if line.rstrip().endswith('],'):
+                        end = n + 1
+                        fix_closing_bracket = True
+                        break
+            else:
+                warn(
+                    f'Did not understand {keyword}= formatting'
+                    f' in {function}() call'
+                )
+                return source_lines
     else:
         start = n
         end = n + 1
