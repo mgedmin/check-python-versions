@@ -10,6 +10,10 @@ from contextlib import contextmanager
 log = logging.getLogger('check-python-versions')
 
 
+def get_indent(line):
+    return line[:-len(line.lstrip())]
+
+
 def warn(msg):
     print(msg, file=sys.stderr)
 

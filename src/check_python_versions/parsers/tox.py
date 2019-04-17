@@ -1,6 +1,8 @@
 import configparser
 import re
 
+from ..utils import warn, open_file, get_indent
+
 
 TOX_INI = 'tox.ini'
 
@@ -8,7 +10,8 @@ TOX_INI = 'tox.ini'
 def get_tox_ini_python_versions(filename=TOX_INI):
     conf = configparser.ConfigParser()
     try:
-        conf.read(filename)
+        with open_file(filename) as fp:
+            conf.read_file(fp)
         envlist = conf.get('tox', 'envlist')
     except configparser.Error:
         return []
@@ -50,3 +53,68 @@ def tox_env_to_py_version(env):
         return f'{env[2]}.{env[3:]}'
     else:
         return env
+
+
+def update_tox_ini_python_versions(filename, new_versions):
+    with open_file(filename) as fp:
+        orig_lines = fp.readlines()
+        fp.seek(0)
+        conf = configparser.ConfigParser()
+        try:
+            conf.read_file(fp)
+            envlist = conf.get('tox', 'envlist')
+        except configparser.Error:
+            return orig_lines
+
+    sep = ','
+    if ', ' in envlist:
+        sep = ', '
+
+    new_envlist = sep.join(
+        f"py{ver.replace('.', '')}"
+        for ver in new_versions
+    )
+
+    new_lines = update_ini_setting(
+        orig_lines, 'tox', 'envlist', new_envlist,
+    )
+    return new_lines
+
+
+def update_ini_setting(orig_lines, section, key, new_value, filename=TOX_INI):
+    lines = iter(enumerate(orig_lines))
+    for n, line in lines:
+        if line.startswith(f'[{section}]'):
+            break
+    else:
+        warn(f'Did not find [{section}] in {filename}')
+        return orig_lines
+
+    # TODO: use a regex to allow an arbitrary number of spaces around =
+    for n, line in lines:
+        if line.startswith(f'{key} ='):
+            start = n
+            break
+    else:
+        warn(f'Did not find {key}= in [{section}] in {filename}')
+        return orig_lines
+
+    end = start + 1
+    for n, line in lines:
+        if line.startswith(' '):
+            end = n + 1
+        else:
+            break
+
+    prefix = ' '
+    firstline = orig_lines[start].strip().expandtabs().replace(' ', '')
+    if firstline == f'{key}=':
+        if end > start + 1:
+            indent = get_indent(orig_lines[start + 1])
+            prefix = f'\n{indent}'
+
+    new_lines = orig_lines[:start] + (
+        f"{key} ={prefix}{new_value}\n"
+    ).splitlines(True) + orig_lines[end:]
+
+    return new_lines

@@ -18,6 +18,7 @@ from .parsers.python import (
 from .parsers.tox import (
     TOX_INI,
     get_tox_ini_python_versions,
+    update_tox_ini_python_versions,
 )
 from .parsers.travis import (
     TRAVIS_YML,
@@ -156,10 +157,14 @@ def update_versions(where='.', *, add=None, drop=None, update=None,
     sources = [
         ('setup.py', get_supported_python_versions,
          update_supported_python_versions),
+        (TOX_INI, get_tox_ini_python_versions,
+         update_tox_ini_python_versions),
         (TRAVIS_YML, get_travis_yml_python_versions,
          update_travis_yml_python_versions),
         (APPVEYOR_YML, get_appveyor_yml_python_versions,
          update_appveyor_yml_python_versions),
+        # TODO: manylinux.sh
+        # TODO: CHANGES.rst
     ]
     replacements = {}
 
