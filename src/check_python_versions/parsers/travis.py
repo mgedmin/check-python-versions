@@ -165,14 +165,17 @@ def update_yaml_list(
     keep_before = []
     keep_after = []
     lines_to_keep = keep_before
+    kept_last = False
     for n, line in lines:
         stripped = line.lstrip()
+        line_indent = len(line) - len(stripped)
         if stripped.startswith('- '):
             lines_to_keep = keep_after
-            indent = len(line) - len(stripped)
+            indent = line_indent
             end = n + 1
             value = stripped[2:].strip()
-            if keep and keep(value):
+            kept_last = keep and keep(value)
+            if kept_last:
                 if replacements and value in replacements:
                     lines_to_keep.append(
                         f"{' '* indent}- {replacements[value]}\n"
@@ -180,6 +183,9 @@ def update_yaml_list(
                 else:
                     lines_to_keep.append(line)
         elif stripped.startswith('#'):
+            lines_to_keep.append(line)
+            end = n + 1
+        elif kept_last and line_indent > indent:
             lines_to_keep.append(line)
             end = n + 1
         if line and line[0] != ' ':
