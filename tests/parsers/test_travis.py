@@ -320,7 +320,7 @@ def test_update_yaml_list_keep_indent_comments_and_pypy():
     """)
 
 
-def test_update_yaml_not_found(capsys):
+def test_update_yaml_list_not_found(capsys):
     source_lines = textwrap.dedent("""\
         language: python
         install: pip install -e .
@@ -338,7 +338,7 @@ def test_update_yaml_not_found(capsys):
     )
 
 
-def test_update_yaml_nested_keys_not_found(capsys):
+def test_update_yaml_list_nested_keys_not_found(capsys):
     source_lines = textwrap.dedent("""\
         language: python
         matrix:
@@ -361,6 +361,64 @@ def test_update_yaml_nested_keys_not_found(capsys):
         "Did not find matrix.include: setting in .travis.yml"
         in capsys.readouterr().err
     )
+
+
+def test_update_yaml_list_nesting_does_not_confuse():
+    source_lines = textwrap.dedent("""\
+        language: python
+        matrix:
+          include:
+
+            - name: flake8
+              script:
+                - flake8
+
+            - python: 2.7
+              env:
+                - PURE_PYTHON: 1
+          allow_failures:
+            - python: 3.8
+        install: pip install -e .
+        script: pytest tests
+    """).splitlines(True)
+    result = update_yaml_list(
+        source_lines, ("matrix", "include"), [],
+        keep=lambda job: job.startswith('python:'))
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        matrix:
+          include:
+            - python: 2.7
+              env:
+                - PURE_PYTHON: 1
+          allow_failures:
+            - python: 3.8
+        install: pip install -e .
+        script: pytest tests
+    """)
+
+
+def test_update_yaml_list_nesting_some_garbage():
+    source_lines = textwrap.dedent("""\
+        language: python
+        matrix:
+          include:
+            - python: 2.7
+            garbage
+        install: pip install -e .
+        script: pytest tests
+    """).splitlines(True)
+    result = update_yaml_list(
+        source_lines, ("matrix", "include"), ['python: 2.7'])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        matrix:
+          include:
+            - python: 2.7
+            garbage
+        install: pip install -e .
+        script: pytest tests
+    """)
 
 
 def test_drop_yaml_node():

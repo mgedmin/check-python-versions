@@ -162,6 +162,7 @@ def update_yaml_list(
     start = n
     end = n + 1
     indent = 2
+    list_indent = None
     keep_before = []
     keep_after = []
     lines_to_keep = keep_before
@@ -169,7 +170,9 @@ def update_yaml_list(
     for n, line in lines:
         stripped = line.lstrip()
         line_indent = len(line) - len(stripped)
-        if stripped.startswith('- '):
+        if list_indent is None and stripped.startswith('- '):
+            list_indent = line_indent
+        if stripped.startswith('- ') and line_indent == list_indent:
             lines_to_keep = keep_after
             indent = line_indent
             end = n + 1
@@ -185,10 +188,15 @@ def update_yaml_list(
         elif stripped.startswith('#'):
             lines_to_keep.append(line)
             end = n + 1
-        elif kept_last and line_indent > indent:
-            lines_to_keep.append(line)
+        elif line_indent > indent:
+            if kept_last:
+                lines_to_keep.append(line)
             end = n + 1
-        if line and line[0] != ' ':
+        elif line == '\n':
+            continue
+        elif line[0] != ' ':
+            break
+        elif list_indent is not None and line_indent < list_indent:
             break
 
     new_lines = orig_lines[:start] + [
