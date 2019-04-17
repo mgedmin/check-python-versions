@@ -7,7 +7,7 @@ except ImportError:  # pragma: nocover
 
 from .tox import parse_envlist, tox_env_to_py_version
 from .travis import update_yaml_list
-from ..utils import open_file
+from ..utils import open_file, warn
 
 
 APPVEYOR_YML = 'appveyor.yml'
@@ -79,8 +79,10 @@ def update_appveyor_yml_python_versions(filename, new_versions):
                 varname = var
                 patterns.add(appveyor_detect_py_version_pattern(value))
                 break
+
     if not patterns:
-        patterns.add('{}{}')
+        warn(f"Did not recognize any PYTHON environments in {fp.name}")
+        return orig_lines
 
     quote = any(f'{varname}: "' in line for line in orig_lines)
 

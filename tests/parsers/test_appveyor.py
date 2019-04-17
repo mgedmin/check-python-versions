@@ -9,6 +9,7 @@ except ImportError:
     yaml = None
 
 from check_python_versions.parsers.appveyor import (
+    appveyor_detect_py_version_pattern,
     appveyor_normalize_py_version,
     get_appveyor_yml_python_versions,
     update_appveyor_yml_python_versions,
@@ -58,6 +59,17 @@ def test_get_appveyor_yml_python_versions_using_toxenv(tmp_path):
 ])
 def test_appveyor_normalize_py_version(s, expected):
     assert appveyor_normalize_py_version(s) == expected
+
+
+@pytest.mark.parametrize('s, expected', [
+    ('37', '{}{}'),
+    ('c:\\python34', 'c:\\python{}{}'),
+    ('C:\\Python27\\', 'C:\\Python{}{}\\'),
+    ('C:\\Python27-x64', 'C:\\Python{}{}-x64'),
+    ('C:\\PYTHON34-X64', 'C:\\PYTHON{}{}-X64'),
+])
+def test_appveyor_detect_py_version_pattern(s, expected):
+    assert appveyor_detect_py_version_pattern(s) == expected
 
 
 def test_update_appveyor_yml_python_versions():
@@ -112,3 +124,24 @@ def test_update_appveyor_yml_python_complicated_but_oneline():
             - PYTHON: c:\\python36
             - { PYTHON: c:\\python36, EXTRA_FEATURE: 1 }
     """)
+
+
+def test_update_appveyor_yml_python_no_understanding(capsys):
+    appveyor_yml = StringIO(textwrap.dedent("""\
+        environment:
+          matrix:
+            - FOO: 1
+            - BAR: 2
+    """))
+    appveyor_yml.name = 'appveyor.yml'
+    result = update_appveyor_yml_python_versions(appveyor_yml, ['3.6'])
+    assert ''.join(result) == textwrap.dedent("""\
+        environment:
+          matrix:
+            - FOO: 1
+            - BAR: 2
+    """)
+    assert (
+        "Did not recognize any PYTHON environments in appveyor.yml"
+        in capsys.readouterr().err
+    )
