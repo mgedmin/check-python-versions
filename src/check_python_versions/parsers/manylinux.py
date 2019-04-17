@@ -27,14 +27,16 @@ def update_manylinux_python_versions(filename, new_versions):
             start = n
             break
     else:
-        warn(f'Failed to understand {filename}')
+        warn(f'Failed to understand {f.name}')
+        return orig_lines
     for n, line in lines:
         m = magic.match(line)
         if not m:
             end = n
             break
     else:
-        warn(f'Failed to understand {filename}')
+        warn(f'Failed to understand {f.name}')
+        return orig_lines
 
     indent = ' ' * 4
     conditions = f' || \\\n{indent}   '.join(
