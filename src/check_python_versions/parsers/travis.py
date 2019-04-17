@@ -74,7 +74,7 @@ def update_travis_yml_python_versions(filename, new_versions):
         if conf.get('dist') != 'xenial':
             new_lines = drop_yaml_node(new_lines, 'dist', filename=fp.name)
             new_lines = add_yaml_node(new_lines, 'dist', 'xenial',
-                                      before='python')
+                                      before=('python', 'matrix', 'jobs'))
         if conf.get('sudo') is False:
             # sudo is ignored nowadays, but in earlier times
             # you needed both dist: xenial and sudo: required
@@ -218,9 +218,11 @@ def add_yaml_node(orig_lines, key, value, before=None):
     lines = iter(enumerate(orig_lines))
     where = len(orig_lines)
     if before:
+        if not isinstance(before, (list, tuple, set)):
+            before = (before, )
         lines = iter(enumerate(orig_lines))
         for n, line in lines:
-            if line == f'{before}:\n':
+            if any(line == f'{key}:\n' for key in before):
                 where = n
                 break
 

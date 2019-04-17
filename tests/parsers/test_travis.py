@@ -345,7 +345,6 @@ def test_update_yaml_nested_keys_not_found(capsys):
     )
 
 
-
 def test_drop_yaml_node():
     source_lines = textwrap.dedent("""\
         language: python
@@ -451,7 +450,7 @@ def test_drop_yaml_node_when_duplicate(capsys):
     )
 
 
-def test_add_yaml_node_before():
+def test_add_yaml_node():
     source_lines = textwrap.dedent("""\
         language: python
         python:
@@ -468,7 +467,7 @@ def test_add_yaml_node_before():
     """)
 
 
-def test_add_yaml_node():
+def test_add_yaml_node_before():
     source_lines = textwrap.dedent("""\
         language: python
         python:
@@ -485,7 +484,7 @@ def test_add_yaml_node():
     """)
 
 
-def test_add_yaml_node_at_end():
+def test_add_yaml_node_at_end_when_before_not_found():
     source_lines = textwrap.dedent("""\
         language: python
         python:
@@ -499,4 +498,22 @@ def test_add_yaml_node_at_end():
            - 3.6
         script: pytest tests
         dist: xenial
+    """)
+
+
+def test_add_yaml_node_before_alternatives():
+    source_lines = textwrap.dedent("""\
+        language: python
+        python:
+           - 3.6
+        script: pytest tests
+    """).splitlines(True)
+    result = add_yaml_node(source_lines, 'dist', 'xenial',
+                           before=('sudo', 'python'))
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        dist: xenial
+        python:
+           - 3.6
+        script: pytest tests
     """)
