@@ -119,7 +119,8 @@ def filename_or_replacement(pathname, replacements):
         return pathname
 
 
-def check_versions(where='.', *, print=print, expect=None, replacements=None):
+def check_versions(where='.', *, print=print, expect=None, replacements=None,
+                   only=None):
 
     sources = [
         ('setup.py', get_supported_python_versions, 'setup.py'),
@@ -136,6 +137,8 @@ def check_versions(where='.', *, print=print, expect=None, replacements=None):
     version_sets = []
 
     for (title, extractor, filename) in sources:
+        if only and filename not in only:
+            continue
         pathname = os.path.join(where, filename)
         if not os.path.exists(pathname):
             continue
@@ -157,7 +160,7 @@ def check_versions(where='.', *, print=print, expect=None, replacements=None):
 
 
 def update_versions(where='.', *, add=None, drop=None, update=None,
-                    diff=False, dry_run=False):
+                    diff=False, dry_run=False, only=None):
 
     sources = [
         ('setup.py', get_supported_python_versions,
@@ -176,6 +179,8 @@ def update_versions(where='.', *, add=None, drop=None, update=None,
     replacements = {}
 
     for (filename, extractor, updater) in sources:
+        if only and filename not in only:
+            continue
         pathname = os.path.join(where, filename)
         if not os.path.exists(pathname):
             continue
@@ -214,6 +219,9 @@ def _main():
     parser.add_argument('--skip-non-packages', action='store_true',
                         help='skip arguments that are not Python packages'
                              ' without warning about them')
+    parser.add_argument('--only',
+                        help='check only the specified files'
+                             ' (comma-separated list)')
     parser.add_argument('where', nargs='*',
                         help='directory where a Python package with a setup.py'
                              ' and other files is located')
@@ -250,6 +258,8 @@ def _main():
     if args.skip_non_packages:
         where = [path for path in where if is_package(path)]
 
+    only = [a.strip() for a in args.only.split(',')] if args.only else None
+
     multiple = len(where) > 1
     mismatches = []
     for n, path in enumerate(where):
@@ -265,10 +275,11 @@ def _main():
             replacements = update_versions(
                 path, add=args.add, drop=args.drop,
                 update=args.update, diff=args.diff,
-                dry_run=args.dry_run)
+                dry_run=args.dry_run, only=only)
         if not args.diff or args.dry_run:
             if not check_versions(path, expect=args.expect,
-                                  replacements=replacements):
+                                  replacements=replacements,
+                                  only=only):
                 mismatches.append(path)
                 continue
 
