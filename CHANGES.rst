@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.12.0 (unreleased)
+0.12.0 (2019-04-18)
 -------------------
 
 - Ignore unreleased Python versions (3.8 at the moment).
