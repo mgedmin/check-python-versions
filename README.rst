@@ -87,7 +87,7 @@ Usage
 
     $ check-python-versions --help
     usage: check-python-versions [-h] [--version] [--expect VERSIONS]
-                                 [--skip-non-packages] [--only ONLY]
+                                 [--skip-non-packages] [--only FILES]
                                  [--add VERSIONS] [--drop VERSIONS]
                                  [--update VERSIONS] [--diff] [--dry-run]
                                  [where [where ...]]
@@ -106,7 +106,8 @@ Usage
                            2.7,3.5-3.7
       --skip-non-packages  skip arguments that are not Python packages without
                            warning about them
-      --only ONLY          check only the specified files (comma-separated list)
+      --only FILES         check only the specified files (comma-separated list,
+                           e.g. --only tox.ini,appveyor.yml)
 
     updating supported version lists (EXPERIMENTAL):
       --add VERSIONS       add these versions to supported ones, e.g --add 3.8

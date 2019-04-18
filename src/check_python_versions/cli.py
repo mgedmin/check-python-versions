@@ -221,9 +221,10 @@ def _main():
     parser.add_argument('--skip-non-packages', action='store_true',
                         help='skip arguments that are not Python packages'
                              ' without warning about them')
-    parser.add_argument('--only',
+    parser.add_argument('--only', metavar='FILES',
                         help='check only the specified files'
-                             ' (comma-separated list)')
+                             ' (comma-separated list, e.g.'
+                             ' --only tox.ini,appveyor.yml)')
     parser.add_argument('where', nargs='*',
                         help='directory where a Python package with a setup.py'
                              ' and other files is located')
