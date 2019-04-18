@@ -8,6 +8,23 @@ Changelog
 
 - Allow half-open ranges like ``--expect 3.5-``.
 
+- Add experimental support for updating supported Python versions in
+  setup.py, tox.ini, .travis.yml, appveyor.yml and .manylinux-install.sh:
+
+  - command-line options --add and --drop to add and/or drop specific versions
+
+  - command-line option --update to explicitly enumerate all supported versions
+
+  - all changes are shown as diffs with confirmation before applying
+
+  - command-line option --diff to show the diffs and exit without any prompting
+
+  - command-line option --dry-run to re-run the parser and checker on in-memory
+    copies of updated files, to see if the update would succeed
+
+  - command-line option --only to limit the checks/update to some of the
+    supported files
+
 
 0.11.0 (2019-02-13)
 -------------------
