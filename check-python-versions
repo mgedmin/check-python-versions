@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+"""
+Wrapper script for running ./check-python-versions directly from a source
+checkout without installing.  (You'll need pyyaml in your system Python.)
+"""
+
+import sys
+import os
+
+here = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(here, 'src'))
+
+from check_python_versions.cli import main  # noqa: E402
+main()

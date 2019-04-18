@@ -6,6 +6,8 @@ Changelog
 
 - Ignore unreleased Python versions (3.8 at the moment).
 
+- Allow half-open ranges like ``--expect 3.5-``.
+
 
 0.11.0 (2019-02-13)
 -------------------

@@ -3,7 +3,7 @@ import ast
 import os
 import re
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 here = os.path.dirname(__file__)
@@ -11,8 +11,10 @@ here = os.path.dirname(__file__)
 with open(os.path.join(here, 'README.rst')) as f:
     long_description = f.read()
 
+source_dir = os.path.join(here, 'src', 'check_python_versions')
+
 metadata = {}
-with open(os.path.join(here, 'check_python_versions.py')) as f:
+with open(os.path.join(source_dir, '__init__.py')) as f:
     rx = re.compile('(__version__|__author__|__url__|__licence__) = (.*)')
     for line in f:
         m = rx.match(line)
@@ -45,10 +47,11 @@ setup(
     ],
     license='GPL',
     python_requires=">=3.6",
-    py_modules=['check_python_versions'],
+    packages=find_packages('src'),
+    package_dir={'': 'src'},
     entry_points={
         'console_scripts': [
-            'check-python-versions = check_python_versions:main',
+            'check-python-versions = check_python_versions.cli:main',
         ],
     },
     install_requires=['pyyaml'],

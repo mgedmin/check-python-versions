@@ -87,7 +87,9 @@ Usage
 
     $ check-python-versions --help
     usage: check-python-versions [-h] [--version] [--expect VERSIONS]
-                                 [--skip-non-packages]
+                                 [--skip-non-packages] [--only ONLY]
+                                 [--add VERSIONS] [--drop VERSIONS]
+                                 [--update VERSIONS] [--diff] [--dry-run]
                                  [where [where ...]]
 
     verify that supported Python versions are the same in setup.py, tox.ini,
@@ -101,9 +103,19 @@ Usage
       -h, --help           show this help message and exit
       --version            show program's version number and exit
       --expect VERSIONS    expect these versions to be supported, e.g. --expect
-                           2.7,3.4-3.7
+                           2.7,3.5-3.7
       --skip-non-packages  skip arguments that are not Python packages without
                            warning about them
+      --only ONLY          check only the specified files (comma-separated list)
+
+    updating supported version lists (EXPERIMENTAL):
+      --add VERSIONS       add these versions to supported ones, e.g --add 3.8
+      --drop VERSIONS      drop these versions from supported ones, e.g --drop
+                           2.6,3.4
+      --update VERSIONS    update the set of supported versions, e.g. --update
+                           2.7,3.5-3.7
+      --diff               show a diff of proposed changes
+      --dry-run            verify proposed changes without writing them to disk
 
 If run without any arguments, check-python-versions will look for a setup.py in
 the current working directory.
@@ -120,6 +132,20 @@ helpful when, e.g. you want to run ::
 
 to check all 380+ packages, and then want re-run the checks only on the failed
 ones, for a faster turnabout.
+
+There's also experimental support for updating supported Python versions
+so you can do things like ::
+
+    check-python-versions ~/projects/* --add 3.8 --dry-run --expect 2.7,3.5-3.8
+    check-python-versions ~/projects/* --drop 3.4 --diff
+    check-python-versions ~/projects/* --update 2.7,3.4- --dry-run --diff
+    check-python-versions ~/projects/* --add 3.8 --drop=-2.6,-3.4
+
+(the last one will show a diff for each file and ask for interactive
+confirmation before making any changes.)
+
+Programmatically updating human-writable files is difficult, so expect
+bugs (and please file issues).
 
 
 Files
@@ -141,6 +167,16 @@ they'll be ignored (and this will not considered a failure).
   extract classifiers, but if that fails, it'll execute
   ``python setup.py --classifiers`` and parse the output.
 
+  There's rudimentary support for dynamically-computed classifiers if at
+  least one part is a list literal, e.g. this can work and can even be
+  updated ::
+
+        classifiers=[
+            ...
+            "Programming Language :: Python :: x.y",
+            ...
+        ] + ... expression that computes extra classifiers ...,
+
 - **setup.py**: the ``python_requires`` argument passed to ``setup()``, if
   present::
 
@@ -149,8 +185,6 @@ they'll be ignored (and this will not considered a failure).
   check-python-versions will attempt to parse the file and walk the AST to
   extract the ``python_requires`` value.  It expects to find a string literal
   or a simple expression of the form ``"literal".join(["...", "..."])``.
-
-  Only ``>=`` and ``!=`` constraints are currently supported.
 
 - **tox.ini**: if present, it's expected to have ::
 
@@ -186,6 +220,8 @@ they'll be ignored (and this will not considered a failure).
     env:
       - TOXENV=...
 
+  (but not all of these forms are supported for updates)
+
 - **appveyor.yml**: if present, it's expected to have ::
 
     environment:
@@ -201,6 +237,8 @@ they'll be ignored (and this will not considered a failure).
   - ``C:\\PythonX.Y-x64`` (case-insensitive)
 
   Alternatively, you can use ``TOXENV`` with the usual values (pyXY).
+
+  (``TOXENV`` is currently not supported for updates.)
 
 - **.manylinux-install.sh**: if present, it's expected to contain a loop like
   ::
@@ -241,13 +279,40 @@ in some of the files:
 
 - **tox.ini** may have pypy[-suffix] and pypy3[-suffix] environments
 
-- **.travis.yml** may have pypy and pypy3 jobs
+- **.travis.yml** may have pypy and pypy3 jobs with optional version suffixes
+  (e.g. pypy2.7-6.0.0, pypy3.5-6.0.0)
 
 - **appveyor.yml** and **.manylinux-install.sh** do not usually have pypy tests,
   so check-python-versions cannot recognize them.
 
 These extra Pythons are shown, but not compared for consistency.
 
+Upcoming Python releases (such as 3.8 in setup.py or 3.8-dev in a .travis.yml)
+are also shown but do not cause mismatch errors.
+
 In addition, ``python_requires`` in setup.py usually has a lower limit, but no
 upper limit.  check-python-versions will assume this means support up to the
 current Python 3.x release (3.7 at the moment).
+
+When you're specifying Python version ranges for --expect, --add, --drop or
+--update, you can use
+
+- ``X.Y`` (e.g. ``--add 3.8``)
+- ``X.Y-U.V`` for an inclusive range (e.g. ``--add 3.5-3.8``)
+- ``X.Y-``, which means from X.Y until the latest known release from the X series
+  (e.g. ``--add 3.5-`` is equivalent to ``--add 3.5-3.7``)
+- ``-X.Y``, which is the same as ``X.0-X.Y``
+  (e.g. ``--drop -3.4`` is equivalent to ``--drop 3.0-3.4``)
+
+or a comma-separated list of the above (e.g. ``--expect 2.7,3.5-``,
+``--drop -2.6,-3.4``).
+
+You may have to take extra care when using ranges with no explicit lower limit,
+as they look like command-line flags, so instead of ::
+
+    --drop -2.6
+
+you may need to write ::
+
+    --drop=-2.6
+
