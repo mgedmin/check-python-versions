@@ -318,6 +318,26 @@ def test_update_python_requires_when_missing(capsys):
     assert capsys.readouterr().err == ""
 
 
+def test_update_python_requires_preserves_style(fix_max_python_3_version):
+    fix_max_python_3_version(2)
+    fp = StringIO(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            python_requires='>=2.7,!=3.0.*',
+        )
+    """))
+    fp.name = "setup.py"
+    result = update_python_requires(fp, ['2.7', '3.2'])
+    assert "".join(result) == textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            python_requires='>=2.7,!=3.0.*,!=3.1.*',
+        )
+    """)
+
+
 def test_find_call_kwarg_in_ast():
     tree = ast.parse('foo(bar="foo")')
     ast.dump(tree)

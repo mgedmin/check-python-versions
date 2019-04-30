@@ -101,7 +101,10 @@ def update_python_requires(filename, new_versions):
     python_requires = get_setup_py_keyword(filename, 'python_requires')
     if python_requires is None:
         return None
-    new_python_requires = compute_python_requires(new_versions)
+    comma = ', '
+    if ',' in python_requires and ', ' not in python_requires:
+        comma = ','
+    new_python_requires = compute_python_requires(new_versions, comma=comma)
     if is_file_object(filename):
         filename.seek(0)
     return update_setup_py_keyword(filename, 'python_requires',
@@ -403,7 +406,7 @@ def parse_python_requires(s):
     return versions
 
 
-def compute_python_requires(new_versions):
+def compute_python_requires(new_versions, comma=', '):
     new_versions = set(new_versions)
     if len(new_versions) == 1:
         return f'=={new_versions.pop()}.*'
@@ -415,4 +418,4 @@ def compute_python_requires(new_versions):
             ver = f'{major}.{minor}'
             if ver >= min_version and ver not in new_versions:
                 specifiers.append(f'!={ver}.*')
-    return ', '.join(specifiers)
+    return comma.join(specifiers)
