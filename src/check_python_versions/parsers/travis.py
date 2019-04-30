@@ -97,6 +97,10 @@ def update_travis_yml_python_versions(filename, new_versions):
             replacements=replacements,
         )
     else:
+        replacements = {
+            f'python: {k}': f'python: {v}'
+            for k, v in replacements.items()
+        }
         for toplevel in 'matrix', 'jobs':
             if 'include' not in conf.get(toplevel, {}):
                 continue
@@ -106,7 +110,7 @@ def update_travis_yml_python_versions(filename, new_versions):
             ]
             new_lines = update_yaml_list(
                 new_lines, (toplevel, "include"), new_jobs, filename=fp.name,
-                keep=keep_old_job
+                replacements=replacements, keep=keep_old_job,
             )
 
     # If python 3.7 was enabled via matrix.include, we've just added a

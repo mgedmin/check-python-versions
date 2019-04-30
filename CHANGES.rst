@@ -4,7 +4,11 @@ Changelog
 0.12.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Improvements in Python version updating:
+
+  - preserve comma style in python_requires lines
+  - upgrade 'pypy' to 'pypy2.7-6.0.0' and 'pypy3' to 'pypy3.5-6.0.0'
+    in matrix jobs in .travis.yml
 
 
 0.12.0 (2019-04-18)

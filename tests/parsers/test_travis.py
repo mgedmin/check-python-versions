@@ -276,6 +276,54 @@ def test_update_travis_yml_python_versions_matrix():
     """)
 
 
+def test_update_travis_yml_python_versions_matrix_xenial():
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        matrix:
+          exclude:
+            - python: 2.6
+          # this is where the fun begins!
+          include:
+            - python: 2.7
+            - python: 3.3
+            - python: pypy
+            - name: docs
+              python: 2.7
+              install: pip install sphinx
+              script: sphinx-build .
+            - name: flake8
+              python: 2.7
+              install: pip install flake8
+              script: flake8 .
+        install: pip install -e .
+        script: pytest tests
+    """))
+    travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        dist: xenial
+        matrix:
+          exclude:
+            - python: 2.6
+          # this is where the fun begins!
+          include:
+            - python: 2.7
+            - python: 3.7
+            - python: pypy2.7-6.0.0
+            - name: docs
+              python: 2.7
+              install: pip install sphinx
+              script: sphinx-build .
+            - name: flake8
+              python: 2.7
+              install: pip install flake8
+              script: flake8 .
+        install: pip install -e .
+        script: pytest tests
+    """)
+
+
 def test_update_yaml_list():
     source_lines = textwrap.dedent("""\
         language: python
