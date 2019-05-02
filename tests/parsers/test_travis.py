@@ -9,6 +9,7 @@ except ImportError:
     yaml = None
 
 from check_python_versions.parsers.travis import (
+    XENIAL_SUPPORTED_PYPY_VERSIONS,
     add_yaml_node,
     drop_yaml_node,
     get_travis_yml_python_versions,
@@ -108,7 +109,9 @@ def test_update_travis_yml_python_versions():
     """)
 
 
-def test_update_travis_yml_python_versions_adds_dist_xenial():
+def test_update_travis_yml_python_versions_adds_dist_xenial(monkeypatch):
+    monkeypatch.setitem(
+        XENIAL_SUPPORTED_PYPY_VERSIONS, 'pypy', 'pypy2.7-6.0.0')
     travis_yml = StringIO(textwrap.dedent("""\
         language: python
         python:
@@ -276,7 +279,9 @@ def test_update_travis_yml_python_versions_matrix():
     """)
 
 
-def test_update_travis_yml_python_versions_matrix_xenial():
+def test_update_travis_yml_python_versions_matrix_xenial(monkeypatch):
+    monkeypatch.setitem(
+        XENIAL_SUPPORTED_PYPY_VERSIONS, 'pypy', 'pypy2.7-6.0.0')
     travis_yml = StringIO(textwrap.dedent("""\
         language: python
         matrix:

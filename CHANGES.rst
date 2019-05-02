@@ -7,8 +7,8 @@ Changelog
 - Improvements in Python version updating:
 
   - preserve comma style in python_requires lines
-  - upgrade 'pypy' to 'pypy2.7-6.0.0' and 'pypy3' to 'pypy3.5-6.0.0'
-    in matrix jobs in .travis.yml
+  - no longer upgrade 'pypy' to 'pypy2.7-6.0.0' and 'pypy3' to 'pypy3.5-6.0.0'
+    because xenial now has 'pypy' and 'pypy3' available
 
 
 0.12.0 (2019-04-18)

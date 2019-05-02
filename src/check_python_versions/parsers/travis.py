@@ -11,8 +11,12 @@ from ..versions import is_important
 TRAVIS_YML = '.travis.yml'
 
 XENIAL_SUPPORTED_PYPY_VERSIONS = {
-    'pypy': 'pypy2.7-6.0.0',
-    'pypy3': 'pypy3.5-6.0.0',
+    # 2019-05-02:
+    #   pypy is now an alias for pypy2.7-7.1.1
+    #   pypy3 is now an alias for pypy3.6-7.1.1
+    # you can check whether a version is available by doing e.g.
+    # baseurl=https://s3.amazonaws.com/travis-python-archives/binaries
+    # http head $baseurl/ubuntu/16.04/x86_64/pypy3.6-7.1.1.tar.bz2
 }
 
 
