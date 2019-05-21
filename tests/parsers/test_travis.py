@@ -19,7 +19,7 @@ from check_python_versions.parsers.travis import (
 )
 
 
-needs_pyyaml = pytest.mark.skipIf(yaml is None, "PyYAML not installed")
+needs_pyyaml = pytest.mark.skipif(yaml is None, reason="PyYAML not installed")
 
 
 @needs_pyyaml
