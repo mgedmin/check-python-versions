@@ -449,6 +449,7 @@ def test_main_diff_and_expect_and_dry_run_oh_my(monkeypatch, tmp_path, capsys):
     )
 
 
+@pytest.mark.xfail(reason="No Python 3.8 on Appveyor yet")
 def test_main_here(monkeypatch, capsys):
     monkeypatch.setattr(sys, 'argv', [
         'check-python-versions',
@@ -557,6 +558,7 @@ def test_main_multiple(monkeypatch, capsys, tmp_path):
     """)
 
 
+@pytest.mark.xfail(reason="No Python 3.8 on Appveyor yet")
 def test_main_multiple_ok(monkeypatch, capsys):
     monkeypatch.setattr(sys, 'argv', [
         'check-python-versions', '.', '.',
