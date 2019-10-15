@@ -75,10 +75,8 @@ def update_travis_yml_python_versions(filename, new_versions):
     replacements = {}
     if any(map(needs_xenial, new_versions)):
         replacements.update(XENIAL_SUPPORTED_PYPY_VERSIONS)
-        if conf.get('dist') != 'xenial':
+        if conf.get('dist') == 'trusty':
             new_lines = drop_yaml_node(new_lines, 'dist', filename=fp.name)
-            new_lines = add_yaml_node(new_lines, 'dist', 'xenial',
-                                      before=('python', 'matrix', 'jobs'))
         if conf.get('sudo') is False:
             # sudo is ignored nowadays, but in earlier times
             # you needed both dist: xenial and sudo: required

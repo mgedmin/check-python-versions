@@ -6,6 +6,8 @@ Changelog
 
 - Support Python 3.8.
 
+- Stop adding ``dist: xenial`` to .travis.yml as that is now the default.
+
 
 0.12.1 (2019-05-02)
 -------------------

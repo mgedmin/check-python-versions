@@ -109,11 +109,12 @@ def test_update_travis_yml_python_versions():
     """)
 
 
-def test_update_travis_yml_python_versions_adds_dist_xenial(monkeypatch):
+def test_update_travis_yml_python_versions_drops_dist_trusty(monkeypatch):
     monkeypatch.setitem(
         XENIAL_SUPPORTED_PYPY_VERSIONS, 'pypy', 'pypy2.7-6.0.0')
     travis_yml = StringIO(textwrap.dedent("""\
         language: python
+        dist: trusty
         python:
           - 2.7
           - pypy
@@ -124,7 +125,6 @@ def test_update_travis_yml_python_versions_adds_dist_xenial(monkeypatch):
     result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
     assert "".join(result) == textwrap.dedent("""\
         language: python
-        dist: xenial
         python:
           - 2.7
           - 3.7
@@ -175,7 +175,6 @@ def test_update_travis_yml_python_versions_drops_matrix():
     result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
     assert "".join(result) == textwrap.dedent("""\
         language: python
-        dist: xenial
         python:
           - 2.7
           - 3.7
@@ -200,7 +199,6 @@ def test_update_travis_yml_python_versions_keeps_matrix():
     result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
     assert "".join(result) == textwrap.dedent("""\
         language: python
-        dist: xenial
         python:
           - 2.7
           - 3.7
@@ -307,7 +305,6 @@ def test_update_travis_yml_python_versions_matrix_xenial(monkeypatch):
     result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
     assert "".join(result) == textwrap.dedent("""\
         language: python
-        dist: xenial
         matrix:
           exclude:
             - python: 2.6
