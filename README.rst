@@ -22,13 +22,13 @@ This is a tool for Python package maintainers who want to explicitly state
 which Python versions they support.
 
 
-**The problem**: to properly support e.g. Python 2.7 and 3.4+ you have to
+**The problem**: to properly support e.g. Python 2.7 and 3.5+ you have to
 run tests with these Pythons.  This means
 
 - you need a tox.ini with envlist = py27, py34, py35, py36, py37
-- you need a .travis.yml with python: [ 2.7, 3.4, 3.5, 3.6, 3.7 ]
+- you need a .travis.yml with python: [ 2.7, 3.5, 3.6, 3.7, 3.8 ]
 - if you support Windows, you need an appveyor.yml with %PYTHON% set to
-  C:\\Python2.7, C:\\Python3.4, and so on
+  C:\\Python2.7, C:\\Python3.5, and so on
 - if you're building manylinux wheels you need to ... you get the idea
 - you have to tell the users which Python versions you support by specifying
   trove classifiers like "Programming Language :: Python :: 2.7"
@@ -44,27 +44,27 @@ you if they don't match ::
     $ check-python-versions ~/projects/*
     /home/mg/projects/check-manifest:
 
-    setup.py says:              2.7, 3.4, 3.5, 3.6, 3.7, PyPy
-    - python_requires says:     2.7, 3.4, 3.5, 3.6, 3.7
-    tox.ini says:               2.7, 3.4, 3.5, 3.6, 3.7, PyPy, PyPy3
-    .travis.yml says:           2.7, 3.4, 3.5, 3.6, 3.7, PyPy, PyPy3
-    appveyor.yml says:          2.7, 3.4, 3.5, 3.6, 3.7
+    setup.py says:              2.7, 3.5, 3.6, 3.7, 3.8, PyPy
+    - python_requires says:     2.7, 3.5, 3.6, 3.7, 3.8
+    tox.ini says:               2.7, 3.5, 3.6, 3.7, 3.8, PyPy, PyPy3
+    .travis.yml says:           2.7, 3.5, 3.6, 3.7, 3.8, PyPy, PyPy3
+    appveyor.yml says:          2.7, 3.5, 3.6, 3.7, 3.8
 
 
     /home/mg/projects/dozer:
 
-    setup.py says:              2.7, 3.4, 3.5, 3.6, 3.7
-    tox.ini says:               2.7, 3.4, 3.5, 3.6, 3.7
-    .travis.yml says:           2.7, 3.4, 3.5, 3.6, 3.7
-    appveyor.yml says:          2.7, 3.4, 3.5, 3.6, 3.7
+    setup.py says:              2.7, 3.5, 3.6, 3.7, 3.8
+    tox.ini says:               2.7, 3.5, 3.6, 3.7, 3.8
+    .travis.yml says:           2.7, 3.5, 3.6, 3.7, 3.8
+    appveyor.yml says:          2.7, 3.5, 3.6, 3.7, 3.8
 
 
     /home/mg/projects/eazysvn:
 
-    setup.py says:              2.7, 3.4, 3.5, 3.6, 3.7, PyPy
-    tox.ini says:               2.7, 3.4, 3.5, 3.6, 3.7, PyPy, PyPy3
-    .travis.yml says:           2.7, 3.4, 3.5, 3.6, 3.7, PyPy, PyPy3
-    appveyor.yml says:          2.7, 3.4, 3.5, 3.6, 3.7
+    setup.py says:              2.7, 3.5, 3.6, 3.7, 3.8, PyPy
+    tox.ini says:               2.7, 3.5, 3.6, 3.7, 3.8, PyPy, PyPy3
+    .travis.yml says:           2.7, 3.5, 3.6, 3.7, 3.8, PyPy, PyPy3
+    appveyor.yml says:          2.7, 3.5, 3.6, 3.7, 3.8
 
     ...
 
@@ -103,7 +103,7 @@ Usage
       -h, --help           show this help message and exit
       --version            show program's version number and exit
       --expect VERSIONS    expect these versions to be supported, e.g. --expect
-                           2.7,3.5-3.7
+                           2.7,3.5-3.8
       --skip-non-packages  skip arguments that are not Python packages without
                            warning about them
       --only FILES         check only the specified files (comma-separated list,
@@ -114,7 +114,7 @@ Usage
       --drop VERSIONS      drop these versions from supported ones, e.g --drop
                            2.6,3.4
       --update VERSIONS    update the set of supported versions, e.g. --update
-                           2.7,3.5-3.7
+                           2.7,3.5-3.8
       --diff               show a diff of proposed changes
       --dry-run            verify proposed changes without writing them to disk
 
@@ -139,7 +139,7 @@ so you can do things like ::
 
     check-python-versions ~/projects/* --add 3.8 --dry-run --expect 2.7,3.5-3.8
     check-python-versions ~/projects/* --drop 3.4 --diff
-    check-python-versions ~/projects/* --update 2.7,3.4- --dry-run --diff
+    check-python-versions ~/projects/* --update 2.7,3.5- --dry-run --diff
     check-python-versions ~/projects/* --add 3.8 --drop=-2.6,-3.4
 
 (the last one will show a diff for each file and ask for interactive
