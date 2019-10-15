@@ -1,10 +1,10 @@
 Changelog
 =========
 
-0.12.2 (unreleased)
+0.13.0 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Support Python 3.8.
 
 
 0.12.1 (2019-05-02)

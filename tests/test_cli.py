@@ -242,7 +242,10 @@ def test_update_versions_dry_run(tmp_path):
     """)
 
 
-def test_update_versions_dry_run_two_updaters_one_file(tmp_path):
+def test_update_versions_dry_run_two_updaters_one_file(
+    tmp_path, fix_max_python_3_version,
+):
+    fix_max_python_3_version(7)
     (tmp_path / "setup.py").write_text(textwrap.dedent("""\
         from setuptools import setup
         setup(
