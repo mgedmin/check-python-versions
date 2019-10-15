@@ -558,11 +558,34 @@ def test_main_multiple(monkeypatch, capsys, tmp_path):
     """)
 
 
-@pytest.mark.xfail(reason="No Python 3.8 on Appveyor yet")
-def test_main_multiple_ok(monkeypatch, capsys):
+def test_main_multiple_ok(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(sys, 'argv', [
-        'check-python-versions', '.', '.',
+        'check-python-versions',
+        str(tmp_path / "a"),
+        str(tmp_path / "b"),
     ])
+    (tmp_path / "a").mkdir()
+    (tmp_path / "a" / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    (tmp_path / "b").mkdir()
+    (tmp_path / "b" / "setup.py").write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 3.6',
+                'Programming Language :: Python :: 3.7',
+            ],
+        )
+    """))
     cpv.main()
     assert (
         capsys.readouterr().out.endswith('\n\nall ok!\n')

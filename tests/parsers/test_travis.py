@@ -509,6 +509,22 @@ def test_drop_yaml_node_when_empty():
     """)
 
 
+def test_drop_yaml_node_when_missing():
+    source_lines = textwrap.dedent("""\
+        language: python
+        python:
+           - 3.6
+        script: pytest tests
+    """).splitlines(True)
+    result = drop_yaml_node(source_lines, 'matrix')
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+           - 3.6
+        script: pytest tests
+    """)
+
+
 def test_drop_yaml_node_when_text():
     source_lines = textwrap.dedent("""\
         language: python
