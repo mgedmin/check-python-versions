@@ -18,4 +18,5 @@ coverage:
 flake8:
 	flake8 src setup.py
 
+DISTCHECK_DIFF_OPTS = $(DISTCHECK_DIFF_DEFAULT_OPTS) -x .github
 include release.mk

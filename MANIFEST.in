@@ -18,3 +18,5 @@ include check-python-versions
 # added by check_manifest.py
 include pytest.ini
 recursive-include tests *.py
+
+prune .github
