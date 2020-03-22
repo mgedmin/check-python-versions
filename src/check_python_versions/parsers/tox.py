@@ -78,8 +78,9 @@ def update_tox_ini_python_versions(filename, new_versions):
 
 def update_tox_envlist(envlist, new_versions):
     sep = ','
-    if ', ' in envlist:
-        sep = ', '
+    m = re.search(r',\s*', envlist)
+    if m:
+        sep = m.group()
 
     envlist = parse_envlist(envlist)
     keep = []
@@ -139,6 +140,7 @@ def update_ini_setting(orig_lines, section, key, new_value, filename=TOX_INI):
         if end > start + 1:
             prefix = f'\n{"".join(comments)}{indent}'
 
+    new_value = new_value.replace('\n', '\n' + indent)
     new_lines = orig_lines[:start] + (
         f"{key} ={prefix}{new_value}\n"
     ).splitlines(True) + orig_lines[end:]

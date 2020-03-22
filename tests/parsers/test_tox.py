@@ -123,6 +123,22 @@ def test_update_tox_envlist_with_suffixes():
     assert result == 'py36,py37,py37-numpy,pypy,pypy3'
 
 
+def test_update_tox_envlist_with_spaces():
+    result = update_tox_envlist(
+        'py27, py34, py35, pypy3',
+        ['3.6', '3.7'])
+    assert result == 'py36, py37, pypy3'
+
+
+def test_update_tox_envlist_with_newlines():
+    # note that configparser trims leading whitespace, so \n is never
+    # followed by a space
+    result = update_tox_envlist(
+        'py27,\npy34,\npy35,\npypy3',
+        ['3.6', '3.7'])
+    assert result == 'py36,\npy37,\npypy3'
+
+
 def test_update_ini_setting():
     source_lines = textwrap.dedent("""\
         [tox]
@@ -155,14 +171,32 @@ def test_update_ini_setting_multiline():
     source_lines = textwrap.dedent("""\
         [tox]
         envlist =
-            py26,py27
+            py26,
+            py27
         usedevelop = true
     """).splitlines(True)
-    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,py37')
+    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,\npy37')
     assert "".join(result) == textwrap.dedent("""\
         [tox]
         envlist =
-            py36,py37
+            py36,
+            py37
+        usedevelop = true
+    """)
+
+
+def test_update_ini_setting_multiline_first_on_same_line():
+    source_lines = textwrap.dedent("""\
+        [tox]
+        envlist = py26,
+                  py27
+        usedevelop = true
+    """).splitlines(True)
+    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,\npy37')
+    assert "".join(result) == textwrap.dedent("""\
+        [tox]
+        envlist = py36,
+                  py37
         usedevelop = true
     """)
 
