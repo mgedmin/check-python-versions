@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.13.1 (unreleased)
+0.13.1 (2020-03-23)
 -------------------
 
 - When updating a tox.ini keep multiline lists on multiple lines.
