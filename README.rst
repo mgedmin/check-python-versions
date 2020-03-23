@@ -25,7 +25,7 @@ which Python versions they support.
 **The problem**: to properly support e.g. Python 2.7 and 3.5+ you have to
 run tests with these Pythons.  This means
 
-- you need a tox.ini with envlist = py27, py34, py35, py36, py37
+- you need a tox.ini with envlist = py27, py35, py36, py37, py38
 - you need a .travis.yml with python: [ 2.7, 3.5, 3.6, 3.7, 3.8 ]
 - if you support Windows, you need an appveyor.yml with %PYTHON% set to
   C:\\Python2.7, C:\\Python3.5, and so on
@@ -246,10 +246,10 @@ they'll be ignored (and this will not considered a failure).
 
     for PYBIN in /opt/python/*/bin; do
         if [[ "${PYBIN}" == *"cp27"* ]] || \
-           [[ "${PYBIN}" == *"cp34"* ]] || \
            [[ "${PYBIN}" == *"cp35"* ]] || \
            [[ "${PYBIN}" == *"cp36"* ]] || \
-           [[ "${PYBIN}" == *"cp37"* ]]; then
+           [[ "${PYBIN}" == *"cp37"* ]] || \
+           [[ "${PYBIN}" == *"cp38"* ]]; then
             "${PYBIN}/pip" install -e /io/
             "${PYBIN}/pip" wheel /io/ -w wheelhouse/
                rm -rf /io/build /io/*.egg-info
@@ -307,13 +307,3 @@ When you're specifying Python version ranges for --expect, --add, --drop or
 
 or a comma-separated list of the above (e.g. ``--expect 2.7,3.5-``,
 ``--drop -2.6,-3.4``).
-
-You may have to take extra care when using ranges with no explicit lower limit,
-as they look like command-line flags, so instead of ::
-
-    --drop -2.6
-
-you may need to write ::
-
-    --drop=-2.6
-
