@@ -153,7 +153,7 @@ Files
 -----
 
 **setup.py** is the only required file; if any of the others are missing,
-they'll be ignored (and this will not considered a failure).
+they'll be ignored (and this will not be considered a failure).
 
 - **setup.py**: the ``classifiers`` argument passed to ``setup()`` is expected
   to have classifiers of the form::
@@ -288,20 +288,20 @@ in some of the files:
 
 These extra Pythons are shown, but not compared for consistency.
 
-Upcoming Python releases (such as 3.8 in setup.py or 3.8-dev in a .travis.yml)
+Upcoming Python releases (such as 3.9 in setup.py or 3.9-dev in a .travis.yml)
 are also shown but do not cause mismatch errors.
 
 In addition, ``python_requires`` in setup.py usually has a lower limit, but no
 upper limit.  check-python-versions will assume this means support up to the
-current Python 3.x release (3.7 at the moment).
+current Python 3.x release (3.8 at the moment).
 
 When you're specifying Python version ranges for --expect, --add, --drop or
 --update, you can use
 
 - ``X.Y`` (e.g. ``--add 3.8``)
 - ``X.Y-U.V`` for an inclusive range (e.g. ``--add 3.5-3.8``)
-- ``X.Y-``, which means from X.Y until the latest known release from the X series
-  (e.g. ``--add 3.5-`` is equivalent to ``--add 3.5-3.7``)
+- ``X.Y-``, which means from X.Y until the latest known release from the X
+  series (e.g. ``--add 3.5-`` is equivalent to ``--add 3.5-3.7``)
 - ``-X.Y``, which is the same as ``X.0-X.Y``
   (e.g. ``--drop -3.4`` is equivalent to ``--drop 3.0-3.4``)
 
