@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.13.2 (unreleased)
+0.13.2 (2020-05-04)
 -------------------
 
 - More robust Appveyor parsing: accept forward slashes (c:/pythonXY), do not
