@@ -4,7 +4,10 @@ Changelog
 0.13.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- More robust Appveyor parsing: accept forward slashes (c:/pythonXY), do not
+  crash if the PYTHON environment variable doesn't point to a versioned Python
+  directory that we recognize (`GH #12
+  <https://github.com/mgedmin/check-python-versions/issues/12>`_).
 
 
 0.13.1 (2020-03-23)

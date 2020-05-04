@@ -1,4 +1,5 @@
 from io import StringIO
+import ast
 
 try:
     import yaml
@@ -28,28 +29,34 @@ def get_appveyor_yml_python_versions(filename=APPVEYOR_YML):
                 versions.extend(
                     tox_env_to_py_version(e)
                     for e in toxenvs if e.startswith('py'))
-    return sorted(set(versions))
+    return sorted(set(versions) - {None})
 
 
 def appveyor_normalize_py_version(ver):
     ver = str(ver).lower()
     if ver.startswith('c:\\python'):
         ver = ver[len('c:\\python'):]
+    elif ver.startswith('c:/python'):
+        ver = ver[len('c:/python'):]
     if ver.endswith('\\'):
         ver = ver[:-1]
     if ver.endswith('-x64'):
         ver = ver[:-len('-x64')]
-    assert len(ver) >= 2 and ver[:2].isdigit()
-    return f'{ver[0]}.{ver[1:]}'
+    if len(ver) >= 2 and ver[:2].isdigit():
+        return f'{ver[0]}.{ver[1:]}'
+    else:
+        return None
 
 
 def appveyor_detect_py_version_pattern(ver):
     ver = str(ver)
     pattern = '{}'
-    if ver.lower().startswith('c:\\python'):
-        pos = len('c:\\python')
-        prefix, ver = ver[:pos], ver[pos:]
-        pattern = pattern.format(f'{prefix}{{}}')
+    for prefix in 'c:\\python', 'c:/python':
+        if ver.lower().startswith(prefix):
+            pos = len(prefix)
+            prefix, ver = ver[:pos], ver[pos:]
+            pattern = pattern.format(f'{prefix}{{}}')
+            break
     if ver.endswith('\\'):
         ver = ver[:-1]
         pattern = pattern.format(f'{{}}\\')
@@ -57,8 +64,10 @@ def appveyor_detect_py_version_pattern(ver):
         pos = -len('-x64')
         ver, suffix = ver[:pos], ver[pos:]
         pattern = pattern.format(f'{{}}{suffix}')
-    assert len(ver) >= 2 and ver[:2].isdigit()
-    return pattern.format('{}{}')
+    if len(ver) >= 2 and ver[:2].isdigit():
+        return pattern.format('{}{}')
+    else:
+        return None
 
 
 def escape(s):
@@ -79,6 +88,7 @@ def update_appveyor_yml_python_versions(filename, new_versions):
                 varname = var
                 patterns.add(appveyor_detect_py_version_pattern(value))
                 break
+    patterns.discard(None)
 
     if not patterns:
         warn(f"Did not recognize any PYTHON environments in {fp.name}")
@@ -106,14 +116,21 @@ def update_appveyor_yml_python_versions(filename, new_versions):
         ]
 
     def keep_complicated(value):
-        if value.startswith('{') and value.endswith('}'):
+        if value.lower().startswith('python:'):
+            ver = value.partition(':')[-1].strip()
+            if ver.startswith('"'):
+                ver = ast.literal_eval(ver)
+            ver = appveyor_normalize_py_version(ver)
+            if ver is not None:
+                return False
+        elif value.startswith('{') and value.endswith('}'):
             env = yaml.safe_load(StringIO(value))
             for var, value in env.items():
                 if var.lower() == 'python':
                     ver = appveyor_normalize_py_version(value)
-                    if ver in new_versions:
-                        return True
-        return False
+                    if ver is not None and ver not in new_versions:
+                        return False
+        return True
 
     new_lines = update_yaml_list(
         orig_lines, ('environment', 'matrix'), new_environments,
