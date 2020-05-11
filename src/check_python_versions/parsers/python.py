@@ -169,15 +169,17 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
         return source_lines
 
     quote_style = '"'
+    rest = first_match.group('rest')
+    joined = False
 
     if isinstance(new_value, list):
         start = n
         indent = first_indent + ' ' * 4
-        if first_match.group('rest').startswith('[]'):
+        if rest.startswith('[]'):
             fix_closing_bracket = True
             end = n + 1
         else:
-            must_fix_indents = first_match.group('rest').rstrip() != '['
+            must_fix_indents = rest.rstrip() != '['
             fix_closing_bracket = False
             for n, line in lines:
                 stripped = line.lstrip()
@@ -199,6 +201,22 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
                     f' in {function}() call'
                 )
                 return source_lines
+    elif rest.endswith('.join(['):
+        joined = True
+        start = n
+        indent = first_indent + ' ' * 4
+        for n, line in lines:
+            stripped = line.lstrip()
+            if stripped.startswith(']'):
+                end = n + 1
+                fix_closing_bracket = True
+                break
+        else:
+            warn(
+                f'Did not understand {keyword}= formatting'
+                f' in {function}() call'
+            )
+            return source_lines
     else:
         start = n
         end = n + 1
@@ -213,8 +231,25 @@ def update_call_arg_in_source(source_lines, function, keyword, new_value):
             f"{first_indent}],\n"
         ] if fix_closing_bracket else [
         ]) + source_lines[end:]
+    elif joined:
+        if rest.startswith("'"):
+            quote_style = "'"
+        comma = ', '
+        if comma not in new_value:
+            comma = ','
+        new_value = new_value.split(comma)
+        comma = to_literal(comma, quote_style)
+        return source_lines[:start] + [
+            f"{first_indent}{keyword}{eq}{comma}.join([\n"
+        ] + [
+            f"{indent}{to_literal(value, quote_style)},\n"
+            for value in new_value
+        ] + ([
+            f"{first_indent}]),\n"
+        ] if fix_closing_bracket else [
+        ]) + source_lines[end:]
     else:
-        if first_match.group('rest').startswith("'"):
+        if rest.startswith("'"):
             quote_style = "'"
         new_value_quoted = to_literal(new_value, quote_style)
         return source_lines[:start] + [

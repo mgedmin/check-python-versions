@@ -4,7 +4,10 @@ Changelog
 0.13.3 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Improvements in Python version updating:
+
+  - preserve multiline ``python_requires=', '.join([...])`` expressions
+    (`GH #10 <https://github.com/mgedmin/check-python-versions/issues/10>`_).
 
 
 0.13.2 (2020-05-04)
