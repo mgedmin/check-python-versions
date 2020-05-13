@@ -130,13 +130,46 @@ def test_update_tox_envlist_with_spaces():
     assert result == 'py36, py37, pypy3'
 
 
-def test_update_tox_envlist_with_newlines():
+@pytest.mark.parametrize('s, expected', [
     # note that configparser trims leading whitespace, so \n is never
     # followed by a space
-    result = update_tox_envlist(
-        'py27,\npy34,\npy35,\npypy3',
-        ['3.6', '3.7'])
-    assert result == 'py36,\npy37,\npypy3'
+    ('py27,\npy34,\npy35,\npypy3', 'py36,\npy37,\npypy3'),
+    ('py27\npy34\npy35\npypy3', 'py36\npy37\npypy3'),
+])
+def test_update_tox_envlist_with_newlines(s, expected):
+    result = update_tox_envlist(s, ['3.6', '3.7'])
+    assert result == expected
+
+
+@pytest.mark.parametrize('s, expected', [
+    # these are contrived
+    ('py{27,34,35,36,37}{,-foo,-bar},docs', 'py{36,37}{,-foo,-bar},docs'),
+    ('py{27,34,py,py3}', 'py{36,37,py,py3}'),
+    ('py27,py30,py{ramid,gmalion}', 'py36,py37,py{ramid,gmalion}'),
+    ('py{27,34,py,py3},py{27,34}-docs', 'py{36,37,py,py3},py{36,37}-docs'),
+    ('py{27,36,27-extra,36-docs}', 'py36,py37,py36-docs'),
+    # these were taken from tox's documentation at
+    # https://tox.readthedocs.io/en/latest/config.html#generative-envlist
+    ('{py36,py27}-django{15,16}', '{py36,py37}-django{15,16}'),
+    ('{py27,py36}-django{ 15, 16 }, docs, flake',
+     '{py36,py37}-django{ 15, 16 }, docs, flake'),
+    # these are examples from real projects
+    ('py{27,py,34,35,36}-{test,stylecheck}', 'py{36,37,py}-{test,stylecheck}'),
+    # pyjwt
+    ('lint\n'
+     'typing\n'
+     'py{35,36,37,38}-crypto\n'
+     'py{35,36,37,38}-contrib_crypto\n'
+     'py{35,36,37,38}-nocrypto',
+     'lint\n'
+     'typing\n'
+     'py{36,37}-crypto\n'
+     'py{36,37}-contrib_crypto\n'
+     'py{36,37}-nocrypto'),
+])
+def test_update_tox_envlist_with_braces(s, expected):
+    result = update_tox_envlist(s, ['3.6', '3.7'])
+    assert result == expected
 
 
 def test_update_ini_setting():
@@ -150,6 +183,20 @@ def test_update_ini_setting():
         [tox]
         envlist = py36,py37
         usedevelop = true
+    """)
+
+
+def test_update_ini_setting_nospaces():
+    source_lines = textwrap.dedent("""\
+        [tox]
+        envlist=py26,py27
+        usedevelop=true
+    """).splitlines(True)
+    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,py37')
+    assert "".join(result) == textwrap.dedent("""\
+        [tox]
+        envlist=py36,py37
+        usedevelop=true
     """)
 
 

@@ -8,6 +8,10 @@ Changelog
 
   - preserve multiline ``python_requires=', '.join([...])`` expressions
     (`GH #10 <https://github.com/mgedmin/check-python-versions/issues/10>`_).
+  - preserve generative envlists (``envlist = py{27,36}``) in tox.ini
+    (`GH #13 <https://github.com/mgedmin/check-python-versions/issues/#13>`_)
+  - accept ``envlist=...`` with no spaces around the ``=`` in tox.ini
+  - preserve newline-separated envlists with no commas in tox.ini
 
 
 0.13.2 (2020-05-04)

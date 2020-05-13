@@ -21,13 +21,17 @@ def get_tox_ini_python_versions(filename=TOX_INI):
         tox_env_to_py_version(e) for e in envlist if e.startswith('py')))
 
 
-def parse_envlist(envlist):
-    envs = []
+def split_envlist(envlist):
     for part in re.split(r'((?:[{][^}]*[}]|[^,{\s])+)|,|\s+', envlist):
         # NB: part can be None
         part = (part or '').strip()
-        if not part:
-            continue
+        if part:
+            yield part
+
+
+def parse_envlist(envlist):
+    envs = []
+    for part in split_envlist(envlist):
         envs += brace_expand(part)
     return envs
 
@@ -77,31 +81,81 @@ def update_tox_ini_python_versions(filename, new_versions):
 
 
 def update_tox_envlist(envlist, new_versions):
-    sep = ','
-    m = re.search(r',\s*', envlist)
+    # Find a comma outside brace groups and see what whitespace follows it
+    # (also note that items can be separated with whitespace without a comma,
+    # but the only whitespace used this way I've seen in the wild was newlines)
+    m = re.search(r',\s*|\n', re.sub(r'[{][^}]*[}]', '', envlist))
     if m:
         sep = m.group()
+    else:
+        sep = ','
 
-    envlist = parse_envlist(envlist)
-    keep = []
-    for env in envlist:
-        if not env.startswith('py'):
-            keep.append(env)
-            continue
-        if not is_important(tox_env_to_py_version(env)):
-            keep.append(env)
-            continue
-        if '-' in env:
-            baseversion = tox_env_to_py_version(env)
-            if baseversion in new_versions:
-                keep.append(env)
-
-    new_envlist = sep.join([
+    new_envs = [
         f"py{ver.replace('.', '')}"
         for ver in new_versions
-    ] + keep)
+    ]
 
+    if 'py{' in envlist or '{py' in envlist:
+        # Try to preserve braced groups
+        parts = []
+        added_vers = False
+        for part in split_envlist(envlist):
+            m = re.match(
+                r'(py[{](?:\d+|py\d*)(?:,(?:\d+|py\d*))*[}])(?P<rest>.*)',
+                part
+            )
+            if m:
+                keep = [env for env in brace_expand(m.group(1))
+                        if should_keep(env, new_versions)]
+                parts.append(
+                    'py{' + ','.join(
+                        env[len('py'):] for env in new_envs + keep
+                    ) + '}' + m.group('rest')
+                )
+                added_vers = True
+                continue
+            m = re.match(
+                r'([{]py(?:\d+|py\d*)(?:,py(?:\d+|py\d*))*[}])(?P<rest>.*)',
+                part
+            )
+            if m:
+                keep = [env for env in brace_expand(m.group(1))
+                        if should_keep(env, new_versions)]
+                parts.append(
+                    '{' + ','.join(new_envs + keep) + '}' + m.group('rest')
+                )
+                added_vers = True
+                continue
+            vers = brace_expand(part)
+            if all(not should_keep(ver, new_versions) for ver in vers):
+                continue
+            if not all(should_keep(ver, new_versions) for ver in vers):
+                parts.append(sep.join(
+                    ver for ver in vers if should_keep(ver, new_versions)
+                ))
+                continue
+            parts.append(part)
+        if not added_vers:
+            parts = new_envs + parts
+        return sep.join(parts)
+
+    # Universal expansion, might destroy braced groups
+    envlist = parse_envlist(envlist)
+    keep = [env for env in envlist if should_keep(env, new_versions)]
+    new_envlist = sep.join(new_envs + keep)
     return new_envlist
+
+
+def should_keep(env, new_versions):
+    if not re.match(r'py(py)?\d*($|-)', env):
+        return True
+    if not is_important(tox_env_to_py_version(env)):
+        return True
+    if '-' in env:
+        baseversion = tox_env_to_py_version(env)
+        if baseversion in new_versions:
+            return True
+    return False
 
 
 def update_ini_setting(orig_lines, section, key, new_value, filename=TOX_INI):
@@ -113,10 +167,14 @@ def update_ini_setting(orig_lines, section, key, new_value, filename=TOX_INI):
         warn(f'Did not find [{section}] section in {filename}')
         return orig_lines
 
-    # TODO: use a regex to allow an arbitrary number of spaces around =
+    space = prefix = ' '
     for n, line in lines:
-        if line.startswith(f'{key} ='):
+        m = re.match(fr'{re.escape(key)}(\s*)=(\s*)', line.rstrip())
+        if m:
             start = n
+            space = m.group(1)
+            if not line.rstrip().endswith('='):
+                prefix = m.group(2)
             break
     else:
         warn(f'Did not find {key}= in [{section}] in {filename}')
@@ -134,7 +192,6 @@ def update_ini_setting(orig_lines, section, key, new_value, filename=TOX_INI):
         else:
             break
 
-    prefix = ' '
     firstline = orig_lines[start].strip().expandtabs().replace(' ', '')
     if firstline == f'{key}=':
         if end > start + 1:
@@ -142,7 +199,7 @@ def update_ini_setting(orig_lines, section, key, new_value, filename=TOX_INI):
 
     new_value = new_value.replace('\n', '\n' + indent)
     new_lines = orig_lines[:start] + (
-        f"{key} ={prefix}{new_value}\n"
+        f"{key}{space}={prefix}{new_value}\n"
     ).splitlines(True) + orig_lines[end:]
 
     return new_lines
