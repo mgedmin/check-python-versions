@@ -33,6 +33,7 @@ setup(
         'Compare supported Python versions in setup.py vs tox.ini et al.'
     ),
     long_description=long_description,
+    long_description_content_type='text/x-rst',
     keywords=(
         'python packaging version checker linter setup.py tox travis appveyor'
     ),
