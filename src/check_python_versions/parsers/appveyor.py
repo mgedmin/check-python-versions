@@ -59,7 +59,7 @@ def appveyor_detect_py_version_pattern(ver):
             break
     if ver.endswith('\\'):
         ver = ver[:-1]
-        pattern = pattern.format(f'{{}}\\')
+        pattern = pattern.format('{}\\')
     if ver.lower().endswith('-x64'):
         pos = -len('-x64')
         ver, suffix = ver[:pos], ver[pos:]

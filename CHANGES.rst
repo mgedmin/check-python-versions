@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.13.3 (unreleased)
+0.14.0 (2020-05-13)
 -------------------
 
 - Improvements in Python version updating:
