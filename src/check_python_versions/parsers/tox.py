@@ -2,7 +2,6 @@ import configparser
 import re
 
 from ..utils import warn, open_file, get_indent
-from ..versions import is_important
 
 
 TOX_INI = 'tox.ini'
@@ -149,8 +148,10 @@ def update_tox_envlist(envlist, new_versions):
 def should_keep(env, new_versions):
     if not re.match(r'py(py)?\d*($|-)', env):
         return True
-    if not is_important(tox_env_to_py_version(env)):
-        return True
+    if env == 'pypy':
+        return any(ver.startswith('2') for ver in new_versions)
+    if env == 'pypy3':
+        return any(ver.startswith('3') for ver in new_versions)
     if '-' in env:
         baseversion = tox_env_to_py_version(env)
         if baseversion in new_versions:

@@ -84,7 +84,12 @@ def update_travis_yml_python_versions(filename, new_versions):
             new_lines = drop_yaml_node(new_lines, "sudo", filename=fp.name)
 
     def keep_old(ver):
-        return not is_important(travis_normalize_py_version(ver))
+        ver = travis_normalize_py_version(ver)
+        if ver == 'PyPy':
+            return any(v.startswith('2') for v in new_versions)
+        if ver == 'PyPy3':
+            return any(v.startswith('3') for v in new_versions)
+        return not is_important(ver)
 
     def keep_old_job(job):
         if job.startswith('python:'):

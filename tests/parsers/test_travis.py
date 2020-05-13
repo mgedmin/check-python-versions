@@ -109,6 +109,75 @@ def test_update_travis_yml_python_versions():
     """)
 
 
+def test_update_travis_yml_python_versions_drops_pypy():
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        python:
+          - 2.7
+          - 3.4
+          - pypy
+          - pypy3
+        install: pip install -e .
+        script: pytest tests
+    """))
+    travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, ["3.8"])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+          - 3.8
+          - pypy3
+        install: pip install -e .
+        script: pytest tests
+    """)
+
+
+def test_update_travis_yml_python_versions_drops_pypy3():
+    # yes this test case is massively unrealistic
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        python:
+          - 2.7
+          - 3.4
+          - pypy
+          - pypy3
+        install: pip install -e .
+        script: pytest tests
+    """))
+    travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, ["2.7"])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+          - 2.7
+          - pypy
+        install: pip install -e .
+        script: pytest tests
+     """)
+
+
+def test_update_travis_yml_python_versions_keeps_dev():
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        python:
+          - 3.7
+          - 3.8
+          - 3.9-dev
+        install: pip install -e .
+        script: pytest tests
+    """))
+    travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, ["3.8"])
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+          - 3.8
+          - 3.9-dev
+        install: pip install -e .
+        script: pytest tests
+    """)
+
+
 def test_update_travis_yml_python_versions_drops_dist_trusty(monkeypatch):
     monkeypatch.setitem(
         XENIAL_SUPPORTED_PYPY_VERSIONS, 'pypy', 'pypy2.7-6.0.0')

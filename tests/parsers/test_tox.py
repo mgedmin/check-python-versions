@@ -112,15 +112,25 @@ def test_update_tox_ini_python_syntax_error(capsys):
 
 
 def test_update_tox_envlist():
-    result = update_tox_envlist('py26,py27,pypy,flake8', ['3.6', '3.7'])
-    assert result == 'py36,py37,pypy,flake8'
+    result = update_tox_envlist('py26,py27,pypy3,flake8', ['3.6', '3.7'])
+    assert result == 'py36,py37,pypy3,flake8'
+
+
+@pytest.mark.parametrize('versions, expected', [
+    (['2.7', '3.7'], 'py27,py37,pypy,pypy3,flake8'),
+    (['3.7'], 'py37,pypy3,flake8'),
+    (['2.7'], 'py27,pypy,flake8'),
+])
+def test_update_tox_envlist_keeps_the_right_pypy(versions, expected):
+    result = update_tox_envlist('py27,py37,pypy,pypy3,flake8', versions)
+    assert result == expected
 
 
 def test_update_tox_envlist_with_suffixes():
     result = update_tox_envlist(
         'py27,py34,py35,py36,py37,py27-numpy,py37-numpy,pypy,pypy3',
         ['3.6', '3.7'])
-    assert result == 'py36,py37,py37-numpy,pypy,pypy3'
+    assert result == 'py36,py37,py37-numpy,pypy3'
 
 
 def test_update_tox_envlist_with_spaces():
@@ -144,9 +154,9 @@ def test_update_tox_envlist_with_newlines(s, expected):
 @pytest.mark.parametrize('s, expected', [
     # these are contrived
     ('py{27,34,35,36,37}{,-foo,-bar},docs', 'py{36,37}{,-foo,-bar},docs'),
-    ('py{27,34,py,py3}', 'py{36,37,py,py3}'),
+    ('py{27,34,py,py3}', 'py{36,37,py3}'),
     ('py27,py30,py{ramid,gmalion}', 'py36,py37,py{ramid,gmalion}'),
-    ('py{27,34,py,py3},py{27,34}-docs', 'py{36,37,py,py3},py{36,37}-docs'),
+    ('py{27,34,py,py3},py{27,34}-docs', 'py{36,37,py3},py{36,37}-docs'),
     ('py{27,36,27-extra,36-docs}', 'py36,py37,py36-docs'),
     # these were taken from tox's documentation at
     # https://tox.readthedocs.io/en/latest/config.html#generative-envlist
@@ -154,7 +164,7 @@ def test_update_tox_envlist_with_newlines(s, expected):
     ('{py27,py36}-django{ 15, 16 }, docs, flake',
      '{py36,py37}-django{ 15, 16 }, docs, flake'),
     # these are examples from real projects
-    ('py{27,py,34,35,36}-{test,stylecheck}', 'py{36,37,py}-{test,stylecheck}'),
+    ('py{27,py,34,35,36}-{test,stylecheck}', 'py{36,37}-{test,stylecheck}'),
     # pyjwt
     ('lint\n'
      'typing\n'
