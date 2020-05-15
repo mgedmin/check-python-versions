@@ -1,12 +1,9 @@
-from typing import Dict
+from typing import Dict, List, Tuple, Union
 
-try:
-    import yaml
-except ImportError:  # pragma: nocover
-    yaml = None
+import yaml
 
 from .tox import parse_envlist, tox_env_to_py_version
-from ..utils import warn, open_file
+from ..utils import FileLines, open_file, warn
 from ..versions import is_important
 
 
@@ -142,9 +139,13 @@ def update_travis_yml_python_versions(filename, new_versions):
 
 
 def update_yaml_list(
-    orig_lines, key, new_value, filename=TRAVIS_YML, keep=None,
+    orig_lines: FileLines,
+    key: Union[str, Tuple[str, ...]],
+    new_value,
+    filename: str = TRAVIS_YML,
+    keep=None,
     replacements=None,
-):
+) -> FileLines:
     if not isinstance(key, tuple):
         key = (key,)
 
@@ -176,8 +177,8 @@ def update_yaml_list(
     end = n + 1
     indent = 2
     list_indent = None
-    keep_before = []
-    keep_after = []
+    keep_before: List[str] = []
+    keep_after: List[str] = []
     lines_to_keep = keep_before
     kept_last = False
     for n, line in lines:

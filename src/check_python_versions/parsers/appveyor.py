@@ -1,20 +1,47 @@
-from io import StringIO
-import ast
+"""
+Support for Appveyor.
 
-try:
-    import yaml
-except ImportError:  # pragma: nocover
-    yaml = None
+Appveyor is a hosted Continuous Integration solution that can be configured
+by dropping a file named ``appveyor.yml`` into your source repository.
+
+Appveyor can be configured through a web form as well, but
+check-python-manifest does not support checking that.
+
+The aforementioned web form can specify an alternative filename, but
+check-python-manifest does not support checking that.
+
+Appveyor does not directly support specifying Python interpreter versions,
+so most projects that test multiple Python versions do so by specifing the
+desired Python version in an environment variable.
+
+check-python-versions assumes this variable is called PYTHON and has either
+a Python version number, or the path to a Python installation
+("C:\\PythonX.Y").
+
+Alternatively, check-python-version looks for TOXENV, which lists names
+of Tox environments (pyXY).
+"""
+
+import ast
+from io import StringIO
+from typing import Optional, Set, cast
+
+import yaml
 
 from .tox import parse_envlist, tox_env_to_py_version
 from .travis import update_yaml_list
-from ..utils import open_file, warn
+from ..utils import FileLines, FileOrFilename, open_file, warn
+from ..versions import SortedVersionList, Version, VersionList
 
 
 APPVEYOR_YML = 'appveyor.yml'
 
 
-def get_appveyor_yml_python_versions(filename=APPVEYOR_YML):
+def get_appveyor_yml_python_versions(
+    filename: FileOrFilename = APPVEYOR_YML,
+) -> SortedVersionList:
+    """Extract supported Python versions from appveyor.yml."""
+
     with open_file(filename) as fp:
         conf = yaml.safe_load(fp)
     # There's more than one way of doing this, I'm setting %PYTHON% to
@@ -29,10 +56,12 @@ def get_appveyor_yml_python_versions(filename=APPVEYOR_YML):
                 versions.extend(
                     tox_env_to_py_version(e)
                     for e in toxenvs if e.startswith('py'))
-    return sorted(set(versions) - {None})
+    # The cast() is a workaround for https://github.com/python/mypy/issues/8526
+    return sorted(cast(Set[str], set(versions) - {None}))
 
 
-def appveyor_normalize_py_version(ver):
+def appveyor_normalize_py_version(ver: str) -> Optional[Version]:
+    """Determine Python version from PYTHON environment variable."""
     ver = str(ver).lower()
     if ver.startswith('c:\\python'):
         ver = ver[len('c:\\python'):]
@@ -48,7 +77,12 @@ def appveyor_normalize_py_version(ver):
         return None
 
 
-def appveyor_detect_py_version_pattern(ver):
+def appveyor_detect_py_version_pattern(ver: str) -> Optional[str]:
+    """Determine the format of the PYTHON environment variable.
+
+    Returns a format string suitable for formatting with placeholders
+    for major and minor version numbers.
+    """
     ver = str(ver)
     pattern = '{}'
     for prefix in 'c:\\python', 'c:/python':
@@ -70,11 +104,19 @@ def appveyor_detect_py_version_pattern(ver):
         return None
 
 
-def escape(s):
+def escape(s: str) -> str:
+    """Escape a string for embedding inside a double-quoted YAML string."""
     return s.replace("\\", "\\\\").replace('"', '\\"')
 
 
-def update_appveyor_yml_python_versions(filename, new_versions):
+def update_appveyor_yml_python_versions(
+    filename: FileOrFilename,
+    new_versions: VersionList,
+) -> Optional[FileLines]:
+    """Update supported Python versions in appveyor.yml.
+
+    Does not touch the file but returns a list of lines with new file contents.
+    """
     with open_file(filename) as fp:
         orig_lines = fp.readlines()
         fp.seek(0)
@@ -86,9 +128,10 @@ def update_appveyor_yml_python_versions(filename, new_versions):
         for var, value in env.items():
             if var.lower() == 'python':
                 varname = var
-                patterns.add(appveyor_detect_py_version_pattern(value))
+                pattern = appveyor_detect_py_version_pattern(value)
+                if pattern is not None:
+                    patterns.add(pattern)
                 break
-    patterns.discard(None)
 
     if not patterns:
         warn(f"Did not recognize any PYTHON environments in {fp.name}")
@@ -96,12 +139,10 @@ def update_appveyor_yml_python_versions(filename, new_versions):
 
     quote = any(f'{varname}: "' in line for line in orig_lines)
 
-    patterns = sorted(patterns)
-
     new_pythons = [
         pattern.format(*ver.split(".", 1))
         for ver in new_versions
-        for pattern in patterns
+        for pattern in sorted(patterns)
     ]
 
     if quote:
@@ -115,20 +156,21 @@ def update_appveyor_yml_python_versions(filename, new_versions):
             for python in new_pythons
         ]
 
-    def keep_complicated(value):
+    def keep_complicated(value: str) -> bool:
+        """Determine if an environment matrix line should be preserved."""
         if value.lower().startswith('python:'):
             ver = value.partition(':')[-1].strip()
             if ver.startswith('"'):
                 ver = ast.literal_eval(ver)
-            ver = appveyor_normalize_py_version(ver)
-            if ver is not None:
+            nver = appveyor_normalize_py_version(ver)
+            if nver is not None:
                 return False
         elif value.startswith('{') and value.endswith('}'):
             env = yaml.safe_load(StringIO(value))
             for var, value in env.items():
                 if var.lower() == 'python':
-                    ver = appveyor_normalize_py_version(value)
-                    if ver is not None and ver not in new_versions:
+                    nver = appveyor_normalize_py_version(value)
+                    if nver is not None and nver not in new_versions:
                         return False
         return True
 

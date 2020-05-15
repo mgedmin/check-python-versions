@@ -1,7 +1,8 @@
 import configparser
 import re
+from typing import Iterable, List
 
-from ..utils import warn, open_file, get_indent
+from ..utils import get_indent, open_file, warn
 
 
 TOX_INI = 'tox.ini'
@@ -20,7 +21,7 @@ def get_tox_ini_python_versions(filename=TOX_INI):
         tox_env_to_py_version(e) for e in envlist if e.startswith('py')))
 
 
-def split_envlist(envlist):
+def split_envlist(envlist: str) -> Iterable[str]:
     for part in re.split(r'((?:[{][^}]*[}]|[^,{\s])+)|,|\s+', envlist):
         # NB: part can be None
         part = (part or '').strip()
@@ -28,7 +29,7 @@ def split_envlist(envlist):
             yield part
 
 
-def parse_envlist(envlist):
+def parse_envlist(envlist: str) -> List[str]:
     envs = []
     for part in split_envlist(envlist):
         envs += brace_expand(part)
@@ -47,7 +48,7 @@ def brace_expand(s):
     return res
 
 
-def tox_env_to_py_version(env):
+def tox_env_to_py_version(env: str) -> str:
     if '-' in env:
         # e.g. py34-coverage, pypy-subunit
         env = env.partition('-')[0]
