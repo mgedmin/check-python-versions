@@ -4,7 +4,13 @@ Changelog
 0.14.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- When check-python-versions falls back to executing python setup.py, it
+  redirects the stdin to /dev/null, to prevent freezing in case setup.py
+  decides to ask the user some questions.
+
+- Better error reporting in some obscure corner cases while parsing setup.py.
+
+- The codebase now has docstrings and type hints, and passes mypy --strict.
 
 
 0.14.1 (2020-05-15)
