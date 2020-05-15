@@ -134,6 +134,9 @@ def check_versions(where='.', *, print=print, expect=None, replacements=None,
 
     width = max(len(title) for title, *etc in sources) + len(" says:")
 
+    if expect:
+        width = max(width, len('expected:'))
+
     version_sets = []
 
     for (title, extractor, filename) in sources:
