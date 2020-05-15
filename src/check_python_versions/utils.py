@@ -5,14 +5,14 @@ import stat
 import subprocess
 import sys
 from contextlib import contextmanager
-from io import StringIO
 from typing import Any, Iterator, List, TextIO, Union, cast
 
 
 log = logging.getLogger('check-python-versions')
 
 
-FileOrFilename = Union[str, StringIO]
+FileObjectWithName = TextIO  # also has a .name attribute
+FileOrFilename = Union[str, FileObjectWithName]
 FileLines = List[str]
 
 
