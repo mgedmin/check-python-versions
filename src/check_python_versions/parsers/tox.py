@@ -83,7 +83,7 @@ def update_tox_envlist(envlist, new_versions):
     # Find a comma outside brace groups and see what whitespace follows it
     # (also note that items can be separated with whitespace without a comma,
     # but the only whitespace used this way I've seen in the wild was newlines)
-    m = re.search(r',\s*|\n', re.sub(r'[{][^}]*[}]', '', envlist))
+    m = re.search(r',\s*|\n', re.sub(r'[{][^}]*[}]', '', envlist.strip()))
     if m:
         sep = m.group()
     else:

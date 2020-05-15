@@ -4,7 +4,18 @@ Changelog
 0.14.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix regression in updating tox.ini that looked like this::
+
+      envlist =
+          py27,py34,py35,py36
+
+  0.14.0 would incorrectly expand it to ::
+
+      envlist =
+          py27
+          py34
+          py35
+          py36
 
 
 0.14.0 (2020-05-13)
