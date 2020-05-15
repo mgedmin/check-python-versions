@@ -102,8 +102,7 @@ def check_package(where='.', *, print=print):
         print("not a directory")
         return False
 
-    setup_py = os.path.join(where, 'setup.py')
-    if not os.path.exists(setup_py):
+    if not is_package(where):
         print("no setup.py -- not a Python package?")
         return False
 
