@@ -1,3 +1,5 @@
+from typing import Dict
+
 try:
     import yaml
 except ImportError:  # pragma: nocover
@@ -10,7 +12,7 @@ from ..versions import is_important
 
 TRAVIS_YML = '.travis.yml'
 
-XENIAL_SUPPORTED_PYPY_VERSIONS = {
+XENIAL_SUPPORTED_PYPY_VERSIONS: Dict[str, str] = {
     # 2019-05-02:
     #   pypy is now an alias for pypy2.7-7.1.1
     #   pypy3 is now an alias for pypy3.6-7.1.1

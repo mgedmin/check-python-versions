@@ -2,17 +2,22 @@ import argparse
 import os
 import sys
 from io import StringIO
+from typing import Collection, Dict, List, Optional, Tuple, Union
 
 from . import __version__
-from .utils import confirm_and_update_file, show_diff
-from .versions import (
-    MAX_MINOR_FOR_MAJOR,
-    important,
-    update_version_list,
+from .parsers.appveyor import (
+    APPVEYOR_YML,
+    get_appveyor_yml_python_versions,
+    update_appveyor_yml_python_versions,
+)
+from .parsers.manylinux import (
+    MANYLINUX_INSTALL_SH,
+    get_manylinux_python_versions,
+    update_manylinux_python_versions,
 )
 from .parsers.python import (
-    get_supported_python_versions,
     get_python_requires,
+    get_supported_python_versions,
     update_python_requires,
     update_supported_python_versions,
 )
@@ -26,28 +31,34 @@ from .parsers.travis import (
     get_travis_yml_python_versions,
     update_travis_yml_python_versions,
 )
-from .parsers.appveyor import (
-    APPVEYOR_YML,
-    get_appveyor_yml_python_versions,
-    update_appveyor_yml_python_versions,
-)
-from .parsers.manylinux import (
-    MANYLINUX_INSTALL_SH,
-    get_manylinux_python_versions,
-    update_manylinux_python_versions,
+from .utils import confirm_and_update_file, show_diff
+from .versions import (
+    MAX_MINOR_FOR_MAJOR,
+    VersionList,
+    SortedVersionList,
+    important,
+    update_version_list,
 )
 
 try:
-    import yaml
+    import yaml  # noqa: F401
 except ImportError:  # pragma: nocover
     # Shouldn't happen, we install_requires=['PyYAML'], but maybe someone is
     # running ./check-python-versions directly from a git checkout.
-    yaml = None
     print("PyYAML is needed for Travis CI/Appveyor support"
           " (apt install python3-yaml)")
 
 
-def parse_version(v):
+def parse_version(v: str) -> Tuple[int, int]:
+    """Parse a Python version number.
+
+    Expects 'MAJOR.MINOR', no more, no less.
+
+    Returns a tuple (major, minor).
+
+    This function is used for command-line argument parsing and may raise an
+    argparse.ArgumentTypeError.
+    """
     try:
         major, minor = map(int, v.split('.', 1))
     except ValueError:
@@ -55,7 +66,17 @@ def parse_version(v):
     return (major, minor)
 
 
-def parse_version_list(v):
+def parse_version_list(v: str) -> SortedVersionList:
+    """Parse a list of Python version ranges.
+
+    Expects something like '2.7,3.6-3.8'.  Allows open ranges.
+
+    Returns an ordered list of strings, each of which represents a single
+    version of the form 'MAJOR.MINOR'.
+
+    This function is used for command-line argument parsing and may raise an
+    argparse.ArgumentTypeError.
+    """
     versions = set()
 
     for part in v.split(','):
@@ -85,18 +106,32 @@ def parse_version_list(v):
             raise argparse.ArgumentTypeError(
                 f'bad range: {part} ({lo_major} != {hi_major})')
 
-        for v in range(lo_minor, hi_minor + 1):
-            versions.add(f'{lo_major}.{v}')
+        for vmin in range(lo_minor, hi_minor + 1):
+            versions.add(f'{lo_major}.{vmin}')
 
     return sorted(versions)
 
 
-def is_package(where='.'):
+def is_package(where='.') -> bool:
+    """Check if there's a Python package in the given directory.
+
+    Currently only traditional packages having a setup.py are supported.
+
+    Does not emit any diagnostics.
+    """
+    # TODO: support setup.py-less packages that use pyproject.toml instead
     setup_py = os.path.join(where, 'setup.py')
     return os.path.exists(setup_py)
 
 
-def check_package(where='.', *, print=print):
+def check_package(where='.', *, print=print) -> bool:
+    """Check if there's a Python package in the given directory.
+
+    Currently only traditional packages having a setup.py are supported.
+
+    Emits diagnostics to standard output if ``where`` is not a directory
+    or doesn't have a Python package in it.
+    """
 
     if not os.path.isdir(where):
         print("not a directory")
@@ -109,7 +144,36 @@ def check_package(where='.', *, print=print):
     return True
 
 
-def filename_or_replacement(pathname, replacements):
+#
+# The way check-python-version does version updates is that it calls
+# various update functions and gives them a filename, then gets back
+# the updated content as a list of lines.  At the end we can show the diff
+# to the user or write them back to the file.
+#
+# But.  Sometimes we want to call two update functions for the same file
+# (setup.py) to update different bits in it (classifiers and python_requires).
+# We don't want to write out the result of the first updater to disk before
+# we call the second one.  So, here's what we do: we remember the updated
+# contents of a file in a "replacement dict", then next time instead of passing
+# a filename to an update function we pass it a StringIO() with the intermedate
+# results, to get back the final results.
+#
+
+FileLines = List[str]
+ReplacementDict = Dict[str, FileLines]
+FileOrFilename = Union[str, StringIO]
+
+
+def filename_or_replacement(
+    pathname: str, replacements: Optional[ReplacementDict]
+) -> FileOrFilename:
+    """Look up a file in the replacement dict.
+
+    This is used to batch multiple updates to a single file.
+
+    Returns the filename if no replacement was found, or a StringIO
+    with replacement contents if a replacement was found.
+    """
     if replacements and pathname in replacements:
         new_lines = replacements[pathname]
         buf = StringIO("".join(new_lines))
@@ -119,10 +183,31 @@ def filename_or_replacement(pathname, replacements):
         return pathname
 
 
-def check_versions(where='.', *, print=print, expect=None, replacements=None,
-                   only=None):
+FilenameSet = Collection[str]
+
+
+def check_versions(
+    where='.',
+    *,
+    print=print,
+    expect: Optional[VersionList] = None,
+    replacements: Optional[ReplacementDict] = None,
+    only: Optional[FilenameSet] = None,
+) -> bool:
+    """Check Python versions for a single package, located in ``where``.
+
+    ``expect`` allows you to state what versions you expect to be supported.
+
+    ``replacements`` allows you to check the result of an update (see
+    `update_versions`) without actually performing an update.
+
+    ``only`` allows you to check only a subset of the files.
+
+    Emits diagnostics to standard output by calling ``print``.
+    """
 
     sources = [
+        # title, extractor, filename
         ('setup.py', get_supported_python_versions, 'setup.py'),
         ('- python_requires', get_python_requires, 'setup.py'),
         (TOX_INI, get_tox_ini_python_versions, TOX_INI),
@@ -162,10 +247,39 @@ def check_versions(where='.', *, print=print, expect=None, replacements=None,
     )
 
 
-def update_versions(where='.', *, add=None, drop=None, update=None,
-                    diff=False, dry_run=False, only=None):
+def update_versions(
+    where='.',
+    *,
+    add: Optional[VersionList] = None,
+    drop: Optional[VersionList] = None,
+    update: Optional[VersionList] = None,
+    diff: bool = False,
+    dry_run: bool = False,
+    only: Optional[FilenameSet] = None,
+) -> ReplacementDict:
+    """Update Python versions for a single package, located in ``where``.
+
+    ``add`` will add to supported versions.
+    ``drop`` will remove from supported versions.
+    ``update`` will specify supported versions.
+
+    You may combine ``add`` and ``drop``.  It doesn't make sense to combine
+    ``update`` with either ``add`` or ``drop``.
+
+    ``only`` allows you to modify only a subset of the files.
+
+    This function performs user interaction: shows a diff, asks for
+    confirmation, updates files on disk.
+
+    ``diff``, if true, prints a diff to standard output instead of writing any
+    files.
+
+    ``dry_run``, if true, returns a dictionary mapping filenames to new file
+    contents instead of asking for confirmation and writing them to disk.
+    """
 
     sources = [
+        # filename, extractor, updater
         ('setup.py', get_supported_python_versions,
          update_supported_python_versions),
         ('setup.py', get_python_requires,
@@ -180,7 +294,7 @@ def update_versions(where='.', *, add=None, drop=None, update=None,
          update_manylinux_python_versions),
         # TODO: CHANGES.rst
     ]
-    replacements = {}
+    replacements: ReplacementDict = {}
 
     for (filename, extractor, updater) in sources:
         if only and filename not in only:
@@ -199,10 +313,16 @@ def update_versions(where='.', *, add=None, drop=None, update=None,
             fp = filename_or_replacement(pathname, replacements)
             new_lines = updater(fp, new_versions)
             if new_lines is not None:
+                # TODO: refactor this into two functions, one that produces a
+                # replacement dict and does no user interaction, and another
+                # that does user interaction based on the contents of the
+                # replacement dict.
                 if diff:
                     fp = filename_or_replacement(pathname, replacements)
                     show_diff(fp, new_lines)
                 if dry_run:
+                    # XXX: why do this on dry-run only, why not always return a
+                    # replacement dict?
                     replacements[pathname] = new_lines
                 if not diff and not dry_run:
                     confirm_and_update_file(pathname, new_lines)
@@ -210,7 +330,7 @@ def update_versions(where='.', *, add=None, drop=None, update=None,
     return replacements
 
 
-def _main():
+def _main() -> None:
     parser = argparse.ArgumentParser(
         description="verify that supported Python versions are the same"
                     " in setup.py, tox.ini, .travis.yml and appveyor.yml")
@@ -259,6 +379,9 @@ def _main():
         parser.error(
             "argument --dry-run: not allowed without --update/--add/--drop")
     if args.expect and args.diff and not args.dry_run:
+        # XXX: the logic of this escapes me, I think this is because
+        # update_versions() doesn't return a replacement dict if you don't use
+        # --dry-run?  but why?
         parser.error(
             "argument --expect: not allowed with --diff,"
             " unless you also add --dry-run")
@@ -302,7 +425,7 @@ def _main():
             print("\n\nall ok!")
 
 
-def main():
+def main() -> None:
     try:
         _main()
     except KeyboardInterrupt:

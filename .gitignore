@@ -6,3 +6,4 @@ tmp/
 .coverage
 __pycache__/
 tags
+.mypy_cache/
