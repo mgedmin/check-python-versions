@@ -2,11 +2,7 @@ import textwrap
 from io import StringIO
 
 import pytest
-
-try:
-    import yaml
-except ImportError:
-    yaml = None
+import yaml
 
 from check_python_versions.parsers.travis import (
     XENIAL_SUPPORTED_PYPY_VERSIONS,

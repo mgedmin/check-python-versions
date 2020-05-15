@@ -1,7 +1,4 @@
-from check_python_versions.versions import (
-    important,
-    update_version_list,
-)
+from check_python_versions.versions import important, update_version_list
 
 
 def test_important(fix_max_python_3_version):

@@ -1,5 +1,6 @@
 from typing import Collection, List, Optional, Set
 
+
 #
 # Information about Python releases that needs to be constantly updated as
 # Python makes new releases.

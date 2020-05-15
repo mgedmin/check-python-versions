@@ -2,11 +2,7 @@ import textwrap
 from io import StringIO
 
 import pytest
-
-try:
-    import yaml
-except ImportError:
-    yaml = None
+import yaml
 
 from check_python_versions.parsers.appveyor import (
     appveyor_detect_py_version_pattern,
