@@ -6,7 +6,7 @@ import subprocess
 import sys
 from contextlib import contextmanager
 from io import StringIO
-from typing import Iterator, List, TextIO, Union, cast
+from typing import Any, Iterator, List, TextIO, Union, cast
 
 
 log = logging.getLogger('check-python-versions')
@@ -41,7 +41,7 @@ def open_file(filename_or_file_object: FileOrFilename) -> Iterator[TextIO]:
             yield fp
 
 
-def pipe(*cmd: str, **kwargs) -> str:
+def pipe(*cmd: str, **kwargs: Any) -> str:
     """Run a subprocess and return its standard output.
 
     Keyword arguments are passed directly to `subprocess.Popen`.
@@ -54,10 +54,10 @@ def pipe(*cmd: str, **kwargs) -> str:
         log.debug('EXEC %s', ' '.join(cmd))
     p = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                          **kwargs)
-    return p.communicate()[0].decode('UTF-8', 'replace')
+    return cast(bytes, p.communicate()[0]).decode('UTF-8', 'replace')
 
 
-def confirm_and_update_file(filename: str, new_lines: FileLines):
+def confirm_and_update_file(filename: str, new_lines: FileLines) -> None:
     """Update a file with new content, after asking for confirmation."""
     if (show_diff(filename, new_lines)
             and confirm(f"Write changes to {filename}?")):
@@ -89,7 +89,7 @@ def show_diff(
     return old_lines != new_lines
 
 
-def print_diff(a: List[str], b: List[str], filename: str):
+def print_diff(a: List[str], b: List[str], filename: str) -> None:
     """Show the difference between two versions of a file."""
     print(''.join(difflib.unified_diff(
         a, b,

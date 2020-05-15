@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 from io import StringIO
-from typing import Collection, Dict, Optional, Tuple
+from typing import Callable, Collection, Dict, List, Optional, Tuple
 
 from . import __version__
 from .parsers.appveyor import (
@@ -118,7 +118,7 @@ def parse_version_list(v: str) -> SortedVersionList:
     return sorted(versions)
 
 
-def is_package(where='.') -> bool:
+def is_package(where: str = '.') -> bool:
     """Check if there's a Python package in the given directory.
 
     Currently only traditional packages having a setup.py are supported.
@@ -130,7 +130,10 @@ def is_package(where='.') -> bool:
     return os.path.exists(setup_py)
 
 
-def check_package(where='.', *, print=print) -> bool:
+PrintFn = Callable[..., None]
+
+
+def check_package(where: str = '.', *, print: PrintFn = print) -> bool:
     """Check if there's a Python package in the given directory.
 
     Currently only traditional packages having a setup.py are supported.
@@ -188,12 +191,13 @@ def filename_or_replacement(
 
 
 FilenameSet = Collection[str]
+ExtractorFn = Callable[[FileOrFilename], Optional[SortedVersionList]]
 
 
 def check_versions(
-    where='.',
+    where: str = '.',
     *,
-    print=print,
+    print: PrintFn = print,
     expect: Optional[VersionList] = None,
     replacements: Optional[ReplacementDict] = None,
     only: Optional[FilenameSet] = None,
@@ -210,7 +214,7 @@ def check_versions(
     Emits diagnostics to standard output by calling ``print``.
     """
 
-    sources = [
+    sources: List[Tuple[str, ExtractorFn, str]] = [
         # title, extractor, filename
         ('setup.py', get_supported_python_versions, 'setup.py'),
         ('- python_requires', get_python_requires, 'setup.py'),
@@ -251,8 +255,11 @@ def check_versions(
     )
 
 
+UpdaterFn = Callable[[FileOrFilename, VersionList], Optional[FileLines]]
+
+
 def update_versions(
-    where='.',
+    where: str = '.',
     *,
     add: Optional[VersionList] = None,
     drop: Optional[VersionList] = None,
@@ -282,7 +289,7 @@ def update_versions(
     contents instead of asking for confirmation and writing them to disk.
     """
 
-    sources = [
+    sources: List[Tuple[str, ExtractorFn, UpdaterFn]] = [
         # filename, extractor, updater
         ('setup.py', get_supported_python_versions,
          update_supported_python_versions),
