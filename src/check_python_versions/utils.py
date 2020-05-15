@@ -5,42 +5,60 @@ import stat
 import subprocess
 import sys
 from contextlib import contextmanager
+from io import StringIO
+from typing import Iterator, List, TextIO, Union, cast
 
 
 log = logging.getLogger('check-python-versions')
 
 
-def get_indent(line):
+FileOrFilename = Union[str, StringIO]
+FileLines = List[str]
+
+
+def get_indent(line: str) -> str:
+    """Return the indentation part of a line of text."""
     return line[:-len(line.lstrip())]
 
 
-def warn(msg):
+def warn(msg: str) -> None:
+    """Print a warning to standard error."""
     print(msg, file=sys.stderr)
 
 
-def is_file_object(filename_or_file_object):
+def is_file_object(filename_or_file_object: FileOrFilename) -> bool:
+    """Is this a file-like object?"""
     return hasattr(filename_or_file_object, 'read')
 
 
 @contextmanager
-def open_file(filename_or_file_object):
+def open_file(filename_or_file_object: FileOrFilename) -> Iterator[TextIO]:
+    """Context manager for opening files."""
     if is_file_object(filename_or_file_object):
-        yield filename_or_file_object
+        yield cast(TextIO, filename_or_file_object)
     else:
-        with open(filename_or_file_object) as fp:
+        with open(cast(str, filename_or_file_object)) as fp:
             yield fp
 
 
-def pipe(*cmd, **kwargs):
+def pipe(*cmd: str, **kwargs) -> str:
+    """Run a subprocess and return its standard output.
+
+    Keyword arguments are passed directly to `subprocess.Popen`.
+
+    Standard input and standard error are not redirected.
+    """
     if 'cwd' in kwargs:
         log.debug('EXEC cd %s && %s', kwargs['cwd'], ' '.join(cmd))
     else:
         log.debug('EXEC %s', ' '.join(cmd))
+    # XXX: maybe redirect stdin to subprocess.DEVNULL?
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, **kwargs)
     return p.communicate()[0].decode('UTF-8', 'replace')
 
 
-def confirm_and_update_file(filename, new_lines):
+def confirm_and_update_file(filename: str, new_lines: FileLines):
+    """Update a file with new content, after asking for confirmation."""
     if (show_diff(filename, new_lines)
             and confirm(f"Write changes to {filename}?")):
         mode = stat.S_IMODE(os.stat(filename).st_mode)
@@ -60,14 +78,19 @@ def confirm_and_update_file(filename, new_lines):
             os.rename(tempfile, filename)
 
 
-def show_diff(filename_or_file_object, new_lines):
+def show_diff(
+    filename_or_file_object: FileOrFilename,
+    new_lines: FileLines
+) -> bool:
+    """Show the difference between two versions of a file."""
     with open_file(filename_or_file_object) as f:
         old_lines = f.readlines()
     print_diff(old_lines, new_lines, f.name)
     return old_lines != new_lines
 
 
-def print_diff(a, b, filename):
+def print_diff(a: List[str], b: List[str], filename: str):
+    """Show the difference between two versions of a file."""
     print(''.join(difflib.unified_diff(
         a, b,
         filename, filename,
@@ -75,7 +98,8 @@ def print_diff(a, b, filename):
     )))
 
 
-def confirm(prompt):
+def confirm(prompt: str) -> bool:
+    """Ask the user to confirm an action."""
     while True:
         try:
             answer = input(f'{prompt} [y/N] ').strip().lower()

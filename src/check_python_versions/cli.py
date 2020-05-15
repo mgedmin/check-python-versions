@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 from io import StringIO
-from typing import Collection, Dict, List, Optional, Tuple, Union
+from typing import Collection, Dict, Optional, Tuple
 
 from . import __version__
 from .parsers.appveyor import (
@@ -31,14 +31,20 @@ from .parsers.travis import (
     get_travis_yml_python_versions,
     update_travis_yml_python_versions,
 )
-from .utils import confirm_and_update_file, show_diff
+from .utils import (
+    FileLines,
+    FileOrFilename,
+    confirm_and_update_file,
+    show_diff,
+)
 from .versions import (
     MAX_MINOR_FOR_MAJOR,
-    VersionList,
     SortedVersionList,
+    VersionList,
     important,
     update_version_list,
 )
+
 
 try:
     import yaml  # noqa: F401
@@ -159,9 +165,7 @@ def check_package(where='.', *, print=print) -> bool:
 # results, to get back the final results.
 #
 
-FileLines = List[str]
 ReplacementDict = Dict[str, FileLines]
-FileOrFilename = Union[str, StringIO]
 
 
 def filename_or_replacement(

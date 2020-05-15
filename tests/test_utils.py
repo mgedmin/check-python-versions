@@ -1,7 +1,22 @@
 import sys
 from io import StringIO
 
-from check_python_versions.utils import pipe, confirm
+import pytest
+
+from check_python_versions.utils import confirm, get_indent, pipe
+
+
+@pytest.mark.parametrize(['line', 'expected'], [
+    ('no indent\n', ''),
+    ('  indent\n', '  '),
+    ('  trailing spaces  \n', '  '),
+    ('\t  tabs and spaces\n', '\t  '),
+    ('\n', ''),
+    ('  \n', ''),
+    ('', ''),
+])
+def test_get_indent(line, expected):
+    assert get_indent(line) == expected
 
 
 def test_pipe():

@@ -398,7 +398,7 @@ def test_main_expect_error_handling(monkeypatch, arg, capsys):
     with pytest.raises(SystemExit):
         cpv.main()
     # the error is either 'bad version: ...' or 'bad range: ...'
-    assert f'--expect: bad' in capsys.readouterr().err
+    assert '--expect: bad' in capsys.readouterr().err
 
 
 @pytest.mark.parametrize('arg', ['--add', '--drop'])
