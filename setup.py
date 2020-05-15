@@ -23,12 +23,20 @@ with open(os.path.join(source_dir, '__init__.py')) as f:
 version = metadata['__version__']
 
 
+github_url = 'https://github.com/mgedmin/check-python-versions'
+
+
 setup(
     name='check-python-versions',
     version=version,
     author='Marius Gedminas',
     author_email='marius@gedmin.as',
-    url='https://github.com/mgedmin/check-python-versions',
+    url=github_url,
+    project_urls={
+        'Changelog': f'{github_url}/blob/master/CHANGES.rst',
+        'Issues': f'{github_url}/issues',
+        'Source Code': github_url,
+    },
     description=(
         'Compare supported Python versions in setup.py vs tox.ini et al.'
     ),

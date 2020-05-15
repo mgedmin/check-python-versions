@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.14.1 (unreleased)
+0.14.1 (2020-05-15)
 -------------------
 
 - Fix regression in updating tox.ini that looked like this::
