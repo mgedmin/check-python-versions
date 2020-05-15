@@ -74,6 +74,7 @@ def test_brace_expand(s, expected):
 @pytest.mark.parametrize('s, expected', [
     ('py36', '3.6'),
     ('py37-lint', '3.7'),
+    ('py310', '3.10'),  # future-proofness!
     ('pypy', 'PyPy'),
     ('pypy3', 'PyPy3'),
     ('flake8', 'flake8'),
