@@ -52,8 +52,8 @@ def pipe(*cmd: str, **kwargs) -> str:
         log.debug('EXEC cd %s && %s', kwargs['cwd'], ' '.join(cmd))
     else:
         log.debug('EXEC %s', ' '.join(cmd))
-    # XXX: maybe redirect stdin to subprocess.DEVNULL?
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, **kwargs)
+    p = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                         **kwargs)
     return p.communicate()[0].decode('UTF-8', 'replace')
 
 
