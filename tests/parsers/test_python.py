@@ -51,6 +51,25 @@ def test_get_supported_python_versions_computed(tmp_path):
     assert get_supported_python_versions(filename) == ['2.7', '3.7']
 
 
+def test_get_supported_python_versions_string(tmp_path, capsys):
+    filename = tmp_path / "setup.py"
+    filename.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers='''
+                Programming Language :: Python :: 2.7
+                Programming Language :: Python :: 3.6
+            ''',
+        )
+    """))
+    assert get_supported_python_versions(filename) == []
+    assert (
+        "The value passed to setup(classifiers=...) is not a list"
+        in capsys.readouterr().err
+    )
+
+
 def test_get_supported_python_versions_from_file_object_cannot_run_setup_py():
     fp = StringIO(textwrap.dedent("""\
         from setuptools import setup
@@ -221,9 +240,28 @@ def test_update_supported_python_versions(tmp_path, capsys):
             ],
         )
     """))
-    update_supported_python_versions(filename, ['3.7', '3.8'])
+    assert update_supported_python_versions(filename, ['3.7', '3.8']) is None
     assert (
         'Non-literal classifiers= passed to setup()'
+        in capsys.readouterr().err
+    )
+
+
+def test_update_supported_python_versions_not_a_list(tmp_path, capsys):
+    filename = tmp_path / "setup.py"
+    filename.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers='''
+                Programming Language :: Python :: 2.7
+                Programming Language :: Python :: 3.6
+            ''',
+        )
+    """))
+    assert update_supported_python_versions(filename, ['3.7', '3.8']) is None
+    assert (
+        'The value passed to setup(classifiers=...) is not a list'
         in capsys.readouterr().err
     )
 
@@ -251,6 +289,22 @@ def test_get_python_requires_not_specified(tmp_path, capsys):
     """))
     assert get_python_requires(setup_py) is None
     assert capsys.readouterr().err == ''
+
+
+def test_get_python_requires_not_a_string(tmp_path, capsys):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            python_requires=['>= 3.6'],
+        )
+    """))
+    assert get_python_requires(setup_py) is None
+    assert (
+        'The value passed to setup(python_requires=...) is not a string'
+        in capsys.readouterr().err
+    )
 
 
 def test_get_setup_py_keyword_syntax_error(tmp_path, capsys):
@@ -453,6 +507,20 @@ def test_eval_ast_node(code, expected):
     assert eval_ast_node(node, 'bar') == expected
 
 
+@pytest.mark.parametrize('code, expected', [
+    ('["a", "b", "c" if condition else "d", "e", 42]', ["a", "b", "e"]),
+])
+def test_eval_ast_node_skips_computed_values(code, expected, capsys):
+    tree = ast.parse(f'foo(bar={code})')
+    node = find_call_kwarg_in_ast(tree, 'foo', 'bar')
+    assert node is not None
+    assert eval_ast_node(node, 'bar') == expected
+    assert (
+        'Non-literal bar= passed to setup(), skipping some values'
+        in capsys.readouterr().err
+    )
+
+
 @pytest.mark.parametrize('code', [
     '[2 * 2]',
     '"".join([2 * 2])',
@@ -463,6 +531,19 @@ def test_eval_ast_node_failures(code, capsys):
     node = find_call_kwarg_in_ast(tree, 'foo', 'bar')
     assert eval_ast_node(node, 'bar') is None
     assert 'Non-literal bar= passed to setup()' in capsys.readouterr().err
+
+
+@pytest.mark.parametrize('code', [
+    '["a", "b"] + "c"',
+])
+def test_eval_ast_node_type_mismatch(code, capsys):
+    tree = ast.parse(f'foo(bar={code})')
+    node = find_call_kwarg_in_ast(tree, 'foo', 'bar')
+    assert eval_ast_node(node, 'bar') is None
+    assert (
+        'bar= is computed by adding incompatible types: list and str'
+        in capsys.readouterr().err
+    )
 
 
 def test_to_literal():
