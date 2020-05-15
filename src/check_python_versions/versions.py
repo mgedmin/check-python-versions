@@ -19,7 +19,7 @@ MAX_MINOR_FOR_MAJOR = {
 # XXX: 3.10 will wreak havoc on all my sorted(list_of_version_strings)!
 # I'll probably have to make Version a named tuple with an __str__
 
-Version = str   # 'MAJOR.MINOR'
+Version = str   # 'MAJOR.MINOR' usually, but could also be e.g. 'PyPy3'
 VersionSet = Set[Version]
 VersionList = Collection[Version]
 SortedVersionList = List[Version]

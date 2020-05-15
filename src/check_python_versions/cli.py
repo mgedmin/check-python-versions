@@ -255,7 +255,7 @@ def check_versions(
     )
 
 
-UpdaterFn = Callable[[FileOrFilename, VersionList], Optional[FileLines]]
+UpdaterFn = Callable[[FileOrFilename, SortedVersionList], Optional[FileLines]]
 
 
 def update_versions(

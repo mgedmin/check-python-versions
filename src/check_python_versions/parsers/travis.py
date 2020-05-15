@@ -1,28 +1,62 @@
-from typing import Dict, List, Tuple, Union
+"""
+Support for Travis CI.
+
+Travis CI is a hosted Continuous Integration solution that can be configured
+by dropping a file named ``.travis.yml`` into your source repository.
+
+There are multiple ways of selecting Python versions, some more canonical
+than others:
+
+- via the top-level ``python`` list
+- via ``python`` attributes in the jobs defined by ``jobs.include`` or its
+  deprecated alias ``matrix.include``
+- via ``TOXENV`` environment variables in the top-level ``env`` list
+  (this is discouraged and check-python-versions might drop support for this in
+  the future)
+"""
+
+from typing import Callable, Collection, Dict, List, Optional, Tuple, Union
 
 import yaml
 
 from .tox import parse_envlist, tox_env_to_py_version
-from ..utils import FileLines, open_file, warn
-from ..versions import is_important
+from ..utils import FileLines, FileOrFilename, open_file, warn
+from ..versions import SortedVersionList, Version, is_important
 
 
 TRAVIS_YML = '.travis.yml'
 
+
+# Back in the day you could do
+#
+#   dist: trusty
+#   python:
+#     - pypy
+#     - pypy3
+#
+# but then xenial came out and it did not recognize 'pypy' or 'pypy3', instead
+# requiring you to explicitly spell out full version numbers like
+#
+#   dist: trusty
+#   python:
+#     - pypy2.7-6.0.0
+#     - pypy3.5-6.0.0
+#
+# and check-python-versions could upgrade your .travis.yml from the old version
+# to the new.  Happily, this is no longer necessary, because Travis supports
+# 'pypy' and 'pypy3' once again.
 XENIAL_SUPPORTED_PYPY_VERSIONS: Dict[str, str] = {
-    # 2019-05-02:
-    #   pypy is now an alias for pypy2.7-7.1.1
-    #   pypy3 is now an alias for pypy3.6-7.1.1
-    # you can check whether a version is available by doing e.g.
-    # baseurl=https://s3.amazonaws.com/travis-python-archives/binaries
-    # http head $baseurl/ubuntu/16.04/x86_64/pypy3.6-7.1.1.tar.bz2
+    # e.g. 'pypy': 'pypy2.7-7.1.1',
 }
 
 
-def get_travis_yml_python_versions(filename=TRAVIS_YML):
+def get_travis_yml_python_versions(
+    filename: FileOrFilename = TRAVIS_YML,
+) -> SortedVersionList:
+    """Extract supported Python versions from .travis.yml."""
     with open_file(filename) as fp:
         conf = yaml.safe_load(fp)
-    versions = []
+    versions: List[str] = []
     if conf.get('python'):
         if isinstance(conf['python'], list):
             versions += map(travis_normalize_py_version, conf['python'])
@@ -46,7 +80,7 @@ def get_travis_yml_python_versions(filename=TRAVIS_YML):
     return sorted(set(versions))
 
 
-def travis_normalize_py_version(v):
+def travis_normalize_py_version(v: str) -> Version:
     v = str(v)
     if v.startswith('pypy3'):
         # could be pypy3, pypy3.5, pypy3.5-5.10.0
@@ -58,12 +92,24 @@ def travis_normalize_py_version(v):
         return v
 
 
-def needs_xenial(v):
+def needs_xenial(v: Version) -> bool:
+    """Check if a Python version needs dist: xenial.
+
+    This is obsolete now that dist: xenial is the default, but it may
+    be helpful to determine when we need to drop old dist: trusty.
+    """
     major, minor = map(int, v.split('.'))
     return major == 3 and minor >= 7
 
 
-def update_travis_yml_python_versions(filename, new_versions):
+def update_travis_yml_python_versions(
+    filename: FileOrFilename,
+    new_versions: SortedVersionList,
+) -> FileLines:
+    """Update supported Python versions in .travis.yml.
+
+    Does not touch the file but returns a list of lines with new file contents.
+    """
     with open_file(filename) as fp:
         orig_lines = fp.readlines()
         fp.seek(0)
@@ -82,7 +128,8 @@ def update_travis_yml_python_versions(filename, new_versions):
             # to get Python 3.7
             new_lines = drop_yaml_node(new_lines, "sudo", filename=fp.name)
 
-    def keep_old(ver):
+    def keep_old(ver: str) -> bool:
+        """Determine if a Python version line should be preserved."""
         ver = travis_normalize_py_version(ver)
         if ver == 'PyPy':
             return any(v.startswith('2') for v in new_versions)
@@ -90,7 +137,8 @@ def update_travis_yml_python_versions(filename, new_versions):
             return any(v.startswith('3') for v in new_versions)
         return not is_important(ver)
 
-    def keep_old_job(job):
+    def keep_old_job(job: str) -> bool:
+        """Determine if a job line should be preserved."""
         if job.startswith('python:'):
             ver = job[len('python:'):].strip()
             return not is_important(travis_normalize_py_version(ver))
@@ -141,11 +189,35 @@ def update_travis_yml_python_versions(filename, new_versions):
 def update_yaml_list(
     orig_lines: FileLines,
     key: Union[str, Tuple[str, ...]],
-    new_value,
+    new_value: List[str],
+    *,
     filename: str = TRAVIS_YML,
-    keep=None,
-    replacements=None,
+    keep: Optional[Callable[[str], bool]] = None,
+    replacements: Optional[Dict[str, str]] = None,
 ) -> FileLines:
+    """Update a list of values in a YAML document.
+
+    The document is represented as a list of lines (``orig_lines``), because
+    we want to preserve the exact formatting including comments.
+
+    ``key`` is a tuple that represents the traversal path from the root of
+    the document.  As a special case it can be a string instead of a 1-tuple
+    for top-level keys.
+
+    The new value of the list will consist of ``new_value``, plus whatever
+    old values need to be kept according to the ``keep`` callback.  Any of the
+    kept old values will also be optionally replaced with a replacement
+    from the ``replacements`` dict.
+
+    No YAML decoding is done for old values passed to ``keep()`` or
+    ``replacements.get()``.
+
+    No YAML escaping or formatting is done for new values or replacements.
+
+    ``filename`` is used for error reporting.
+
+    Returns an updated list of lines.
+    """
     if not isinstance(key, tuple):
         key = (key,)
 
@@ -180,7 +252,7 @@ def update_yaml_list(
     keep_before: List[str] = []
     keep_after: List[str] = []
     lines_to_keep = keep_before
-    kept_last = False
+    kept_last: Optional[bool] = False
     for n, line in lines:
         stripped = line.lstrip()
         line_indent = len(line) - len(stripped)
@@ -222,7 +294,25 @@ def update_yaml_list(
     return new_lines
 
 
-def drop_yaml_node(orig_lines, key, filename=TRAVIS_YML):
+def drop_yaml_node(
+    orig_lines: FileLines,
+    key: str,
+    filename: str = TRAVIS_YML,
+) -> FileLines:
+    """Drop a value from a YAML document.
+
+    The document is represented as a list of lines (``orig_lines``), because
+    we want to preserve the exact formatting including comments.
+
+    ``key`` is a string.  Currently only top-level nodes can be dropped.
+
+    ``filename`` is used for error reporting.
+
+    It is not an error if ``key`` is not present in the document.  In this
+    case ``orig_lines`` is returned unmodified.
+
+    Returns an updated list of lines.
+    """
     lines = iter(enumerate(orig_lines))
     where = None
     for n, line in lines:
@@ -250,11 +340,31 @@ def drop_yaml_node(orig_lines, key, filename=TRAVIS_YML):
     return new_lines
 
 
-def add_yaml_node(orig_lines, key, value, before=None):
+def add_yaml_node(
+    orig_lines: FileLines,
+    key: str,
+    value: str,
+    before: Optional[Union[str, Collection[str]]] = None,
+) -> FileLines:
+    """Add a value to a YAML document.
+
+    The document is represented as a list of lines (``orig_lines``), because
+    we want to preserve the exact formatting including comments.
+
+    ``key`` is a string.  Currently only top-level nodes can be added.
+
+    ``value`` is the new value, as a string.  No YAML escaping or formatting
+    is done.
+
+    ``before`` can specify a key or a set of keys.  If specified, the new
+    key will be added before the first of existing keys from this set.
+
+    Returns an updated list of lines.
+    """
     lines = iter(enumerate(orig_lines))
     where = len(orig_lines)
     if before:
-        if not isinstance(before, (list, tuple, set)):
+        if isinstance(before, str):
             before = (before, )
         lines = iter(enumerate(orig_lines))
         for n, line in lines:
