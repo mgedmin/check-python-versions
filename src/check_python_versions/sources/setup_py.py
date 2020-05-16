@@ -60,7 +60,7 @@ def get_supported_python_versions(
         # AST parsing is complicated
         filename = cast(str, filename)
         setup_py = os.path.basename(filename)
-        classifiers = pipe("python", setup_py, "-q", "--classifiers",
+        classifiers = pipe("python3", setup_py, "-q", "--classifiers",
                            cwd=os.path.dirname(filename)).splitlines()
     if classifiers is None:
         # Note: do not return None because setup.py is not an optional source!

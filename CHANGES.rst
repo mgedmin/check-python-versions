@@ -6,6 +6,9 @@ Changelog
 
 - Recognize ``setuptools.setup()`` calls in setup.py.
 
+- When parsing setup.py fails and check-python-versions falls back to running
+  ``python setup.py --classifiers``, it will now use python3.
+
 
 0.14.2 (2020-05-16)
 -------------------
