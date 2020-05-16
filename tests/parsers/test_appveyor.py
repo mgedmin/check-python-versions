@@ -78,6 +78,7 @@ def test_get_appveyor_yml_python_versions_using_toxenv(tmp_path):
     ('C:\\Python27\\', '2.7'),
     ('C:\\Python27-x64', '2.7'),
     ('C:\\PYTHON34-X64', '3.4'),
+    ('C:\\Python38-x64\\python.exe', '3.8'),
     ('c:/python38', '3.8'),
     ('c:/python3', None),  # would it be useful to return '3'?  probably not
     ('unknown', None),

@@ -62,12 +62,12 @@ def get_appveyor_yml_python_versions(
 
 def appveyor_normalize_py_version(ver: str) -> Optional[Version]:
     """Determine Python version from PYTHON environment variable."""
-    ver = str(ver).lower()
-    if ver.startswith('c:\\python'):
-        ver = ver[len('c:\\python'):]
-    elif ver.startswith('c:/python'):
+    ver = str(ver).lower().replace('\\', '/')
+    if ver.startswith('c:/python'):
         ver = ver[len('c:/python'):]
-    if ver.endswith('\\'):
+    if ver.endswith('/python.exe'):
+        ver = ver[:-len('/python.exe')]
+    elif ver.endswith('/'):
         ver = ver[:-1]
     if ver.endswith('-x64'):
         ver = ver[:-len('-x64')]

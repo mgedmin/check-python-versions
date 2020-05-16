@@ -15,6 +15,8 @@ Changelog
 - When tox.ini has an environment named 'pylint' we no longer consider this to
   be Python version l.int.
 
+- Recognize ``PYTHON: C:\PythonXY\python.exe`` in appveyor.yml.
+
 
 0.14.1 (2020-05-15)
 -------------------
