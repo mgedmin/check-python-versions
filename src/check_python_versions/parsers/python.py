@@ -5,7 +5,7 @@ Tools for manipulating Python files.
 import ast
 import re
 import string
-from typing import List, Optional, Tuple, Union, cast
+from typing import List, Optional, Tuple, Union
 
 from ..utils import FileLines, get_indent, warn
 
@@ -216,8 +216,10 @@ def eval_ast_node(node: ast.AST, keyword: str) -> Optional[AstValue]:
             and isinstance(node.func.value, ast.Str)
             and node.func.attr == 'join'):
         try:
-            return cast(str, node.func.value.s).join(
-                ast.literal_eval(node.args[0]))
+            # The assert is needed to placate mypy on Python 3.8
+            # https://github.com/python/mypy/issues/8837
+            assert isinstance(node.func.value.s, str)
+            return node.func.value.s.join(ast.literal_eval(node.args[0]))
         except ValueError:
             pass
     if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
