@@ -1,7 +1,7 @@
 import textwrap
 from io import StringIO
 
-from check_python_versions.parsers.manylinux import (
+from check_python_versions.sources.manylinux import (
     get_manylinux_python_versions,
     update_manylinux_python_versions,
 )

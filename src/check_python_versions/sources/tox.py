@@ -18,7 +18,8 @@ import configparser
 import re
 from typing import Iterable, List, Optional
 
-from ..utils import FileLines, FileOrFilename, get_indent, open_file, warn
+from ..parsers.ini import update_ini_setting
+from ..utils import FileLines, FileOrFilename, open_file, warn
 from ..versions import SortedVersionList, Version, VersionList
 
 
@@ -130,7 +131,7 @@ def update_tox_ini_python_versions(
     new_envlist = update_tox_envlist(envlist, new_versions)
 
     new_lines = update_ini_setting(
-        orig_lines, 'tox', 'envlist', new_envlist,
+        orig_lines, 'tox', 'envlist', new_envlist, filename=fp.name,
     )
     return new_lines
 
@@ -232,70 +233,3 @@ def should_keep(env: str, new_versions: VersionList) -> bool:
         if baseversion in new_versions:
             return True
     return False
-
-
-def update_ini_setting(
-    orig_lines: FileLines,
-    section: str,
-    key: str,
-    new_value: str,
-    *,
-    filename: str = TOX_INI,
-) -> FileLines:
-    """Update a setting in an .ini file.
-
-    Preserves formatting and comments.
-
-    ``orig_lines`` contains the old contents of the INI file.
-
-    ``section`` and ``key`` specify which value in which section need to be
-    updated.  It is an error if the section or the key do not exist.
-
-    ``filename`` is used for error reporting.
-
-    Returns the updated contents.
-    """
-    lines = iter(enumerate(orig_lines))
-    for n, line in lines:
-        if line.startswith(f'[{section}]'):
-            break
-    else:
-        warn(f'Did not find [{section}] section in {filename}')
-        return orig_lines
-
-    space = prefix = ' '
-    for n, line in lines:
-        m = re.match(fr'{re.escape(key)}(\s*)=(\s*)', line.rstrip())
-        if m:
-            start = n
-            space = m.group(1)
-            if not line.rstrip().endswith('='):
-                prefix = m.group(2)
-            break
-    else:
-        warn(f'Did not find {key}= in [{section}] in {filename}')
-        return orig_lines
-
-    end = start + 1
-    comments = []
-    indent = '  '
-    for n, line in lines:
-        if line.startswith(' '):
-            indent = get_indent(line)
-            end = n + 1
-        elif line.lstrip().startswith('#'):
-            comments.append(line)
-        else:
-            break
-
-    firstline = orig_lines[start].strip().expandtabs().replace(' ', '')
-    if firstline == f'{key}=':
-        if end > start + 1:
-            prefix = f'\n{"".join(comments)}{indent}'
-
-    new_value = new_value.replace('\n', '\n' + indent)
-    new_lines = orig_lines[:start] + (
-        f"{key}{space}={prefix}{new_value}\n"
-    ).splitlines(True) + orig_lines[end:]
-
-    return new_lines

@@ -3,12 +3,11 @@ from io import StringIO
 
 import pytest
 
-from check_python_versions.parsers.tox import (
+from check_python_versions.sources.tox import (
     brace_expand,
     get_tox_ini_python_versions,
     parse_envlist,
     tox_env_to_py_version,
-    update_ini_setting,
     update_tox_envlist,
     update_tox_ini_python_versions,
 )
@@ -89,6 +88,7 @@ def test_update_tox_ini_python_versions():
         [tox]
         envlist = py26, py27
     """))
+    fp.name = 'tox.ini'
     result = update_tox_ini_python_versions(fp, ['3.6', '3.7'])
     assert "".join(result) == textwrap.dedent("""\
         [tox]
@@ -184,129 +184,3 @@ def test_update_tox_envlist_with_newlines(s, expected):
 def test_update_tox_envlist_with_braces(s, expected):
     result = update_tox_envlist(s, ['3.6', '3.7'])
     assert result == expected
-
-
-def test_update_ini_setting():
-    source_lines = textwrap.dedent("""\
-        [tox]
-        envlist = py26,py27
-        usedevelop = true
-    """).splitlines(True)
-    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,py37')
-    assert "".join(result) == textwrap.dedent("""\
-        [tox]
-        envlist = py36,py37
-        usedevelop = true
-    """)
-
-
-def test_update_ini_setting_nospaces():
-    source_lines = textwrap.dedent("""\
-        [tox]
-        envlist=py26,py27
-        usedevelop=true
-    """).splitlines(True)
-    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,py37')
-    assert "".join(result) == textwrap.dedent("""\
-        [tox]
-        envlist=py36,py37
-        usedevelop=true
-    """)
-
-
-def test_update_ini_setting_from_empty():
-    source_lines = textwrap.dedent("""\
-        [tox]
-        envlist =
-        usedevelop = true
-    """).splitlines(True)
-    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,py37')
-    assert "".join(result) == textwrap.dedent("""\
-        [tox]
-        envlist = py36,py37
-        usedevelop = true
-    """)
-
-
-def test_update_ini_setting_multiline():
-    source_lines = textwrap.dedent("""\
-        [tox]
-        envlist =
-            py26,
-            py27
-        usedevelop = true
-    """).splitlines(True)
-    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,\npy37')
-    assert "".join(result) == textwrap.dedent("""\
-        [tox]
-        envlist =
-            py36,
-            py37
-        usedevelop = true
-    """)
-
-
-def test_update_ini_setting_multiline_first_on_same_line():
-    source_lines = textwrap.dedent("""\
-        [tox]
-        envlist = py26,
-                  py27
-        usedevelop = true
-    """).splitlines(True)
-    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,\npy37')
-    assert "".join(result) == textwrap.dedent("""\
-        [tox]
-        envlist = py36,
-                  py37
-        usedevelop = true
-    """)
-
-
-def test_update_ini_setting_multiline_with_comments():
-    source_lines = textwrap.dedent("""\
-        [tox]
-        envlist =
-        # blah blah
-        #   py26,py27,pypy
-            py26,py27
-        usedevelop = true
-    """).splitlines(True)
-    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,py37')
-    assert "".join(result) == textwrap.dedent("""\
-        [tox]
-        envlist =
-        # blah blah
-        #   py26,py27,pypy
-            py36,py37
-        usedevelop = true
-    """)
-
-
-def test_update_ini_setting_no_section(capsys):
-    source_lines = textwrap.dedent("""\
-        [toxx]
-    """).splitlines(True)
-    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,py37')
-    assert "".join(result) == textwrap.dedent("""\
-        [toxx]
-    """)
-    assert (
-        "Did not find [tox] section in tox.ini"
-        in capsys.readouterr().err
-    )
-
-
-def test_update_ini_setting_no_key(capsys):
-    source_lines = textwrap.dedent("""\
-        [tox]
-        usedevelop = true
-    """).splitlines(True)
-    result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,py37')
-    assert "".join(result) == textwrap.dedent("""\
-        [tox]
-        usedevelop = true
-    """)
-    assert (
-        "Did not find envlist= in [tox] in tox.ini"
-        in capsys.readouterr().err
-    )

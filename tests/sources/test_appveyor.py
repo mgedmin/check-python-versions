@@ -3,7 +3,7 @@ from io import StringIO
 
 import pytest
 
-from check_python_versions.parsers.appveyor import (
+from check_python_versions.sources.appveyor import (
     appveyor_detect_py_version_pattern,
     appveyor_normalize_py_version,
     get_appveyor_yml_python_versions,
@@ -107,6 +107,7 @@ def test_update_appveyor_yml_python_versions():
             - PYTHON: "c:\\python27"
             - PYTHON: "c:\\python36"
     """).lstrip('\n'))
+    appveyor_yml.name = 'appveyor.yml'
     result = update_appveyor_yml_python_versions(appveyor_yml, ['2.7', '3.7'])
     assert ''.join(result) == textwrap.dedent(r"""
         environment:
@@ -125,6 +126,7 @@ def test_update_appveyor_yml_python_versions_multiple_of_each():
             - PYTHON: c:\\python36
             - PYTHON: c:\\python36-x64
     """))
+    appveyor_yml.name = 'appveyor.yml'
     result = update_appveyor_yml_python_versions(appveyor_yml, ['2.7', '3.7'])
     assert ''.join(result) == textwrap.dedent("""\
         environment:
@@ -144,6 +146,7 @@ def test_update_appveyor_yml_leave_unknown_python_versions_alone():
             - PYTHON: c:\\python36
             - PYTHON: c:\\custompython
     """))
+    appveyor_yml.name = 'appveyor.yml'
     result = update_appveyor_yml_python_versions(appveyor_yml, ['3.6', '3.7'])
     assert ''.join(result) == textwrap.dedent("""\
         environment:
@@ -167,6 +170,7 @@ def test_update_appveyor_yml_python_complicated_but_oneline():
             - { TOO: 1,
                 COMPLICATED: 2 }
     """))
+    appveyor_yml.name = 'appveyor.yml'
     result = update_appveyor_yml_python_versions(appveyor_yml, ['3.6'])
     assert ''.join(result) == textwrap.dedent("""\
         environment:

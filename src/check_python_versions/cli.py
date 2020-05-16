@@ -5,28 +5,28 @@ from io import StringIO
 from typing import Callable, Collection, Dict, List, Optional, Tuple
 
 from . import __version__
-from .parsers.appveyor import (
+from .sources.appveyor import (
     APPVEYOR_YML,
     get_appveyor_yml_python_versions,
     update_appveyor_yml_python_versions,
 )
-from .parsers.manylinux import (
+from .sources.manylinux import (
     MANYLINUX_INSTALL_SH,
     get_manylinux_python_versions,
     update_manylinux_python_versions,
 )
-from .parsers.python import (
+from .sources.setup_py import (
     get_python_requires,
     get_supported_python_versions,
     update_python_requires,
     update_supported_python_versions,
 )
-from .parsers.tox import (
+from .sources.tox import (
     TOX_INI,
     get_tox_ini_python_versions,
     update_tox_ini_python_versions,
 )
-from .parsers.travis import (
+from .sources.travis import (
     TRAVIS_YML,
     get_travis_yml_python_versions,
     update_travis_yml_python_versions,

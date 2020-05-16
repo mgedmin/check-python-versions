@@ -29,7 +29,7 @@ from typing import Optional, Set, cast
 import yaml
 
 from .tox import parse_envlist, tox_env_to_py_version
-from .travis import update_yaml_list
+from ..parsers.yaml import update_yaml_list
 from ..utils import FileLines, FileOrFilename, open_file, warn
 from ..versions import SortedVersionList, Version, VersionList
 
@@ -176,6 +176,6 @@ def update_appveyor_yml_python_versions(
 
     new_lines = update_yaml_list(
         orig_lines, ('environment', 'matrix'), new_environments,
-        keep=keep_complicated,
+        keep=keep_complicated, filename=fp.name,
     )
     return new_lines
