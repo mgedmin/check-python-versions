@@ -2,7 +2,6 @@ import textwrap
 from io import StringIO
 
 import pytest
-import yaml
 
 from check_python_versions.parsers.travis import (
     XENIAL_SUPPORTED_PYPY_VERSIONS,
@@ -15,10 +14,6 @@ from check_python_versions.parsers.travis import (
 )
 
 
-needs_pyyaml = pytest.mark.skipif(yaml is None, reason="PyYAML not installed")
-
-
-@needs_pyyaml
 def test_get_travis_yml_python_versions(tmp_path):
     travis_yml = tmp_path / ".travis.yml"
     travis_yml.write_text(textwrap.dedent("""\
@@ -42,7 +37,6 @@ def test_get_travis_yml_python_versions(tmp_path):
     ]
 
 
-@needs_pyyaml
 def test_get_travis_yml_python_versions_no_list(tmp_path):
     travis_yml = StringIO(textwrap.dedent("""\
         python: 3.7
@@ -53,7 +47,6 @@ def test_get_travis_yml_python_versions_no_list(tmp_path):
     ]
 
 
-@needs_pyyaml
 def test_get_travis_yml_python_versions_no_python_only_matrix(tmp_path):
     travis_yml = tmp_path / ".travis.yml"
     travis_yml.write_text(textwrap.dedent("""\

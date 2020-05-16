@@ -2,7 +2,6 @@ import textwrap
 from io import StringIO
 
 import pytest
-import yaml
 
 from check_python_versions.parsers.appveyor import (
     appveyor_detect_py_version_pattern,
@@ -12,10 +11,6 @@ from check_python_versions.parsers.appveyor import (
 )
 
 
-needs_pyyaml = pytest.mark.skipif(yaml is None, reason="PyYAML not installed")
-
-
-@needs_pyyaml
 def test_get_appveyor_yml_python_versions(tmp_path):
     appveyor_yml = tmp_path / "appveyor.yml"
     appveyor_yml.write_text(textwrap.dedent("""\
@@ -32,7 +27,6 @@ def test_get_appveyor_yml_python_versions(tmp_path):
     ]
 
 
-@needs_pyyaml
 def test_get_appveyor_yml_python_versions_forward_slashs(tmp_path):
     # Regr. test for https://github.com/mgedmin/check-python-versions/issues/12
     appveyor_yml = tmp_path / "appveyor.yml"
@@ -49,7 +43,6 @@ def test_get_appveyor_yml_python_versions_forward_slashs(tmp_path):
     ]
 
 
-@needs_pyyaml
 def test_get_appveyor_yml_python_versions_python_not_recognized(tmp_path):
     # Regr. test for https://github.com/mgedmin/check-python-versions/issues/12
     appveyor_yml = tmp_path / "appveyor.yml"
@@ -66,7 +59,6 @@ def test_get_appveyor_yml_python_versions_python_not_recognized(tmp_path):
     ]
 
 
-@needs_pyyaml
 def test_get_appveyor_yml_python_versions_using_toxenv(tmp_path):
     appveyor_yml = tmp_path / "appveyor.yml"
     appveyor_yml.write_text(textwrap.dedent("""\
