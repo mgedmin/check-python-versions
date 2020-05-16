@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.14.2 (unreleased)
+0.14.2 (2020-05-16)
 -------------------
 
 - When check-python-versions falls back to executing python setup.py, it
