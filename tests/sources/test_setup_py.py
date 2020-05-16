@@ -314,6 +314,17 @@ def test_get_setup_py_keyword_syntax_error(tmp_path, capsys):
     assert 'Could not parse' in capsys.readouterr().err
 
 
+def test_get_setup_py_keyword_dotted_call(tmp_path, capsys):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        import setuptools
+        setuptools.setup(
+            name='foo',
+        )
+    """))
+    assert get_setup_py_keyword(setup_py, 'name') == 'foo'
+
+
 def test_update_python_requires(tmp_path, fix_max_python_3_version):
     fix_max_python_3_version(7)
     filename = tmp_path / "setup.py"

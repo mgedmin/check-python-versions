@@ -5,7 +5,7 @@ Tools for manipulating Python files.
 import ast
 import re
 import string
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 from ..utils import FileLines, get_indent, warn
 
@@ -158,7 +158,7 @@ def update_call_arg_in_source(
 
 def find_call_kwarg_in_ast(
     tree: ast.AST,
-    funcname: str,
+    funcname: Union[str, Sequence[str]],
     keyword: str,
     *,
     filename: str,
@@ -167,18 +167,29 @@ def find_call_kwarg_in_ast(
 
     ``filename`` is used for error reporting.
     """
+    if isinstance(funcname, str):
+        funcname = (funcname, )
     for node in ast.walk(tree):
         if (isinstance(node, ast.Call)
-                and isinstance(node.func, ast.Name)
-                and node.func.id == funcname):
+                and any(name_matches(n, node.func) for n in funcname)):
             for kwarg in node.keywords:
                 if kwarg.arg == keyword:
                     return kwarg.value
             else:
                 return None
     else:
-        warn(f'Could not find {funcname}() call in {filename}')
+        warn(f'Could not find {funcname[0]}() call in {filename}')
         return None
+
+
+def name_matches(funcname: str, node: ast.AST) -> bool:
+    """Check if the AST node refers to a funcion named `funcname`."""
+    while '.' in funcname:
+        funcname, dot, attr = funcname.rpartition('.')
+        if not isinstance(node, ast.Attribute) or node.attr != attr:
+            return False
+        node = node.value
+    return isinstance(node, ast.Name) and node.id == funcname
 
 
 def eval_ast_node(node: ast.AST, keyword: str) -> Optional[AstValue]:

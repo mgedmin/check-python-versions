@@ -6,6 +6,7 @@ import pytest
 from check_python_versions.parsers.python import (
     eval_ast_node,
     find_call_kwarg_in_ast,
+    name_matches,
     to_literal,
     update_call_arg_in_source,
 )
@@ -17,6 +18,23 @@ def test_find_call_kwarg_in_ast():
     node = find_call_kwarg_in_ast(tree, 'foo', 'bar', filename='setup.py')
     assert isinstance(node, ast.Str)
     assert node.s == "foo"
+
+
+def test_find_call_kwarg_in_ast_dotted():
+    tree = ast.parse('mod.foo(bar="gronk")')
+    ast.dump(tree)
+    node = find_call_kwarg_in_ast(tree, 'mod.foo', 'bar', filename='setup.py')
+    assert isinstance(node, ast.Str)
+    assert node.s == "gronk"
+
+
+def test_find_call_kwarg_in_ast_alternatives():
+    tree = ast.parse('mod.foo(bar="gronk")')
+    ast.dump(tree)
+    node = find_call_kwarg_in_ast(tree, {'foo', 'mod.foo'}, 'bar',
+                                  filename='a.py')
+    assert isinstance(node, ast.Str)
+    assert node.s == "gronk"
 
 
 def test_find_call_kwarg_in_ast_no_arg(capsys):
@@ -33,6 +51,15 @@ def test_find_call_kwarg_in_ast_no_call(capsys):
     node = find_call_kwarg_in_ast(tree, 'foo', 'bar', filename='setup.py')
     assert node is None
     assert 'Could not find foo() call in setup.py' in capsys.readouterr().err
+
+
+def test_name_matches():
+    tree = ast.parse('a.b.c.d.e')
+    node = tree.body[0].value
+    assert name_matches('a.b.c.d.e', node)
+    assert not name_matches('a.b.c.d.x', node)
+    assert not name_matches('b.c.d.e', node)
+    assert not name_matches('e', node)
 
 
 @pytest.mark.parametrize('code, expected', [

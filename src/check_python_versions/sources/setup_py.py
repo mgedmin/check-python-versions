@@ -218,7 +218,8 @@ def get_setup_py_keyword(
         except SyntaxError as error:
             warn(f'Could not parse {f.name}: {error}')
             return None
-    node = find_call_kwarg_in_ast(tree, 'setup', keyword, filename=f.name)
+    node = find_call_kwarg_in_ast(tree, ('setup', 'setuptools.setup'), keyword,
+                                  filename=f.name)
     return eval_ast_node(node, keyword) if node is not None else None
 
 
