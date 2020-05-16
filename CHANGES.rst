@@ -7,7 +7,9 @@ Changelog
 - Recognize ``setuptools.setup()`` calls in setup.py.
 
 - When parsing setup.py fails and check-python-versions falls back to running
-  ``python setup.py --classifiers``, it will now use python3.
+  ``python setup.py --classifiers``, it will try to use python3, falling back
+  to python, and then to whatever interpreter was used to run
+  check-python-versions.
 
 
 0.14.2 (2020-05-16)

@@ -14,6 +14,8 @@ check-python-versions supports both.
 import ast
 import os
 import re
+import shutil
+import sys
 from functools import partial
 from typing import (
     Callable,
@@ -60,7 +62,7 @@ def get_supported_python_versions(
         # AST parsing is complicated
         filename = cast(str, filename)
         setup_py = os.path.basename(filename)
-        classifiers = pipe("python3", setup_py, "-q", "--classifiers",
+        classifiers = pipe(find_python(), setup_py, "-q", "--classifiers",
                            cwd=os.path.dirname(filename)).splitlines()
     if classifiers is None:
         # Note: do not return None because setup.py is not an optional source!
@@ -395,3 +397,16 @@ def compute_python_requires(
             if ver >= min_version and ver not in new_versions:
                 specifiers.append(f'!={ver}.*')
     return comma.join(specifiers)
+
+
+def find_python() -> str:
+    """Find a Python interpreter."""
+    # The reason I prefer python3 or python from $PATH over sys.executable is
+    # this gives the user some control.  E.g. if the setup.py of the project
+    # requires some dependencies, the user could install them into a virtualenv
+    # and activate it.
+    if shutil.which('python3'):
+        return 'python3'
+    if shutil.which('python'):
+        return 'python'
+    return sys.executable

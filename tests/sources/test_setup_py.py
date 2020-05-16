@@ -1,3 +1,5 @@
+import shutil
+import sys
 import textwrap
 from io import StringIO
 
@@ -5,6 +7,7 @@ import pytest
 
 from check_python_versions.sources.setup_py import (
     compute_python_requires,
+    find_python,
     get_python_requires,
     get_setup_py_keyword,
     get_supported_python_versions,
@@ -604,3 +607,14 @@ def test_compute_python_requires(versions, expected, fix_max_python_3_version):
     result = compute_python_requires(versions)
     assert result == expected
     assert parse_python_requires(result) == versions
+
+
+@pytest.mark.parametrize(['available', 'chosen'], [
+    ({'python': '/usr/bin/python'}, 'python'),
+    ({'python3': '/usr/bin/python3'}, 'python3'),
+    ({'python': '/usr/bin/python', 'python3': '/usr/bin/python3'}, 'python3'),
+    ({}, sys.executable),
+])
+def test_find_python(monkeypatch, available, chosen):
+    monkeypatch.setattr(shutil, 'which', available.get)
+    assert find_python() == chosen
