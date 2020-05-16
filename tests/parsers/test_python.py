@@ -14,7 +14,6 @@ from check_python_versions.parsers.python import (
 
 def test_find_call_kwarg_in_ast():
     tree = ast.parse('foo(bar="foo")')
-    ast.dump(tree)
     node = find_call_kwarg_in_ast(tree, 'foo', 'bar', filename='setup.py')
     assert isinstance(node, ast.Str)
     assert node.s == "foo"
@@ -22,7 +21,6 @@ def test_find_call_kwarg_in_ast():
 
 def test_find_call_kwarg_in_ast_dotted():
     tree = ast.parse('mod.foo(bar="gronk")')
-    ast.dump(tree)
     node = find_call_kwarg_in_ast(tree, 'mod.foo', 'bar', filename='setup.py')
     assert isinstance(node, ast.Str)
     assert node.s == "gronk"
@@ -30,7 +28,6 @@ def test_find_call_kwarg_in_ast_dotted():
 
 def test_find_call_kwarg_in_ast_alternatives():
     tree = ast.parse('mod.foo(bar="gronk")')
-    ast.dump(tree)
     node = find_call_kwarg_in_ast(tree, {'foo', 'mod.foo'}, 'bar',
                                   filename='a.py')
     assert isinstance(node, ast.Str)
@@ -39,7 +36,6 @@ def test_find_call_kwarg_in_ast_alternatives():
 
 def test_find_call_kwarg_in_ast_no_arg(capsys):
     tree = ast.parse('foo(baz="foo")')
-    ast.dump(tree)
     node = find_call_kwarg_in_ast(tree, 'foo', 'bar', filename='setup.py')
     assert node is None
     assert capsys.readouterr().err == ''
@@ -47,7 +43,6 @@ def test_find_call_kwarg_in_ast_no_arg(capsys):
 
 def test_find_call_kwarg_in_ast_no_call(capsys):
     tree = ast.parse('fooo(bar="foo")')
-    ast.dump(tree)
     node = find_call_kwarg_in_ast(tree, 'foo', 'bar', filename='setup.py')
     assert node is None
     assert 'Could not find foo() call in setup.py' in capsys.readouterr().err
@@ -65,6 +60,7 @@ def test_name_matches():
 @pytest.mark.parametrize('code, expected', [
     ('"hi"', "hi"),
     ('"hi\\n"', "hi\n"),
+    ('3.14', None),
     ('["a", "b"]', ["a", "b"]),
     ('("a", "b")', ("a", "b")),
     ('"-".join(["a", "b"])', "a-b"),
