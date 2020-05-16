@@ -234,7 +234,8 @@ def update_setup_py_keyword(
     """
     with open_file(setup_py) as f:
         lines = f.readlines()
-    new_lines = update_call_arg_in_source(lines, 'setup', keyword, new_value)
+    new_lines = update_call_arg_in_source(lines, ('setup', 'setuptools.setup'),
+                                          keyword, new_value)
     return new_lines
 
 

@@ -293,6 +293,45 @@ def test_update_call_arg_in_source_handles_empty_list():
     """)
 
 
+def test_update_call_arg_in_source_dotted_name():
+    source_lines = textwrap.dedent("""\
+        setuptools.setup(
+            foo=1,
+            bar="x",
+            baz=2,
+        )
+    """).splitlines(True)
+    result = update_call_arg_in_source(source_lines, "setuptools.setup",
+                                       "bar", "y")
+    assert "".join(result) == textwrap.dedent("""\
+        setuptools.setup(
+            foo=1,
+            bar="y",
+            baz=2,
+        )
+    """)
+
+
+def test_update_call_arg_in_source_maybe_dotted_name():
+    source_lines = textwrap.dedent("""\
+        setuptools.setup(
+            foo=1,
+            bar="x",
+            baz=2,
+        )
+    """).splitlines(True)
+    result = update_call_arg_in_source(source_lines,
+                                       ("setup", "setuptools.setup"),
+                                       "bar", "y")
+    assert "".join(result) == textwrap.dedent("""\
+        setuptools.setup(
+            foo=1,
+            bar="y",
+            baz=2,
+        )
+    """)
+
+
 def test_update_call_arg_in_source_no_function_call(capsys):
     source_lines = textwrap.dedent("""\
     """).splitlines(True)

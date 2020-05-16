@@ -31,7 +31,7 @@ def to_literal(value: str, quote_style: str = '"') -> str:
 
 def update_call_arg_in_source(
     source_lines: FileLines,
-    function: str,
+    function: Union[str, Sequence[str]],
     keyword: str,
     new_value: Union[str, List[str]],
 ) -> FileLines:
@@ -44,13 +44,17 @@ def update_call_arg_in_source(
 
     Returns the updated source.
     """
+    if isinstance(function, str):
+        function = (function, )
     lines = iter(enumerate(source_lines))
-    rx = re.compile(f'^{re.escape(function)}\\s*\\(')
+    rx = re.compile(fr'^({"|".join(map(re.escape, function))})\s*\(')
     for n, line in lines:
-        if rx.match(line):
+        m = rx.match(line)
+        if m:
+            fname = m.group(1)
             break
     else:
-        warn(f'Did not find {function}() call')
+        warn(f'Did not find {function[0]}() call')
         return source_lines
     eq = '='
     rx = re.compile(
@@ -64,7 +68,7 @@ def update_call_arg_in_source(
             first_indent = m.group('indent')
             break
     else:
-        warn(f'Did not find {keyword}= argument in {function}() call')
+        warn(f'Did not find {keyword}= argument in {fname}() call')
         return source_lines
 
     quote_style = '"'
@@ -97,7 +101,7 @@ def update_call_arg_in_source(
             else:
                 warn(
                     f'Did not understand {keyword}= formatting'
-                    f' in {function}() call'
+                    f' in {fname}() call'
                 )
                 return source_lines
     elif rest.endswith('.join(['):
@@ -113,7 +117,7 @@ def update_call_arg_in_source(
         else:
             warn(
                 f'Did not understand {keyword}= formatting'
-                f' in {function}() call'
+                f' in {fname}() call'
             )
             return source_lines
     else:
