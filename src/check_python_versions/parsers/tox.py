@@ -16,7 +16,7 @@ The list of supported Python versions is extracted from ::
 
 import configparser
 import re
-from typing import Iterable, List
+from typing import Iterable, List, Optional
 
 from ..utils import FileLines, FileOrFilename, get_indent, open_file, warn
 from ..versions import SortedVersionList, Version, VersionList
@@ -37,8 +37,7 @@ def get_tox_ini_python_versions(
     except configparser.Error:
         return []
     return sorted({
-        tox_env_to_py_version(e)
-        for e in parse_envlist(envlist) if e.startswith('py')
+        e for e in map(tox_env_to_py_version, parse_envlist(envlist)) if e
     })
 
 
@@ -88,7 +87,7 @@ def brace_expand(s: str) -> List[str]:
     return res
 
 
-def tox_env_to_py_version(env: str) -> Version:
+def tox_env_to_py_version(env: str) -> Optional[Version]:
     """Convert a Tox environment name to a Python version.
 
     E.g. py34 becomes '3.4', pypy3 becomes 'PyPy3'.
@@ -103,10 +102,10 @@ def tox_env_to_py_version(env: str) -> Version:
         env = env.partition('-')[0]
     if env.startswith('pypy'):
         return 'PyPy' + env[4:]
-    elif env.startswith('py') and len(env) >= 4:
+    elif env.startswith('py') and len(env) >= 4 and env[2:].isdigit():
         return f'{env[2]}.{env[3:]}'
     else:
-        return env
+        return None
 
 
 def update_tox_ini_python_versions(

@@ -75,8 +75,7 @@ def get_travis_yml_python_versions(
         for env in conf['env']:
             if env.startswith('TOXENV='):
                 toxenvs.extend(parse_envlist(env.partition('=')[-1]))
-        versions.extend(
-            tox_env_to_py_version(e) for e in toxenvs if e.startswith('py'))
+        versions.extend(e for e in map(tox_env_to_py_version, toxenvs) if e)
     return sorted(set(versions))
 
 

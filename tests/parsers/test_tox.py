@@ -18,7 +18,7 @@ def test_get_tox_ini_python_versions(tmp_path):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
         [tox]
-        envlist = py27,py36,py27-docs
+        envlist = py27,py36,py27-docs,pylint
     """))
     assert get_tox_ini_python_versions(tox_ini) == ['2.7', '3.6']
 
@@ -77,7 +77,8 @@ def test_brace_expand(s, expected):
     ('py310', '3.10'),  # future-proofness!
     ('pypy', 'PyPy'),
     ('pypy3', 'PyPy3'),
-    ('flake8', 'flake8'),
+    ('pylint', None),
+    ('flake8', None),
 ])
 def test_tox_env_to_py_version(s, expected):
     assert tox_env_to_py_version(s) == expected
