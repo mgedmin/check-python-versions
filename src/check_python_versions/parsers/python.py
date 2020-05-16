@@ -202,6 +202,8 @@ def eval_ast_node(node: ast.AST, keyword: str) -> Optional[AstValue]:
     ``keyword`` is used for error reporting.
     """
     if isinstance(node, ast.Str):
+        # The assert is needed to placate mypy on Python 3.8
+        # https://github.com/python/mypy/issues/8837
         assert isinstance(node.s, str)
         return node.s
     if isinstance(node, (ast.List, ast.Tuple)):
