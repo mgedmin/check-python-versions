@@ -327,7 +327,7 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
 
     @handler('>')
     def greater_version(constraint: Constraint) -> CheckFn:
-        if '*' in constraint:
+        if constraint[-1] == '*':
             raise BadConstraint('> does not allow a .*')
         if len(constraint) == 1:
             # > X allows X+1.0 etc
