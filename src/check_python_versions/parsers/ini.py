@@ -4,6 +4,7 @@ Tools for manipulating INI files.
 I want to preserve formatting and comments, therefore I cannot use a standard
 INI parser and serializer.
 """
+
 import re
 
 from ..utils import FileLines, get_indent, warn

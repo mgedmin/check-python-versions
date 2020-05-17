@@ -1,3 +1,5 @@
+"""Python version business logic."""
+
 from typing import Collection, List, Optional, Set
 
 

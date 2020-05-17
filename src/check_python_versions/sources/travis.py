@@ -81,6 +81,7 @@ def get_travis_yml_python_versions(
 
 
 def travis_normalize_py_version(v: str) -> Version:
+    """Determine Python version from Travis ``python`` value."""
     v = str(v)
     if v.startswith('pypy3'):
         # could be pypy3, pypy3.5, pypy3.5-5.10.0

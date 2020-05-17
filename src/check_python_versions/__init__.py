@@ -10,5 +10,6 @@ Makes sure the set of supported Python versions is consistent between
 - (optionally) .manylinux-install.sh as used by various ZopeFoundation projects
 
 """
+
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
 __version__ = '0.14.3.dev0'

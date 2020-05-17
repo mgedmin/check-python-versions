@@ -1,3 +1,9 @@
+"""
+Assorted utilities that didn't fit elsewhere.
+
+Yes, this is a sign of bad design.  Maybe someday I'll clean it up.
+"""
+
 import difflib
 import logging
 import os

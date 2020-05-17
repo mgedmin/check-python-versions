@@ -1,1 +1,1 @@
-# make a package
+"""Higher-level parsers for various file formats."""

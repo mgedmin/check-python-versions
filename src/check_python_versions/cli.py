@@ -1,3 +1,12 @@
+"""
+Command-line user interface.
+
+This is the main module of check-python-versions, responsible for handling
+command-line arguments, extracting information about supported Python versions
+from various sources, presenting it to the user and possibly making
+modifications.
+"""
+
 import argparse
 import os
 import sys
@@ -44,15 +53,6 @@ from .versions import (
     important,
     update_version_list,
 )
-
-
-try:
-    import yaml  # noqa: F401
-except ImportError:  # pragma: nocover
-    # Shouldn't happen, we install_requires=['PyYAML'], but maybe someone is
-    # running ./check-python-versions directly from a git checkout.
-    print("PyYAML is needed for Travis CI/Appveyor support"
-          " (apt install python3-yaml)")
 
 
 def parse_version(v: str) -> Tuple[int, int]:
@@ -342,6 +342,11 @@ def update_versions(
 
 
 def _main() -> None:
+    """The guts of the main() function.
+
+    Parses command-line arguments, does work, reports results, exits with an
+    error code if necessary.
+    """
     parser = argparse.ArgumentParser(
         description="verify that supported Python versions are the same"
                     " in setup.py, tox.ini, .travis.yml and appveyor.yml")
@@ -437,6 +442,12 @@ def _main() -> None:
 
 
 def main() -> None:
+    """The main function.
+
+    It is here because I detest programs that print tracebacks when they're
+    terminated with a Ctrl+C.  I could inline _main() here, but I didn't want
+    to indent all of that code.  Maybe I should've added a decorator instead.
+    """
     try:
         _main()
     except KeyboardInterrupt:

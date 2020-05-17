@@ -1,3 +1,5 @@
+"""Support python -m check_python_versions."""
+
 from .cli import main
 
 
