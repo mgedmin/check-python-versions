@@ -252,12 +252,31 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
     rx = re.compile(r'^(~=|==|!=|<=|>=|<|>|===)\s*(\d+(?:\.\d+)*(?:\.\*)?)$')
 
     class BadConstraint(Exception):
-        pass
+        """The version clause is ill-formed according to PEP 440."""
+
+    #
+    # This works as follows: we split the specifier on commas into a list
+    # of Constraints, each represented as a operator and a tuple of numbers
+    # with a possible trailing '*'.  PEP 440 calls them "clauses".
+    #
 
     Constraint = Tuple[Union[str, int], ...]
-    Version = Tuple[int, int]
-    CheckFn = Callable[[Version], bool]
+
+    #
+    # The we look up a handler for each operartor.  This handler takes a
+    # constraint and compiles it into a checker.  A checker is a function
+    # that takes a Python version number as a 2-tuple and returns True if
+    # that version passes its constraint.
+    #
+
+    VersionTuple = Tuple[int, int]
+    CheckFn = Callable[[VersionTuple], bool]
     HandlerFn = Callable[[Constraint], CheckFn]
+
+    #
+    # Here we're defining the handlers for all the operators
+    #
+
     handlers: Dict[str, HandlerFn] = {}
     handler = partial(partial, handlers.__setitem__)
 
@@ -270,6 +289,7 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
 
     @handler('~=')
     def compatible_version(constraint: Constraint) -> CheckFn:
+        """~= X.Y more or less means >= X.Y and == X.Y.*"""
         if len(constraint) < 2:
             raise BadConstraint('~= requires a version with at least one dot')
         if constraint[-1] == '*':
@@ -278,6 +298,7 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
 
     @handler('==')
     def matching_version(constraint: Constraint) -> CheckFn:
+        """== X.Y means X.Y, no more, no less; == X[.Y].* is allowed."""
         # we know len(candidate) == 2
         if len(constraint) == 2 and constraint[-1] == '*':
             return lambda candidate: candidate[0] == constraint[0]
@@ -290,6 +311,7 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
 
     @handler('!=')
     def excluded_version(constraint: Constraint) -> CheckFn:
+        """!= X.Y is the opposite of == X.Y."""
         # we know len(candidate) == 2
         if constraint[-1] != '*':
             # != X or != X.Y or != X.Y.Z all are meaningless for us, because
@@ -308,6 +330,7 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
 
     @handler('>=')
     def greater_or_equal_version(constraint: Constraint) -> CheckFn:
+        """>= X.Y allows X.Y.* or X.(Y+n).*, or (X+n).*."""
         if constraint[-1] == '*':
             raise BadConstraint('>= does not allow a .*')
         # >= X, >= X.Y, >= X.Y.Z all work out nicely because in Python
@@ -316,6 +339,7 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
 
     @handler('<=')
     def lesser_or_equal_version(constraint: Constraint) -> CheckFn:
+        """<= X.Y is the opposite of > X.Y."""
         if constraint[-1] == '*':
             raise BadConstraint('<= does not allow a .*')
         if len(constraint) == 1:
@@ -327,6 +351,7 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
 
     @handler('>')
     def greater_version(constraint: Constraint) -> CheckFn:
+        """> X.Y is equivalent to >= X.Y and != X.Y, I think."""
         if constraint[-1] == '*':
             raise BadConstraint('> does not allow a .*')
         if len(constraint) == 1:
@@ -341,6 +366,7 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
 
     @handler('<')
     def lesser_version(constraint: Constraint) -> CheckFn:
+        """< X.Y is equivalent to <= X.Y and != X.Y, I think."""
         if constraint[-1] == '*':
             raise BadConstraint('< does not allow a .*')
         # < X, < X.Y, < X.Y.Z all work out nicely because in Python
@@ -349,6 +375,7 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
 
     @handler('===')
     def arbitrary_version(constraint: Constraint) -> CheckFn:
+        """=== X.Y means X.Y, without any zero padding etc."""
         if constraint[-1] == '*':
             raise BadConstraint('=== does not allow a .*')
         # === X does not allow anything
@@ -357,7 +384,12 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
         # === X.Y.Z allows X.Y
         return lambda candidate: candidate == constraint[:2]
 
-    constraints = []
+    #
+    # And now we can do what we planned: split and compile the constraints
+    # into checkers (which I also call "constraints", for maximum confusion).
+    #
+
+    constraints: List[CheckFn] = []
     for specifier in map(str.strip, s.split(',')):
         m = rx.match(specifier)
         if not m:
@@ -375,6 +407,11 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
 
     if not constraints:
         return None
+
+    #
+    # And now we can check all the existing Python versions we know about
+    # and list those that pass all the requirements.
+    #
 
     versions = []
     for major in sorted(MAX_MINOR_FOR_MAJOR):
