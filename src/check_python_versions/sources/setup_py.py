@@ -194,7 +194,11 @@ def update_python_requires(
     comma = ', '
     if ',' in python_requires and ', ' not in python_requires:
         comma = ','
-    new_python_requires = compute_python_requires(new_versions, comma=comma)
+    space = ''
+    if '> ' in python_requires or '= ' in python_requires:
+        space = ' '
+    new_python_requires = compute_python_requires(
+        new_versions, comma=comma, space=space)
     if is_file_object(filename):
         # Make sure we can read it twice please.
         # XXX: I don't like this.
@@ -382,20 +386,22 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
 
 def compute_python_requires(
     new_versions: VersionList,
-    comma: str = ', '
+    *,
+    comma: str = ', ',
+    space: str = '',
 ) -> str:
     """Compute a value for python_requires that matches a set of versions."""
     new_versions = set(new_versions)
     if len(new_versions) == 1:
-        return f'=={new_versions.pop()}.*'
+        return f'=={space}{new_versions.pop()}.*'
     # XXX assumes all versions are X.Y and 3.10 will never be released
     min_version = min(new_versions)
-    specifiers = [f'>={min_version}']
+    specifiers = [f'>={space}{min_version}']
     for major in sorted(MAX_MINOR_FOR_MAJOR):
         for minor in range(0, MAX_MINOR_FOR_MAJOR[major] + 1):
             ver = f'{major}.{minor}'
             if ver >= min_version and ver not in new_versions:
-                specifiers.append(f'!={ver}.*')
+                specifiers.append(f'!={space}{ver}.*')
     return comma.join(specifiers)
 
 

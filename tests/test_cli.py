@@ -250,7 +250,7 @@ def test_update_versions_dry_run_two_updaters_one_file(
         from setuptools import setup
         setup(
             name='foo',
-            python_requires='>= 2.7',
+            python_requires='>=2.7',
             classifiers=[
                 'Programming Language :: Python :: 2.7',
                 'Programming Language :: Python :: 3.6',
@@ -264,7 +264,7 @@ def test_update_versions_dry_run_two_updaters_one_file(
         from setuptools import setup
         setup(
             name='foo',
-            python_requires='>= 2.7',
+            python_requires='>=2.7',
             classifiers=[
                 'Programming Language :: Python :: 2.7',
                 'Programming Language :: Python :: 3.6',

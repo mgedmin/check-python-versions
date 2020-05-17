@@ -11,6 +11,10 @@ Changelog
   to python, and then to whatever interpreter was used to run
   check-python-versions.
 
+- Preserve formatting in ``python_requires``, e.g. when dropping 3.5,
+  ``python_requires='>= 3.5'`` now becomes ``python_requires='>= 3.6'``
+  instead of ``python_requires='>=3.6'``.
+
 
 0.14.2 (2020-05-16)
 -------------------

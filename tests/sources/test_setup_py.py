@@ -361,7 +361,7 @@ def test_update_python_requires(tmp_path, fix_max_python_3_version):
         from setuptools import setup
         setup(
             name='foo',
-            python_requires='>=3.5',
+            python_requires='>= 3.5',
         )
     """)
 
@@ -372,7 +372,7 @@ def test_update_python_requires_file_object(fix_max_python_3_version):
         from setuptools import setup
         setup(
             name='foo',
-            python_requires='>= 3.4',
+            python_requires='>=3.4',
         )
     """))
     fp.name = "setup.py"
