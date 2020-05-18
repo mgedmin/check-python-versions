@@ -11,10 +11,14 @@ import stat
 import subprocess
 import sys
 from contextlib import contextmanager
-from typing import Any, Iterator, List, TextIO, Union, cast
+from typing import Any, Iterator, List, Sequence, TextIO, TypeVar, Union, cast
 
 
 log = logging.getLogger('check-python-versions')
+
+
+T = TypeVar('T')
+OneOrMore = Union[T, Sequence[T]]
 
 
 FileObjectWithName = TextIO  # also has a .name attribute

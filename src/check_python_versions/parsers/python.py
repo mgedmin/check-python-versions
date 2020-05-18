@@ -5,9 +5,9 @@ Tools for manipulating Python files.
 import ast
 import re
 import string
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
-from ..utils import FileLines, get_indent, warn
+from ..utils import FileLines, OneOrMore, get_indent, warn
 
 
 AstValue = Union[str, List[str], Tuple[str, ...]]
@@ -31,7 +31,7 @@ def to_literal(value: str, quote_style: str = '"') -> str:
 
 def update_call_arg_in_source(
     source_lines: FileLines,
-    function: Union[str, Sequence[str]],
+    function: OneOrMore[str],
     keyword: str,
     new_value: Union[str, List[str]],
 ) -> FileLines:
@@ -162,7 +162,7 @@ def update_call_arg_in_source(
 
 def find_call_kwarg_in_ast(
     tree: ast.AST,
-    funcname: Union[str, Sequence[str]],
+    funcname: OneOrMore[str],
     keyword: str,
     *,
     filename: str,

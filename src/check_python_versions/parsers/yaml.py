@@ -5,9 +5,9 @@ I want to preserve formatting and comments, therefore I cannot use a standard
 YAML parser and serializer.
 """
 
-from typing import Callable, Collection, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
-from ..utils import FileLines, warn
+from ..utils import OneOrMore, FileLines, warn
 
 
 def update_yaml_list(
@@ -170,7 +170,7 @@ def add_yaml_node(
     key: str,
     value: str,
     *,
-    before: Optional[Union[str, Collection[str]]] = None,
+    before: Optional[OneOrMore[str]] = None,
 ) -> FileLines:
     """Add a value to a YAML document.
 
