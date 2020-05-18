@@ -5,14 +5,14 @@ I want to preserve formatting and comments, therefore I cannot use a standard
 YAML parser and serializer.
 """
 
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional
 
-from ..utils import OneOrMore, FileLines, warn
+from ..utils import FileLines, OneOrMore, OneOrTuple, warn
 
 
 def update_yaml_list(
     orig_lines: FileLines,
-    key: Union[str, Tuple[str, ...]],
+    key: OneOrTuple[str],
     new_value: List[str],
     *,
     filename: str,

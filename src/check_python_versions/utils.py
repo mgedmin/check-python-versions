@@ -11,7 +11,17 @@ import stat
 import subprocess
 import sys
 from contextlib import contextmanager
-from typing import Any, Iterator, List, Sequence, TextIO, TypeVar, Union, cast
+from typing import (
+    Any,
+    Iterator,
+    List,
+    Sequence,
+    TextIO,
+    Tuple,
+    TypeVar,
+    Union,
+    cast,
+)
 
 
 log = logging.getLogger('check-python-versions')
@@ -19,6 +29,7 @@ log = logging.getLogger('check-python-versions')
 
 T = TypeVar('T')
 OneOrMore = Union[T, Sequence[T]]
+OneOrTuple = Union[T, Tuple[T, ...]]
 
 
 FileObjectWithName = TextIO  # also has a .name attribute
