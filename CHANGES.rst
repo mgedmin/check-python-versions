@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.14.3 (unreleased)
+0.14.3 (2020-07-02)
 -------------------
 
 - Recognize ``setuptools.setup()`` calls in setup.py.
