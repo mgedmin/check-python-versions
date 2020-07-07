@@ -1,0 +1,7 @@
+-   id: check-python-versions
+    name: check-python-versions
+    description: This is a tool for Python package maintainers who want to explicitly state which Python versions they support.
+    entry: check-python-versions
+    language: python
+    pass_filenames: false
+    always_run: true
