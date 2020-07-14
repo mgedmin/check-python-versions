@@ -4,7 +4,7 @@ Changelog
 0.15.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix instruction for `pre-commit` integration.
 
 
 0.15.0 (2020-07-14)
