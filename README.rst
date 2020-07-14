@@ -307,3 +307,19 @@ When you're specifying Python version ranges for --expect, --add, --drop or
 
 or a comma-separated list of the above (e.g. ``--expect 2.7,3.5-``,
 ``--drop -2.6,-3.4``).
+
+
+pre-commit integration
+----------------------
+
+With `pre-commit <https://pre-commit.com>`_,
+``check-python-versions`` can be part of your git-workflow.
+Add the following snippet to your ``.pre-commit-config.yaml``.
+
+.. code-block:: yaml
+
+    repos:
+    -   repo: https://github.com/mgedmin/check-python-versions
+        rev: "0.15"
+        hooks:
+        -   id: check-python-versions
