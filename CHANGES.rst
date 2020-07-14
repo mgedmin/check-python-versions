@@ -1,8 +1,8 @@
 Changelog
 =========
 
-0.15 (unreleased)
------------------
+0.15.0 (2020-07-14)
+-------------------
 
 - Add ``pre-commit`` integration. See README file for instructions.
 

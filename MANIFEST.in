@@ -20,3 +20,6 @@ include pytest.ini
 recursive-include tests *.py
 
 prune .github
+
+# added by check_manifest.py
+include *.yaml
