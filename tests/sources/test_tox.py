@@ -54,6 +54,7 @@ def test_get_tox_ini_python_versions_no_tox_envlist(tmp_path):
     ('py36, py37', ['py36', 'py37']),
     ('\n  py36,\n  py37', ['py36', 'py37']),
     ('py3{6,7},pypy', ['py36', 'py37', 'pypy']),
+    ('py{35, 36, 37, 38, py3}', ['py35', 'py36', 'py37', 'py38', 'pypy3']),
 ])
 def test_parse_envlist(s, expected):
     assert parse_envlist(s) == expected
@@ -65,6 +66,9 @@ def test_parse_envlist(s, expected):
     ('py3{6,7}', ['py36', 'py37']),
     ('py3{6,7}-lint', ['py36-lint', 'py37-lint']),
     ('py3{6,7}{,-lint}', ['py36', 'py36-lint', 'py37', 'py37-lint']),
+    ('py3{6, 7}', ['py36', 'py37']),
+    ('py3{6 ,7}', ['py36', 'py37']),
+    ('py3{6 , 7}', ['py36', 'py37']),
 ])
 def test_brace_expand(s, expected):
     assert brace_expand(s) == expected

@@ -84,7 +84,7 @@ def brace_expand(s: str) -> List[str]:
     right = m.group(3)
     res = []
     for alt in m.group(2).split(','):
-        res += brace_expand(left + alt + right)
+        res += brace_expand(left + alt.strip() + right)
     return res
 
 

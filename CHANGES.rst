@@ -4,7 +4,9 @@ Changelog
 0.15.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Correctly handle ``tox.ini`` brace expressions with spaces in them
+  (e.g. ``py{35, 36}``; `GH #18
+  <https://github.com/mgedmin/check-python-versions/issues/18>`_)
 
 
 0.15.0 (2020-07-14)
