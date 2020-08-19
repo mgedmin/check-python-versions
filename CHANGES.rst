@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.15.1 (unreleased)
+0.15.1 (2020-08-19)
 -------------------
 
 - Correctly handle ``tox.ini`` brace expressions with spaces in them
