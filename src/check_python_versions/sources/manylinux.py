@@ -24,7 +24,7 @@ supported versions.  This looks like ::
 import re
 
 from ..utils import FileLines, FileOrFilename, open_file, warn
-from ..versions import SortedVersionList, VersionList
+from ..versions import SortedVersionList, Version, VersionList
 
 
 MANYLINUX_INSTALL_SH = '.manylinux-install.sh'
@@ -34,13 +34,14 @@ def get_manylinux_python_versions(
     filename: FileOrFilename = MANYLINUX_INSTALL_SH,
 ) -> SortedVersionList:
     """Extract supported Python versions from .manylinux-install.sh."""
-    magic = re.compile(r'.*\[\[ "\$\{PYBIN\}" == \*"cp(\d)(\d)"\* \]\]')
+    magic = re.compile(r'.*\[\[ "\$\{PYBIN\}" == \*"cp(\d)(\d+)"\* \]\]')
     versions = []
     with open_file(filename) as fp:
         for line in fp:
             m = magic.match(line)
             if m:
-                versions.append('{}.{}'.format(*m.groups()))
+                v = Version.from_string('{}.{}'.format(*m.groups()))
+                versions.append(v)
     return sorted(set(versions))
 
 
@@ -75,7 +76,7 @@ def update_manylinux_python_versions(
 
     indent = ' ' * 4
     conditions = f' || \\\n{indent}   '.join(
-        f'[[ "${{PYBIN}}" == *"cp{ver.replace(".", "")}"* ]]'
+        f'[[ "${{PYBIN}}" == *"cp{ver.major}{ver.minor}"* ]]'
         for ver in new_versions
     )
     new_lines = orig_lines[:start] + (

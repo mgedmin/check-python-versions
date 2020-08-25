@@ -102,9 +102,9 @@ def tox_env_to_py_version(env: str) -> Optional[Version]:
         # e.g. py34-coverage, pypy-subunit
         env = env.partition('-')[0]
     if env.startswith('pypy'):
-        return 'PyPy' + env[4:]
+        return Version.from_string('PyPy' + env[4:])
     elif env.startswith('py') and len(env) >= 4 and env[2:].isdigit():
-        return f'{env[2]}.{env[3:]}'
+        return Version.from_string(f'{env[2]}.{env[3:]}')
     else:
         return None
 
@@ -155,7 +155,7 @@ def update_tox_envlist(envlist: str, new_versions: SortedVersionList) -> str:
         sep = ','
 
     new_envs = [
-        f"py{ver.replace('.', '')}"
+        f"py{ver.major}{ver.minor if ver.minor >= 0 else ''}"
         for ver in new_versions
     ]
 
@@ -225,9 +225,9 @@ def should_keep(env: str, new_versions: VersionList) -> bool:
     if not re.match(r'py(py)?\d*($|-)', env):
         return True
     if env == 'pypy':
-        return any(ver.startswith('2') for ver in new_versions)
+        return any(ver.major == 2 for ver in new_versions)
     if env == 'pypy3':
-        return any(ver.startswith('3') for ver in new_versions)
+        return any(ver.major == 3 for ver in new_versions)
     if '-' in env:
         baseversion = tox_env_to_py_version(env)
         if baseversion in new_versions:

@@ -1,5 +1,6 @@
 import textwrap
 from io import StringIO
+from typing import List
 
 import pytest
 
@@ -9,6 +10,11 @@ from check_python_versions.sources.travis import (
     travis_normalize_py_version,
     update_travis_yml_python_versions,
 )
+from check_python_versions.versions import Version
+
+
+def v(versions: List[str]) -> List[Version]:
+    return [Version.from_string(v) for v in versions]
 
 
 def test_get_travis_yml_python_versions(tmp_path):
@@ -17,6 +23,7 @@ def test_get_travis_yml_python_versions(tmp_path):
         python:
           - 2.7
           - 3.6
+          - 3.10-dev
         matrix:
           include:
             - python: 3.7
@@ -29,9 +36,9 @@ def test_get_travis_yml_python_versions(tmp_path):
           - TOXENV=py35-docs
           - UNRELATED=variable
     """))
-    assert get_travis_yml_python_versions(travis_yml) == [
-        '2.7', '3.4', '3.5', '3.6', '3.7',
-    ]
+    assert get_travis_yml_python_versions(travis_yml) == v([
+        '2.7', '3.4', '3.5', '3.6', '3.7', '3.10-dev',
+    ])
 
 
 def test_get_travis_yml_python_versions_no_list(tmp_path):
@@ -39,9 +46,9 @@ def test_get_travis_yml_python_versions_no_list(tmp_path):
         python: 3.7
     """))
     travis_yml.name = '.travis.yml'
-    assert get_travis_yml_python_versions(travis_yml) == [
+    assert get_travis_yml_python_versions(travis_yml) == v([
         '3.7',
-    ]
+    ])
 
 
 def test_get_travis_yml_python_versions_no_python_only_matrix(tmp_path):
@@ -51,9 +58,9 @@ def test_get_travis_yml_python_versions_no_python_only_matrix(tmp_path):
           include:
             - python: 3.7
     """))
-    assert get_travis_yml_python_versions(travis_yml) == [
+    assert get_travis_yml_python_versions(travis_yml) == v([
         '3.7',
-    ]
+    ])
 
 
 @pytest.mark.parametrize('s, expected', [
@@ -70,7 +77,7 @@ def test_get_travis_yml_python_versions_no_python_only_matrix(tmp_path):
     ('nightly', 'nightly'),
 ])
 def test_travis_normalize_py_version(s, expected):
-    assert travis_normalize_py_version(s) == expected
+    assert travis_normalize_py_version(s) == Version.from_string(expected)
 
 
 def test_update_travis_yml_python_versions():
@@ -83,13 +90,36 @@ def test_update_travis_yml_python_versions():
         script: pytest tests
     """))
     travis_yml.name = '.travis.yml'
-    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.4"])
+    result = update_travis_yml_python_versions(travis_yml, v(["2.7", "3.4"]))
     assert "".join(result) == textwrap.dedent("""\
         language: python
         python:
           - 2.7
           - 3.4
           - pypy
+        install: pip install -e .
+        script: pytest tests
+    """)
+
+
+def test_update_travis_yml_python_versions_3_10():
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        python:
+          - 3.4
+          - pypy3
+        install: pip install -e .
+        script: pytest tests
+    """))
+    travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, v(["3.9", "3.10"]))
+    # Note: we cannot say '- 3.10', that's a float and evaluates to 3.1!
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+          - 3.9
+          - "3.10"
+          - pypy3
         install: pip install -e .
         script: pytest tests
     """)
@@ -107,7 +137,7 @@ def test_update_travis_yml_python_versions_drops_pypy():
         script: pytest tests
     """))
     travis_yml.name = '.travis.yml'
-    result = update_travis_yml_python_versions(travis_yml, ["3.8"])
+    result = update_travis_yml_python_versions(travis_yml, v(["3.8"]))
     assert "".join(result) == textwrap.dedent("""\
         language: python
         python:
@@ -131,7 +161,7 @@ def test_update_travis_yml_python_versions_drops_pypy3():
         script: pytest tests
     """))
     travis_yml.name = '.travis.yml'
-    result = update_travis_yml_python_versions(travis_yml, ["2.7"])
+    result = update_travis_yml_python_versions(travis_yml, v(["2.7"]))
     assert "".join(result) == textwrap.dedent("""\
         language: python
         python:
@@ -153,7 +183,7 @@ def test_update_travis_yml_python_versions_keeps_dev():
         script: pytest tests
     """))
     travis_yml.name = '.travis.yml'
-    result = update_travis_yml_python_versions(travis_yml, ["3.8"])
+    result = update_travis_yml_python_versions(travis_yml, v(["3.8"]))
     assert "".join(result) == textwrap.dedent("""\
         language: python
         python:
@@ -177,7 +207,7 @@ def test_update_travis_yml_python_versions_drops_dist_trusty(monkeypatch):
         script: pytest tests
     """))
     travis_yml.name = '.travis.yml'
-    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
+    result = update_travis_yml_python_versions(travis_yml, v(["2.7", "3.7"]))
     assert "".join(result) == textwrap.dedent("""\
         language: python
         python:
@@ -200,7 +230,7 @@ def test_update_travis_yml_python_versions_drops_sudo():
         script: pytest tests
     """))
     travis_yml.name = '.travis.yml'
-    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
+    result = update_travis_yml_python_versions(travis_yml, v(["2.7", "3.7"]))
     assert "".join(result) == textwrap.dedent("""\
         language: python
         dist: xenial
@@ -227,7 +257,7 @@ def test_update_travis_yml_python_versions_drops_matrix():
         script: pytest tests
     """))
     travis_yml.name = '.travis.yml'
-    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
+    result = update_travis_yml_python_versions(travis_yml, v(["2.7", "3.7"]))
     assert "".join(result) == textwrap.dedent("""\
         language: python
         python:
@@ -251,7 +281,7 @@ def test_update_travis_yml_python_versions_keeps_matrix():
         script: pytest tests
     """))
     travis_yml.name = '.travis.yml'
-    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
+    result = update_travis_yml_python_versions(travis_yml, v(["2.7", "3.7"]))
     assert "".join(result) == textwrap.dedent("""\
         language: python
         python:
@@ -274,7 +304,7 @@ def test_update_travis_yml_python_versions_one_to_many():
         script: pytest tests
     """))
     travis_yml.name = '.travis.yml'
-    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.4"])
+    result = update_travis_yml_python_versions(travis_yml, v(["2.7", "3.4"]))
     assert "".join(result) == textwrap.dedent("""\
         language: python
         python:
@@ -308,7 +338,7 @@ def test_update_travis_yml_python_versions_matrix():
         script: pytest tests
     """))
     travis_yml.name = '.travis.yml'
-    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.4"])
+    result = update_travis_yml_python_versions(travis_yml, v(["2.7", "3.4"]))
     assert "".join(result) == textwrap.dedent("""\
         language: python
         matrix:
@@ -357,7 +387,7 @@ def test_update_travis_yml_python_versions_matrix_xenial(monkeypatch):
         script: pytest tests
     """))
     travis_yml.name = '.travis.yml'
-    result = update_travis_yml_python_versions(travis_yml, ["2.7", "3.7"])
+    result = update_travis_yml_python_versions(travis_yml, v(["2.7", "3.7"]))
     assert "".join(result) == textwrap.dedent("""\
         language: python
         matrix:

@@ -1,10 +1,23 @@
 import textwrap
 
+import pytest
+
 from check_python_versions.parsers.yaml import (
     add_yaml_node,
     drop_yaml_node,
+    quote_string,
     update_yaml_list,
 )
+
+
+@pytest.mark.parametrize('s, expected', [
+    ('', ''),
+    ('3.1', '3.1'),
+    ('3.10', '"3.10"'),
+    ('pypy', 'pypy'),
+])
+def test_quote_string(s, expected):
+    assert quote_string(s) == expected
 
 
 def test_update_yaml_list():

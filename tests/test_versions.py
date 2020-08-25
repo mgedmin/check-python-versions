@@ -1,4 +1,59 @@
-from check_python_versions.versions import important, update_version_list
+import pytest
+
+from check_python_versions.versions import (
+    Version,
+    important,
+    update_version_list,
+)
+
+
+def test_version_from_string() -> None:
+    assert Version.from_string('3') == Version(major=3)
+    assert Version.from_string('3.0') == Version(major=3, minor=0)
+    assert Version.from_string('3.6') == Version(major=3, minor=6)
+    assert Version.from_string('3.10-dev') == Version('', 3, 10, '-dev')
+    assert Version.from_string('PyPy') == Version('PyPy')
+    assert Version.from_string('PyPy3') == Version('PyPy', 3)
+    assert Version.from_string('PyPy-dev') == Version('PyPy', suffix='-dev')
+    assert Version.from_string('PyPy3-dev') == Version('PyPy', 3, -1, '-dev')
+    assert Version.from_string('3') != Version.from_string('3.0')
+
+
+def test_version_repr() -> None:
+    assert repr(Version()) == 'Version()'
+    assert repr(Version(major=3)) == 'Version(major=3)'
+    assert repr(Version(major=3, minor=0)) == 'Version(major=3, minor=0)'
+    assert repr(Version(major=3, minor=6)) == 'Version(major=3, minor=6)'
+    assert repr(Version(major=3, minor=10, suffix='-dev')) == \
+        "Version(major=3, minor=10, suffix='-dev')"
+    assert repr(Version(prefix='PyPy')) == "Version(prefix='PyPy')"
+    assert repr(Version(prefix='PyPy', major=3, suffix='-dev')) == \
+        "Version(prefix='PyPy', major=3, suffix='-dev')"
+
+
+@pytest.mark.parametrize('v', [
+    '3',
+    '3.0',
+    '3.6',
+    '3.10-dev',
+    'PyPy',
+    'PyPy3',
+    'PyPy-dev',
+    'PyPy3-dev',
+    'PyPy3-dev',
+])
+def test_version_str_roundtrips(v):
+    assert str(Version.from_string(v)) == v
+
+
+def test_version_sorting():
+    assert sorted(Version.from_string(v) for v in [
+        '2.7', '3.1', '3.6', '3.10', '3.10-dev',
+        'PyPy', 'PyPy3', 'nightly',
+    ]) == [Version.from_string(v) for v in [
+        '2.7', '3.1', '3.6', '3.10', '3.10-dev',
+        'PyPy', 'PyPy3', 'nightly',
+    ]]
 
 
 def test_important(fix_max_python_3_version):

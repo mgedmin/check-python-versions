@@ -1,5 +1,6 @@
 import textwrap
 from io import StringIO
+from typing import List
 
 import pytest
 
@@ -9,6 +10,11 @@ from check_python_versions.sources.appveyor import (
     get_appveyor_yml_python_versions,
     update_appveyor_yml_python_versions,
 )
+from check_python_versions.versions import Version
+
+
+def v(versions: List[str]) -> List[Version]:
+    return [Version.from_string(v) for v in versions]
 
 
 def test_get_appveyor_yml_python_versions(tmp_path):
@@ -22,9 +28,9 @@ def test_get_appveyor_yml_python_versions(tmp_path):
             - PYTHON: c:\\python36-x64
               UNRELATED: variable
     """))
-    assert get_appveyor_yml_python_versions(appveyor_yml) == [
+    assert get_appveyor_yml_python_versions(appveyor_yml) == v([
         '2.7', '3.6',
-    ]
+    ])
 
 
 def test_get_appveyor_yml_python_versions_forward_slashs(tmp_path):
@@ -38,9 +44,9 @@ def test_get_appveyor_yml_python_versions_forward_slashs(tmp_path):
             - PYTHON: "C:/Python35"
             - PYTHON: "C:/Python36"
     """))
-    assert get_appveyor_yml_python_versions(appveyor_yml) == [
+    assert get_appveyor_yml_python_versions(appveyor_yml) == v([
         '2.7', '3.4', '3.5', '3.6',
-    ]
+    ])
 
 
 def test_get_appveyor_yml_python_versions_python_not_recognized(tmp_path):
@@ -54,9 +60,9 @@ def test_get_appveyor_yml_python_versions_python_not_recognized(tmp_path):
             - PYTHON: "C:/Python37"
             - PYTHON: "C:/Python38"
     """))
-    assert get_appveyor_yml_python_versions(appveyor_yml) == [
+    assert get_appveyor_yml_python_versions(appveyor_yml) == v([
         '3.6', '3.7', '3.8',
-    ]
+    ])
 
 
 def test_get_appveyor_yml_python_versions_using_toxenv(tmp_path):
@@ -67,9 +73,9 @@ def test_get_appveyor_yml_python_versions_using_toxenv(tmp_path):
             - TOXENV: py27
             - TOXENV: py37
     """))
-    assert get_appveyor_yml_python_versions(appveyor_yml) == [
+    assert get_appveyor_yml_python_versions(appveyor_yml) == v([
         '2.7', '3.7',
-    ]
+    ])
 
 
 @pytest.mark.parametrize('s, expected', [
@@ -81,9 +87,11 @@ def test_get_appveyor_yml_python_versions_using_toxenv(tmp_path):
     ('C:\\Python38-x64\\python.exe', '3.8'),
     ('c:/python38', '3.8'),
     ('c:/python3', None),  # would it be useful to return '3'?  probably not
+    ('c:/python310', '3.10'),
     ('unknown', None),
 ])
 def test_appveyor_normalize_py_version(s, expected):
+    expected = expected and Version.from_string(expected)
     assert appveyor_normalize_py_version(s) == expected
 
 
@@ -94,6 +102,7 @@ def test_appveyor_normalize_py_version(s, expected):
     ('C:\\Python27-x64', 'C:\\Python{}{}-x64'),
     ('C:\\PYTHON34-X64', 'C:\\PYTHON{}{}-X64'),
     ('c:/python38', 'c:/python{}{}'),
+    ('c:/python310', 'c:/python{}{}'),
     ('unknown', None),
 ])
 def test_appveyor_detect_py_version_pattern(s, expected):
@@ -108,12 +117,16 @@ def test_update_appveyor_yml_python_versions():
             - PYTHON: "c:\\python36"
     """).lstrip('\n'))
     appveyor_yml.name = 'appveyor.yml'
-    result = update_appveyor_yml_python_versions(appveyor_yml, ['2.7', '3.7'])
+    result = update_appveyor_yml_python_versions(appveyor_yml, v([
+        '2.7', '3.7', '3.10',
+    ]))
+    assert result is not None
     assert ''.join(result) == textwrap.dedent(r"""
         environment:
            matrix:
             - PYTHON: "c:\\python27"
             - PYTHON: "c:\\python37"
+            - PYTHON: "c:\\python310"
     """.lstrip('\n'))
 
 
@@ -127,7 +140,10 @@ def test_update_appveyor_yml_python_versions_multiple_of_each():
             - PYTHON: c:\\python36-x64
     """))
     appveyor_yml.name = 'appveyor.yml'
-    result = update_appveyor_yml_python_versions(appveyor_yml, ['2.7', '3.7'])
+    result = update_appveyor_yml_python_versions(appveyor_yml, v([
+        '2.7', '3.7',
+    ]))
+    assert result is not None
     assert ''.join(result) == textwrap.dedent("""\
         environment:
           matrix:
@@ -147,7 +163,10 @@ def test_update_appveyor_yml_leave_unknown_python_versions_alone():
             - PYTHON: c:\\custompython
     """))
     appveyor_yml.name = 'appveyor.yml'
-    result = update_appveyor_yml_python_versions(appveyor_yml, ['3.6', '3.7'])
+    result = update_appveyor_yml_python_versions(appveyor_yml, v([
+        '3.6', '3.7',
+    ]))
+    assert result is not None
     assert ''.join(result) == textwrap.dedent("""\
         environment:
           matrix:
@@ -171,7 +190,8 @@ def test_update_appveyor_yml_python_complicated_but_oneline():
                 COMPLICATED: 2 }
     """))
     appveyor_yml.name = 'appveyor.yml'
-    result = update_appveyor_yml_python_versions(appveyor_yml, ['3.6'])
+    result = update_appveyor_yml_python_versions(appveyor_yml, v(['3.6']))
+    assert result is not None
     assert ''.join(result) == textwrap.dedent("""\
         environment:
           matrix:
@@ -192,7 +212,8 @@ def test_update_appveyor_yml_python_no_understanding(capsys):
             - BAR: 2
     """))
     appveyor_yml.name = 'appveyor.yml'
-    result = update_appveyor_yml_python_versions(appveyor_yml, ['3.6'])
+    result = update_appveyor_yml_python_versions(appveyor_yml, v(['3.6']))
+    assert result is not None
     assert ''.join(result) == textwrap.dedent("""\
         environment:
           matrix:

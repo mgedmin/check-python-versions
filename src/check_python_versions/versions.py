@@ -1,6 +1,7 @@
 """Python version business logic."""
 
-from typing import Collection, List, Optional, Set
+import re
+from typing import Collection, List, NamedTuple, Optional, Set, Union
 
 
 #
@@ -19,16 +20,62 @@ MAX_MINOR_FOR_MAJOR = {
 }
 
 
-# XXX: 3.10 will wreak havoc on all my sorted(list_of_version_strings)!
-# I'll probably have to make Version a named tuple with an __str__
+VERSION_RX = re.compile('^([^-0-9]*)([0-9]*)([.][0-9]+)?(.*)$')
 
-Version = str   # 'MAJOR.MINOR' usually, but could also be e.g. 'PyPy3'
+
+class Version(NamedTuple):
+    """A simplified Python version number.
+
+    Primarily needed so we can sort lists of version numbers correctly, i.e.
+    2.7, 3.0, 3.1, 3.2, ..., 3.9, 3.10, ...
+
+    Can have an optional prefix, e.g. PyPy3.6 is Version(prefix='PyPy',
+    major=3, minor=6).
+
+    Can have an optional suffix, e.g. 3.10-dev is Version(major=3, minor=10,
+    suffix='-dev').
+
+    Any string can be round-tripped to a Version and back via
+    Version.from_string() and Version.__str__.
+    """
+
+    prefix: str = ''
+    major: int = -1  # I'd've preferred to use None, but it complicates sorting
+    minor: int = -1
+    suffix: str = ''
+
+    @classmethod
+    def from_string(cls, v: str) -> 'Version':
+        m = VERSION_RX.match(v)
+        assert m is not None
+        prefix, major, minor, suffix = m.groups()
+        return cls(
+            prefix,
+            int(major) if major else -1,
+            int(minor[1:]) if minor else -1,
+            suffix,
+        )
+
+    def __repr__(self) -> str:
+        return 'Version({})'.format(', '.join(part for part in [
+            f'prefix={self.prefix!r}' if self.prefix else '',
+            f'major={self.major!r}' if self.major != -1 else '',
+            f'minor={self.minor!r}' if self.minor != -1 else '',
+            f'suffix={self.suffix!r}' if self.suffix else '',
+        ] if part))
+
+    def __str__(self) -> str:
+        major = '' if self.major == -1 else f'{self.major}'
+        minor = '' if self.minor == -1 else f'.{self.minor}'
+        return f'{self.prefix}{major}{minor}{self.suffix}'
+
+
 VersionSet = Set[Version]
 VersionList = Collection[Version]
 SortedVersionList = List[Version]
 
 
-def is_important(v: str) -> bool:
+def is_important(v: Union[Version, str]) -> bool:
     """Is the version important for matching purposes?
 
     Different sources can express support for different versions, e.g.
@@ -37,14 +84,16 @@ def is_important(v: str) -> bool:
     cannot be listed in classifiers, so their presence should not cause
     mismatch errors.
     """
-    upcoming_release = f'3.{CURRENT_PYTHON_3_VERSION + 1}'
+    if not isinstance(v, Version):
+        v = Version.from_string(v)
+    upcoming_release = Version(major=3, minor=CURRENT_PYTHON_3_VERSION + 1)
     return (
-        not v.startswith(('PyPy', 'Jython')) and v != 'nightly'
-        and not v.endswith('-dev') and v != upcoming_release
+        not v.prefix.startswith(('PyPy', 'Jython')) and v.prefix != 'nightly'
+        and not v.suffix.endswith('-dev') and v != upcoming_release
     )
 
 
-def important(versions: Collection[str]) -> VersionSet:
+def important(versions: Collection[Version]) -> VersionSet:
     """Filter out unimportant versions.
 
     See `is_important` for what consitutes "important".

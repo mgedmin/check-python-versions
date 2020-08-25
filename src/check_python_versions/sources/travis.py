@@ -15,12 +15,12 @@ than others:
   the future)
 """
 
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import yaml
 
 from .tox import parse_envlist, tox_env_to_py_version
-from ..parsers.yaml import drop_yaml_node, update_yaml_list
+from ..parsers.yaml import drop_yaml_node, quote_string, update_yaml_list
 from ..utils import FileLines, FileOrFilename, open_file
 from ..versions import SortedVersionList, Version, is_important
 
@@ -57,7 +57,7 @@ def get_travis_yml_python_versions(
     """Extract supported Python versions from .travis.yml."""
     with open_file(filename) as fp:
         conf = yaml.safe_load(fp)
-    versions: List[str] = []
+    versions: List[Version] = []
     if conf.get('python'):
         if isinstance(conf['python'], list):
             versions += map(travis_normalize_py_version, conf['python'])
@@ -80,17 +80,17 @@ def get_travis_yml_python_versions(
     return sorted(set(versions))
 
 
-def travis_normalize_py_version(v: str) -> Version:
+def travis_normalize_py_version(v: Union[str, float]) -> Version:
     """Determine Python version from Travis ``python`` value."""
     v = str(v)
     if v.startswith('pypy3'):
         # could be pypy3, pypy3.5, pypy3.5-5.10.0
-        return 'PyPy3'
+        return Version.from_string('PyPy3')
     elif v.startswith('pypy'):
         # could be pypy, pypy2, pypy2.7, pypy2.7-5.10.0
-        return 'PyPy'
+        return Version.from_string('PyPy')
     else:
-        return v
+        return Version.from_string(v)
 
 
 def needs_xenial(v: Version) -> bool:
@@ -99,8 +99,7 @@ def needs_xenial(v: Version) -> bool:
     This is obsolete now that dist: xenial is the default, but it may
     be helpful to determine when we need to drop old dist: trusty.
     """
-    major, minor = map(int, v.split('.'))
-    return major == 3 and minor >= 7
+    return v >= Version(major=3, minor=7)
 
 
 def update_travis_yml_python_versions(
@@ -129,13 +128,13 @@ def update_travis_yml_python_versions(
             # to get Python 3.7
             new_lines = drop_yaml_node(new_lines, "sudo", filename=fp.name)
 
-    def keep_old(ver: str) -> bool:
+    def keep_old(value: str) -> bool:
         """Determine if a Python version line should be preserved."""
-        ver = travis_normalize_py_version(ver)
-        if ver == 'PyPy':
-            return any(v.startswith('2') for v in new_versions)
-        if ver == 'PyPy3':
-            return any(v.startswith('3') for v in new_versions)
+        ver = travis_normalize_py_version(value)
+        if ver == Version.from_string('PyPy'):
+            return any(v.major == 2 for v in new_versions)
+        if ver == Version.from_string('PyPy3'):
+            return any(v.major == 3 for v in new_versions)
         return not is_important(ver)
 
     def keep_old_job(job: str) -> bool:
@@ -146,9 +145,15 @@ def update_travis_yml_python_versions(
         else:
             return True
 
+    yaml_new_versions = [
+        quote_string(str(v))
+        for v in new_versions
+    ]
+
     if conf.get('python'):
         new_lines = update_yaml_list(
-            new_lines, "python", new_versions, filename=fp.name, keep=keep_old,
+            new_lines, "python", yaml_new_versions, filename=fp.name,
+            keep=keep_old,
             replacements=replacements,
         )
     else:
@@ -161,7 +166,7 @@ def update_travis_yml_python_versions(
                 continue
             new_jobs = [
                 f'python: {ver}'
-                for ver in new_versions
+                for ver in yaml_new_versions
             ]
             new_lines = update_yaml_list(
                 new_lines, (toplevel, "include"), new_jobs, filename=fp.name,

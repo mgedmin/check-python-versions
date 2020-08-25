@@ -57,7 +57,7 @@ def get_appveyor_yml_python_versions(
                     tox_env_to_py_version(e)
                     for e in toxenvs if e.startswith('py'))
     # The cast() is a workaround for https://github.com/python/mypy/issues/8526
-    return sorted(cast(Set[str], set(versions) - {None}))
+    return sorted(cast(Set[Version], set(versions) - {None}))
 
 
 def appveyor_normalize_py_version(ver: str) -> Optional[Version]:
@@ -72,7 +72,7 @@ def appveyor_normalize_py_version(ver: str) -> Optional[Version]:
     if ver.endswith('-x64'):
         ver = ver[:-len('-x64')]
     if len(ver) >= 2 and ver[:2].isdigit():
-        return f'{ver[0]}.{ver[1:]}'
+        return Version.from_string(f'{ver[0]}.{ver[1:]}')
     else:
         return None
 
@@ -140,7 +140,7 @@ def update_appveyor_yml_python_versions(
     quote = any(f'{varname}: "' in line for line in orig_lines)
 
     new_pythons = [
-        pattern.format(*ver.split(".", 1))
+        pattern.format(ver.major, ver.minor)
         for ver in new_versions
         for pattern in sorted(patterns)
     ]

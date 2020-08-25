@@ -4,7 +4,10 @@ Changelog
 0.15.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Python 3.10 support: sort 3.10 after 3.9, quote "3.10" when
+  updating YAML files so it doesn't get treated as a floating point
+  number (`GH #19
+  <https://github.com/mgedmin/check-python-versions/issues/19>`_)
 
 
 0.15.1 (2020-08-19)

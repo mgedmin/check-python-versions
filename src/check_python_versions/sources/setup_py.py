@@ -43,7 +43,12 @@ from ..utils import (
     pipe,
     warn,
 )
-from ..versions import MAX_MINOR_FOR_MAJOR, SortedVersionList, VersionList
+from ..versions import (
+    MAX_MINOR_FOR_MAJOR,
+    SortedVersionList,
+    Version,
+    VersionList,
+)
 
 
 SETUP_PY = 'setup.py'
@@ -128,7 +133,7 @@ def get_versions_from_classifiers(
         if major in versions and any(
                 v.startswith(f'{major}.') for v in versions):
             versions.remove(major)
-    return sorted(versions)
+    return sorted(map(Version.from_string, versions))
 
 
 def update_classifiers(
@@ -147,7 +152,8 @@ def update_classifiers(
     if any(map(is_major_version_classifier, classifiers)):
         new_versions = sorted(
             set(new_versions).union(
-                v.partition('.')[0] for v in new_versions
+                v._replace(prefix='', minor=-1, suffix='')
+                for v in new_versions
             )
         )
 
@@ -417,7 +423,7 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
     for major in sorted(MAX_MINOR_FOR_MAJOR):
         for minor in range(0, MAX_MINOR_FOR_MAJOR[major] + 1):
             if all(constraint((major, minor)) for constraint in constraints):
-                versions.append(f'{major}.{minor}')
+                versions.append(Version.from_string(f'{major}.{minor}'))
     return versions
 
 
@@ -429,14 +435,14 @@ def compute_python_requires(
 ) -> str:
     """Compute a value for python_requires that matches a set of versions."""
     new_versions = set(new_versions)
-    if len(new_versions) == 1:
+    latest_python = Version(major=3, minor=MAX_MINOR_FOR_MAJOR[3])
+    if len(new_versions) == 1 and new_versions != {latest_python}:
         return f'=={space}{new_versions.pop()}.*'
-    # XXX assumes all versions are X.Y and 3.10 will never be released
     min_version = min(new_versions)
     specifiers = [f'>={space}{min_version}']
     for major in sorted(MAX_MINOR_FOR_MAJOR):
         for minor in range(0, MAX_MINOR_FOR_MAJOR[major] + 1):
-            ver = f'{major}.{minor}'
+            ver = Version.from_string(f'{major}.{minor}')
             if ver >= min_version and ver not in new_versions:
                 specifiers.append(f'!={space}{ver}.*')
     return comma.join(specifiers)

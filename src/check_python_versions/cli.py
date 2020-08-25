@@ -49,6 +49,7 @@ from .utils import (
 from .versions import (
     MAX_MINOR_FOR_MAJOR,
     SortedVersionList,
+    Version,
     VersionList,
     important,
     update_version_list,
@@ -113,7 +114,7 @@ def parse_version_list(v: str) -> SortedVersionList:
                 f'bad range: {part} ({lo_major} != {hi_major})')
 
         for vmin in range(lo_minor, hi_minor + 1):
-            versions.add(f'{lo_major}.{vmin}')
+            versions.add(Version(major=lo_major, minor=vmin))
 
     return sorted(versions)
 
@@ -241,13 +242,14 @@ def check_versions(
         versions = extractor(filename_or_replacement(pathname, replacements))
         if versions is None:
             continue
-        print(f"{title} says:".ljust(width), ", ".join(versions) or "(empty)")
+        print(f"{title} says:".ljust(width),
+              ", ".join(str(v) for v in versions) or "(empty)")
         version_sets.append(important(versions))
 
     if not expect:
         expect = version_sets[0]
     else:
-        print("expected:".ljust(width), ', '.join(expect))
+        print("expected:".ljust(width), ', '.join(str(v) for v in expect))
 
     expect = important(expect)
     return all(
@@ -324,10 +326,12 @@ def update_versions(
             fp = filename_or_replacement(pathname, replacements)
             new_lines = updater(fp, new_versions)
             if new_lines is not None:
-                # TODO: refactor this into two functions, one that produces a
-                # replacement dict and does no user interaction, and another
-                # that does user interaction based on the contents of the
-                # replacement dict.
+                # TODO: refactor update_versions() into two functions, one that
+                # produces a replacement dict and does no user interaction, and
+                # another that does user interaction based on the contents of
+                # the replacement dict.  This is because showing a diff for
+                # setup.py twice (once to update classifiers and once to update
+                # python_requires) is weird?
                 if diff:
                     fp = filename_or_replacement(pathname, replacements)
                     show_diff(fp, new_lines)

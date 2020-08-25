@@ -5,15 +5,36 @@ I want to preserve formatting and comments, therefore I cannot use a standard
 YAML parser and serializer.
 """
 
-from typing import Callable, Dict, List, Optional
+import string
+from typing import Any, Callable, Dict, List, Optional
 
 from ..utils import FileLines, OneOrMore, OneOrTuple, warn
+
+
+def quote_string(value: str, quote_style: str = '') -> str:
+    """Convert a string value to a YAML string literal."""
+    # Because I don't want to deal with quoting, I'll require all values
+    # to contain only safe characters (i.e. no ' or " or \).  This is fine
+    # because the only thing I want to quote is version numbers
+    safe_chars = string.ascii_letters + string.digits + ".-"
+    assert all(
+        c in safe_chars for c in value
+    ), f'{value!r} has unexpected characters'
+    try:
+        # 3.10 in yaml evaluates to 3.1 (a float), not '3.10' (a string)
+        if str(float(value)) != value:
+            quote_style = '"'
+    except ValueError:
+        pass
+    if quote_style:
+        assert quote_style not in value
+    return f'{quote_style}{value}{quote_style}'
 
 
 def update_yaml_list(
     orig_lines: FileLines,
     key: OneOrTuple[str],
-    new_value: List[str],
+    new_value: List[Any],
     *,
     filename: str,
     keep: Optional[Callable[[str], bool]] = None,

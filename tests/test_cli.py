@@ -4,26 +4,38 @@ import re
 import sys
 import textwrap
 from io import StringIO
+from typing import List
 
 import pytest
 
 import check_python_versions.cli as cpv
+from check_python_versions.versions import Version
+
+
+def v(versions: List[str]) -> List[Version]:
+    return [Version.from_string(v) for v in versions]
 
 
 def test_parse_version_list():
     assert cpv.parse_version_list(
         '2.7,3.4-3.6'
-    ) == ['2.7', '3.4', '3.5', '3.6']
+    ) == v(['2.7', '3.4', '3.5', '3.6'])
+
+
+def test_parse_version_list_3_10():
+    assert cpv.parse_version_list(
+        '3.7-3.10'
+    ) == v(['3.7', '3.8', '3.9', '3.10'])
 
 
 def test_parse_version_list_magic_range(fix_max_python_3_version):
     fix_max_python_3_version(7)
     assert cpv.parse_version_list(
         '2.7,3.4-'
-    ) == ['2.7', '3.4', '3.5', '3.6', '3.7']
+    ) == v(['2.7', '3.4', '3.5', '3.6', '3.7'])
     assert cpv.parse_version_list(
         '2.6,-3.4'
-    ) == ['2.6', '3.0', '3.1', '3.2', '3.3', '3.4']
+    ) == v(['2.6', '3.0', '3.1', '3.2', '3.3', '3.4'])
 
 
 @pytest.mark.parametrize('v', [
@@ -150,7 +162,7 @@ def test_check_expectation(tmp_path, capsys):
             ],
         )
     """))
-    assert cpv.check_versions(tmp_path, expect=['2.7', '3.6', '3.7']) is False
+    assert not cpv.check_versions(tmp_path, expect=v(['2.7', '3.6', '3.7']))
     assert capsys.readouterr().out == textwrap.dedent("""\
         setup.py says:              2.7, 3.6
         expected:                   2.7, 3.6, 3.7
@@ -192,7 +204,7 @@ def test_update_versions(tmp_path, monkeypatch):
             ],
         )
     """))
-    cpv.update_versions(tmp_path, add=['3.7'])
+    cpv.update_versions(tmp_path, add=v(['3.7']))
     assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
         from setuptools import setup
         setup(
@@ -217,7 +229,7 @@ def test_update_versions_dry_run(tmp_path):
             ],
         )
     """))
-    replacements = cpv.update_versions(tmp_path, add=['3.7'], dry_run=True)
+    replacements = cpv.update_versions(tmp_path, add=v(['3.7']), dry_run=True)
     assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
         from setuptools import setup
         setup(
@@ -258,7 +270,7 @@ def test_update_versions_dry_run_two_updaters_one_file(
         )
     """))
     replacements = cpv.update_versions(
-        tmp_path, update=['2.7', '3.4', '3.5', '3.6', '3.7'], dry_run=True,
+        tmp_path, update=v(['2.7', '3.4', '3.5', '3.6', '3.7']), dry_run=True,
     )
     assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
         from setuptools import setup
@@ -299,7 +311,7 @@ def test_update_versions_diff(tmp_path, capsys):
             ],
         )
     """))
-    cpv.update_versions(tmp_path, add=['3.7'], diff=True)
+    cpv.update_versions(tmp_path, add=v(['3.7']), diff=True)
     assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
         from setuptools import setup
         setup(
@@ -337,7 +349,7 @@ def test_update_versions_no_change(tmp_path):
             ],
         )
     """))
-    cpv.update_versions(tmp_path, add=['3.6'])
+    assert cpv.update_versions(tmp_path, add=v(['3.6'])) == {}
 
 
 def test_update_versions_only(tmp_path):
@@ -356,7 +368,7 @@ def test_update_versions_only(tmp_path):
         envlist = py27
     """))
     replacements = cpv.update_versions(
-        tmp_path, add=['3.6'], only='tox.ini', dry_run=True,
+        tmp_path, add=v(['3.6']), only='tox.ini', dry_run=True,
     )
     assert set(replacements) == {str(tmp_path / 'tox.ini')}
 
@@ -373,7 +385,7 @@ def test_update_versions_computed(tmp_path):
         )
     """))
     replacements = cpv.update_versions(
-        tmp_path, add=['3.6'], dry_run=True,
+        tmp_path, add=v(['3.6']), dry_run=True,
     )
     assert set(replacements) == set()
 
