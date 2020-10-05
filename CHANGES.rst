@@ -1,8 +1,10 @@
 Changelog
 =========
 
-0.15.2 (unreleased)
+0.16.0 (unreleased)
 -------------------
+
+- Add support for Python 3.9.
 
 - Python 3.10 support: sort 3.10 after 3.9, quote "3.10" when
   updating YAML files so it doesn't get treated as a floating point
