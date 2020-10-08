@@ -6,7 +6,7 @@ all:
 
 .PHONY: test check
 test check:
-	tox
+	tox -p auto
 
 
 .PHONY: coverage
