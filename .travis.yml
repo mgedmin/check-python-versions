@@ -5,11 +5,8 @@ python:
   - 3.7
   - 3.8
   - 3.9
-  - 3.9-dev
   - pypy3
 jobs:
-  allow_failures:
-    - python: 3.9  # travis doesn't have it yet
   include:
     - name: flake8
       install: pip install tox
