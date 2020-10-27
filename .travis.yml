@@ -4,8 +4,9 @@ python:
   - 3.6
   - 3.7
   - 3.8
-  - pypy3.6-7.1.1
-matrix:
+  - 3.9
+  - pypy3
+jobs:
   include:
     - name: flake8
       install: pip install tox
