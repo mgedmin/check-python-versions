@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.16.0 (unreleased)
+0.16.0 (2020-10-27)
 -------------------
 
 - Add support for Python 3.9.
