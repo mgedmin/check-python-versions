@@ -1,5 +1,5 @@
 language: python
-dist: xenial
+cache: pip
 python:
   - 3.6
   - 3.7
@@ -28,5 +28,13 @@ script:
   - coverage report -m --fail-under=100
 after_script:
   - coveralls
+
 notifications:
-  email: false
+  irc:
+    channels:
+      - "chat.freenode.net##mgedmin"
+    on_success: change
+    on_failure: always
+    template:
+      # ping my nick so I get a pushbullet notification on my phone
+      - "mgedmin: %{repository_name} (%{branch}) build %{result}: %{build_url}"
