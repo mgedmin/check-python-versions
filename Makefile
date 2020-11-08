@@ -10,10 +10,26 @@ test:                           ##: run tests
 coverage:                       ##: measure test coverage
 	tox -e coverage
 
+##:
+
+.PHONY: lint
+lint:                           ##: run all linters
+	tox -p auto -e flake8,mypy,isort
+
 .PHONY: flake8
 flake8:                         ##: check for style problems
-	flake8 src setup.py
+	tox -e flake8
 
+.PHONY: isort
+isort:                          ##: check for incorrect import ordering
+	tox -e isort
+
+.PHONY: mypy
+mypy:                           ##: check for type errors
+	tox -e coverage
+
+##:
 
 FILE_WITH_VERSION = src/check_python_versions/__init__.py
 include release.mk
+HELP_SECTION_SEP = ""
