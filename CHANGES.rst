@@ -6,6 +6,7 @@ Changelog
 
 - Preserve trailing commas in ``tox.ini``.
 - Do not duplicate comments in ``tox.ini``.
+- If all versions in .travis.yml are quoted, keep the quotes.
 
 
 0.16.0 (2020-10-27)

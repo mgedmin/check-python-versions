@@ -125,6 +125,50 @@ def test_update_travis_yml_python_versions_3_10():
     """)
 
 
+def test_update_travis_yml_python_versions_as_strings():
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        python:
+          - "3.4"
+          - pypy3
+        install: pip install -e .
+        script: pytest tests
+    """))
+    travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, v(["3.9"]))
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+          - "3.9"
+          - pypy3
+        install: pip install -e .
+        script: pytest tests
+    """)
+
+
+def test_update_travis_yml_some_python_versions_as_strings():
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        python:
+          - 3.9
+          - "3.10"
+          - pypy3
+        install: pip install -e .
+        script: pytest tests
+    """))
+    travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, v(["3.9", "3.10"]))
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        python:
+          - 3.9
+          - "3.10"
+          - pypy3
+        install: pip install -e .
+        script: pytest tests
+    """)
+
+
 def test_update_travis_yml_python_versions_drops_pypy():
     travis_yml = StringIO(textwrap.dedent("""\
         language: python
