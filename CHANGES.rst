@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.16.1 (unreleased)
+0.16.1 (2020-11-08)
 -------------------
 
 - Preserve trailing commas in ``tox.ini``.

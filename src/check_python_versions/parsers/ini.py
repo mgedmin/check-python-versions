@@ -6,6 +6,7 @@ INI parser and serializer.
 """
 
 import re
+from typing import List
 
 from ..utils import FileLines, get_indent, warn
 
@@ -54,7 +55,7 @@ def update_ini_setting(
 
     end = start + 1
     comments = []
-    pending_comments = []
+    pending_comments = []  # type: List[str]
     indent = '  '
     for n, line in lines:
         if line.startswith(' '):
