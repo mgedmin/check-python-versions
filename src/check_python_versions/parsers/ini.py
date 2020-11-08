@@ -54,13 +54,16 @@ def update_ini_setting(
 
     end = start + 1
     comments = []
+    pending_comments = []
     indent = '  '
     for n, line in lines:
         if line.startswith(' '):
             indent = get_indent(line)
+            comments += pending_comments
+            pending_comments = []
             end = n + 1
         elif line.lstrip().startswith('#'):
-            comments.append(line)
+            pending_comments.append(line)
         else:
             break
 

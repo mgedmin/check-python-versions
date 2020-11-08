@@ -91,6 +91,7 @@ def test_update_ini_setting_multiline_with_comments():
         # blah blah
         #   py26,py27,pypy
             py26,py27
+        # etc.
         usedevelop = true
     """).splitlines(True)
     result = update_ini_setting(source_lines, 'tox', 'envlist', 'py36,py37',
@@ -101,6 +102,7 @@ def test_update_ini_setting_multiline_with_comments():
         # blah blah
         #   py26,py27,pypy
             py36,py37
+        # etc.
         usedevelop = true
     """)
 

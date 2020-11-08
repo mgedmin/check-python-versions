@@ -5,6 +5,7 @@ Changelog
 -------------------
 
 - Preserve trailing commas in ``tox.ini``.
+- Do not duplicate comments in ``tox.ini``.
 
 
 0.16.0 (2020-10-27)
