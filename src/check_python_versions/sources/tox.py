@@ -154,6 +154,8 @@ def update_tox_envlist(envlist: str, new_versions: SortedVersionList) -> str:
     else:
         sep = ','
 
+    trailing_comma = envlist.rstrip().endswith(',')
+
     new_envs = [
         f"py{ver.major}{ver.minor if ver.minor >= 0 else ''}"
         for ver in new_versions
@@ -209,6 +211,8 @@ def update_tox_envlist(envlist: str, new_versions: SortedVersionList) -> str:
         for env in parse_envlist(envlist) if should_keep(env, new_versions)
     ]
     new_envlist = sep.join(new_envs + keep)
+    if trailing_comma:
+        new_envlist += ','
     return new_envlist
 
 

@@ -160,6 +160,8 @@ def test_update_tox_envlist_with_spaces():
     ('py27\npy34\npy35\npypy3', 'py36\npy37\npypy3'),
     # uhh regression I guess
     ('\npy27,py34,py35,pypy3', 'py36,py37,pypy3'),
+    # interesting corner case
+    ('py27,\npy34,\npy35,\npypy3,', 'py36,\npy37,\npypy3,'),
 ])
 def test_update_tox_envlist_with_newlines(s, expected):
     result = update_tox_envlist(s, v(['3.6', '3.7']))
