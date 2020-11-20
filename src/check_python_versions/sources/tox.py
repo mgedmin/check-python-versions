@@ -18,6 +18,7 @@ import configparser
 import re
 from typing import Iterable, List, Optional
 
+from .base import Source
 from ..parsers.ini import update_ini_setting
 from ..utils import FileLines, FileOrFilename, open_file, warn
 from ..versions import SortedVersionList, Version, VersionList
@@ -237,3 +238,11 @@ def should_keep(env: str, new_versions: VersionList) -> bool:
         if baseversion in new_versions:
             return True
     return False
+
+
+Tox = Source(
+    title=TOX_INI,
+    filename=TOX_INI,
+    extract=get_tox_ini_python_versions,
+    update=update_tox_ini_python_versions,
+)

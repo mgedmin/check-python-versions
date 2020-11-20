@@ -29,6 +29,7 @@ from typing import (
     cast,
 )
 
+from .base import Source
 from ..parsers.python import (
     AstValue,
     eval_ast_node,
@@ -459,3 +460,18 @@ def find_python() -> str:
     if shutil.which('python'):
         return 'python'
     return sys.executable
+
+
+SetupClassifiers = Source(
+    title=SETUP_PY,
+    filename=SETUP_PY,
+    extract=get_supported_python_versions,
+    update=update_supported_python_versions,
+)
+
+SetupPythonRequires = Source(
+    title='- python_requires',
+    filename=SETUP_PY,
+    extract=get_python_requires,
+    update=update_python_requires,
+)

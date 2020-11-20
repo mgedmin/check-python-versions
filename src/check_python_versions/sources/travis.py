@@ -19,6 +19,7 @@ from typing import Dict, List, Union
 
 import yaml
 
+from .base import Source
 from .tox import parse_envlist, tox_env_to_py_version
 from ..parsers.yaml import drop_yaml_node, quote_string, update_yaml_list
 from ..utils import FileLines, FileOrFilename, open_file
@@ -201,3 +202,11 @@ def update_travis_yml_python_versions(
         new_lines = drop_yaml_node(new_lines, "matrix", filename=fp.name)
 
     return new_lines
+
+
+Travis = Source(
+    title=TRAVIS_YML,
+    filename=TRAVIS_YML,
+    extract=get_travis_yml_python_versions,
+    update=update_travis_yml_python_versions,
+)

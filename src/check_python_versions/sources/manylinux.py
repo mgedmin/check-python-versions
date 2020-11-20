@@ -23,6 +23,7 @@ supported versions.  This looks like ::
 
 import re
 
+from .base import Source
 from ..utils import FileLines, FileOrFilename, open_file, warn
 from ..versions import SortedVersionList, Version, VersionList
 
@@ -84,3 +85,11 @@ def update_manylinux_python_versions(
     ).splitlines(True) + orig_lines[end:]
 
     return new_lines
+
+
+Manylinux = Source(
+    title=MANYLINUX_INSTALL_SH,
+    filename=MANYLINUX_INSTALL_SH,
+    extract=get_manylinux_python_versions,
+    update=update_manylinux_python_versions,
+)

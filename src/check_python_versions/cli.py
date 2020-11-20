@@ -11,35 +11,10 @@ import argparse
 import os
 import sys
 from io import StringIO
-from typing import Callable, Collection, Dict, List, Optional, Tuple
+from typing import Callable, Collection, Dict, Optional, Tuple
 
 from . import __version__
-from .sources.appveyor import (
-    APPVEYOR_YML,
-    get_appveyor_yml_python_versions,
-    update_appveyor_yml_python_versions,
-)
-from .sources.manylinux import (
-    MANYLINUX_INSTALL_SH,
-    get_manylinux_python_versions,
-    update_manylinux_python_versions,
-)
-from .sources.setup_py import (
-    get_python_requires,
-    get_supported_python_versions,
-    update_python_requires,
-    update_supported_python_versions,
-)
-from .sources.tox import (
-    TOX_INI,
-    get_tox_ini_python_versions,
-    update_tox_ini_python_versions,
-)
-from .sources.travis import (
-    TRAVIS_YML,
-    get_travis_yml_python_versions,
-    update_travis_yml_python_versions,
-)
+from .sources.all import ALL_SOURCES
 from .utils import (
     FileLines,
     FileOrFilename,
@@ -192,7 +167,6 @@ def filename_or_replacement(
 
 
 FilenameSet = Collection[str]
-ExtractorFn = Callable[[FileOrFilename], Optional[SortedVersionList]]
 
 
 def check_versions(
@@ -215,34 +189,24 @@ def check_versions(
     Emits diagnostics to standard output by calling ``print``.
     """
 
-    sources: List[Tuple[str, ExtractorFn, str]] = [
-        # title, extractor, filename
-        ('setup.py', get_supported_python_versions, 'setup.py'),
-        ('- python_requires', get_python_requires, 'setup.py'),
-        (TOX_INI, get_tox_ini_python_versions, TOX_INI),
-        (TRAVIS_YML, get_travis_yml_python_versions, TRAVIS_YML),
-        (APPVEYOR_YML, get_appveyor_yml_python_versions, APPVEYOR_YML),
-        (MANYLINUX_INSTALL_SH, get_manylinux_python_versions,
-         MANYLINUX_INSTALL_SH),
-    ]
-
-    width = max(len(title) for title, *etc in sources) + len(" says:")
+    width = max(len(title) for title, *etc in ALL_SOURCES) + len(" says:")
 
     if expect:
         width = max(width, len('expected:'))
 
     version_sets = []
 
-    for (title, extractor, filename) in sources:
-        if only and filename not in only:
+    for source in ALL_SOURCES:
+        if only and source.filename not in only:
             continue
-        pathname = os.path.join(where, filename)
+        pathname = os.path.join(where, source.filename)
         if not os.path.exists(pathname):
             continue
-        versions = extractor(filename_or_replacement(pathname, replacements))
+        versions = source.extract(
+            filename_or_replacement(pathname, replacements))
         if versions is None:
             continue
-        print(f"{title} says:".ljust(width),
+        print(f"{source.title} says:".ljust(width),
               ", ".join(str(v) for v in versions) or "(empty)")
         version_sets.append(important(versions))
 
@@ -255,9 +219,6 @@ def check_versions(
     return all(
         expect == v for v in version_sets
     )
-
-
-UpdaterFn = Callable[[FileOrFilename, SortedVersionList], Optional[FileLines]]
 
 
 def update_versions(
@@ -291,31 +252,16 @@ def update_versions(
     contents instead of asking for confirmation and writing them to disk.
     """
 
-    sources: List[Tuple[str, ExtractorFn, UpdaterFn]] = [
-        # filename, extractor, updater
-        ('setup.py', get_supported_python_versions,
-         update_supported_python_versions),
-        ('setup.py', get_python_requires,
-         update_python_requires),
-        (TOX_INI, get_tox_ini_python_versions,
-         update_tox_ini_python_versions),
-        (TRAVIS_YML, get_travis_yml_python_versions,
-         update_travis_yml_python_versions),
-        (APPVEYOR_YML, get_appveyor_yml_python_versions,
-         update_appveyor_yml_python_versions),
-        (MANYLINUX_INSTALL_SH, get_manylinux_python_versions,
-         update_manylinux_python_versions),
-        # TODO: CHANGES.rst
-    ]
     replacements: ReplacementDict = {}
 
-    for (filename, extractor, updater) in sources:
-        if only and filename not in only:
+    for source in ALL_SOURCES:
+        if only and source.filename not in only:
             continue
-        pathname = os.path.join(where, filename)
+        pathname = os.path.join(where, source.filename)
         if not os.path.exists(pathname):
             continue
-        versions = extractor(filename_or_replacement(pathname, replacements))
+        versions = source.extract(
+            filename_or_replacement(pathname, replacements))
         if versions is None:
             continue
 
@@ -324,7 +270,7 @@ def update_versions(
             versions, add=add, drop=drop, update=update)
         if versions != new_versions:
             fp = filename_or_replacement(pathname, replacements)
-            new_lines = updater(fp, new_versions)
+            new_lines = source.update(fp, new_versions)
             if new_lines is not None:
                 # TODO: refactor update_versions() into two functions, one that
                 # produces a replacement dict and does no user interaction, and

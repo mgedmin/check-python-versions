@@ -28,6 +28,7 @@ from typing import Optional, Set, cast
 
 import yaml
 
+from .base import Source
 from .tox import parse_envlist, tox_env_to_py_version
 from ..parsers.yaml import update_yaml_list
 from ..utils import FileLines, FileOrFilename, open_file, warn
@@ -179,3 +180,11 @@ def update_appveyor_yml_python_versions(
         keep=keep_complicated, filename=fp.name,
     )
     return new_lines
+
+
+Appveyor = Source(
+    title=APPVEYOR_YML,
+    filename=APPVEYOR_YML,
+    extract=get_appveyor_yml_python_versions,
+    update=update_appveyor_yml_python_versions,
+)
