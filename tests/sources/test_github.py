@@ -147,6 +147,37 @@ def test_update_gha_python_versions():
     """)
 
 
+def test_update_gha_python_versions_quote_all_of_them():
+    tests_yml = StringIO(textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                python-version:
+                  - "2.7"
+                  - "3.5"
+                  - "3.6"
+                  - "3.7"
+                  - "3.8"
+            steps:
+            - ...
+    """))
+    tests_yml.name = '.github/workflows/tests.yml'
+    result = update_gha_python_versions(tests_yml, v(["3.8", "3.9", "3.10"]))
+    assert "".join(result) == textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                python-version:
+                  - "3.8"
+                  - "3.9"
+                  - "3.10"
+            steps:
+            - ...
+    """)
+
+
 def test_update_gha_python_versions_zopefoundation():
     tests_yml = StringIO(textwrap.dedent("""\
         jobs:

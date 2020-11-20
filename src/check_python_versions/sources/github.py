@@ -90,11 +90,6 @@ def update_gha_python_versions(
         conf = yaml.safe_load(fp)
     new_lines = orig_lines
 
-    yaml_new_versions = [
-        quote_string(str(v))
-        for v in new_versions
-    ]
-
     def keep_old(value: str) -> bool:
         """Determine if a Python version line should be preserved."""
         parsed = yaml.safe_load(value)
@@ -112,6 +107,13 @@ def update_gha_python_versions(
     for job_name, job in conf.get('jobs', {}).items():
         matrix = job.get('strategy', {}).get('matrix', {})
         if 'python-version' in matrix:
+            quote_style = ''
+            if all(isinstance(v, str) for v in matrix['python-version']):
+                quote_style = '"'
+            yaml_new_versions = [
+                quote_string(str(v), quote_style)
+                for v in new_versions
+            ]
             new_lines = update_yaml_list(
                 new_lines,
                 ('jobs', job_name, 'strategy', 'matrix', 'python-version'),
