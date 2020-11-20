@@ -20,6 +20,7 @@ from ..versions import SortedVersionList, Version
 
 
 GHA_WORKFLOW_FILE = '.github/workflows/tests.yml'
+GHA_WORKFLOW_GLOB = '.github/workflows/*.yml'
 
 
 def get_gha_python_versions(

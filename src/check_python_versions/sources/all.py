@@ -1,9 +1,9 @@
 from .appveyor import Appveyor
+from .github import GitHubActions
 from .manylinux import Manylinux
 from .setup_py import SetupClassifiers, SetupPythonRequires
 from .tox import Tox
 from .travis import Travis
-from .github import GitHubActions
 
 
 # The order here is only mildly important: it's used for presentation.

@@ -11,10 +11,11 @@ import argparse
 import os
 import sys
 from io import StringIO
-from typing import Callable, Collection, Dict, Optional, Tuple
+from typing import Callable, Collection, Dict, List, Optional, Tuple
 
 from . import __version__
 from .sources.all import ALL_SOURCES
+from .sources.base import SourceFile
 from .utils import (
     FileLines,
     FileOrFilename,
@@ -169,10 +170,42 @@ def filename_or_replacement(
 FilenameSet = Collection[str]
 
 
+def find_sources(
+    where: str = '.',
+    *,
+    replacements: Optional[ReplacementDict] = None,
+    only: Optional[FilenameSet] = None,
+    supports_update: bool = False,
+) -> List[SourceFile]:
+    """Find all sources that exist in a given directory.
+
+    ``replacements`` allows you to check the result of an update (see
+    `update_versions`) without actually performing an update.
+
+    ``only`` allows you to check only a subset of the files.
+    """
+    sources = []
+    for source in ALL_SOURCES:
+        if supports_update and source.update is None:
+            continue
+        if only and source.filename not in only:
+            continue
+        pathname = os.path.join(where, source.filename)
+        if not os.path.exists(pathname):
+            continue
+        versions = source.extract(
+            filename_or_replacement(pathname, replacements))
+        if versions is None:
+            continue
+        sources.append(source.for_file(pathname, versions))
+    return sources
+
+
 def check_versions(
     where: str = '.',
     *,
     print: PrintFn = print,
+    min_width: int = 0,
     expect: Optional[VersionList] = None,
     replacements: Optional[ReplacementDict] = None,
     only: Optional[FilenameSet] = None,
@@ -189,26 +222,21 @@ def check_versions(
     Emits diagnostics to standard output by calling ``print``.
     """
 
-    width = max(len(title) for title, *etc in ALL_SOURCES) + len(" says:")
+    sources = find_sources(where, replacements=replacements, only=only)
+
+    width = max(len(source.title) for source in sources) + len(" says:")
 
     if expect:
         width = max(width, len('expected:'))
 
+    width = max(width, min_width)
+
     version_sets = []
 
-    for source in ALL_SOURCES:
-        if only and source.filename not in only:
-            continue
-        pathname = os.path.join(where, source.filename)
-        if not os.path.exists(pathname):
-            continue
-        versions = source.extract(
-            filename_or_replacement(pathname, replacements))
-        if versions is None:
-            continue
+    for source in sources:
         print(f"{source.title} says:".ljust(width),
-              ", ".join(str(v) for v in versions) or "(empty)")
-        version_sets.append(important(versions))
+              ", ".join(str(v) for v in source.versions) or "(empty)")
+        version_sets.append(important(source.versions))
 
     if not expect:
         expect = version_sets[0]
@@ -254,24 +282,16 @@ def update_versions(
 
     replacements: ReplacementDict = {}
 
-    for source in ALL_SOURCES:
-        if source.update is None:
-            continue
-        if only and source.filename not in only:
-            continue
-        pathname = os.path.join(where, source.filename)
-        if not os.path.exists(pathname):
-            continue
-        versions = source.extract(
-            filename_or_replacement(pathname, replacements))
-        if versions is None:
-            continue
-
-        versions = sorted(important(versions))
+    sources = find_sources(where, replacements=replacements, only=only,
+                           supports_update=True)
+    for source in sources:
+        # this assert explains supports_update=True to mypy
+        assert source.update is not None
+        versions = sorted(important(source.versions))
         new_versions = update_version_list(
             versions, add=add, drop=drop, update=update)
         if versions != new_versions:
-            fp = filename_or_replacement(pathname, replacements)
+            fp = filename_or_replacement(source.pathname, replacements)
             new_lines = source.update(fp, new_versions)
             if new_lines is not None:
                 # TODO: refactor update_versions() into two functions, one that
@@ -281,14 +301,14 @@ def update_versions(
                 # setup.py twice (once to update classifiers and once to update
                 # python_requires) is weird?
                 if diff:
-                    fp = filename_or_replacement(pathname, replacements)
+                    fp = filename_or_replacement(source.pathname, replacements)
                     show_diff(fp, new_lines)
                 if dry_run:
                     # XXX: why do this on dry-run only, why not always return a
                     # replacement dict?
-                    replacements[pathname] = new_lines
+                    replacements[source.pathname] = new_lines
                 if not diff and not dry_run:
-                    confirm_and_update_file(pathname, new_lines)
+                    confirm_and_update_file(source.pathname, new_lines)
 
     return replacements
 
@@ -361,6 +381,11 @@ def _main() -> None:
     only = [a.strip() for a in args.only.split(',')] if args.only else None
 
     multiple = len(where) > 1
+
+    min_width = 0
+    if multiple:
+        min_width = max(len(s.title) for s in ALL_SOURCES) + len('says: ')
+
     mismatches = []
     for n, path in enumerate(where):
         if multiple and (not args.diff or args.dry_run):
@@ -379,7 +404,8 @@ def _main() -> None:
         if not args.diff or args.dry_run:
             if not check_versions(path, expect=args.expect,
                                   replacements=replacements,
-                                  only=only):
+                                  only=only,
+                                  min_width=min_width):
                 mismatches.append(path)
                 continue
 
