@@ -196,7 +196,7 @@ def find_sources(
             continue
         for pathname in pathnames:
             relpath = os.path.relpath(pathname, where)
-            if only and relpath not in only:
+            if only and relpath not in only and source.filename not in only:
                 continue
             versions = source.extract(
                 filename_or_replacement(pathname, replacements))

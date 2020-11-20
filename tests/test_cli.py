@@ -219,6 +219,33 @@ def test_check_only_glob_source(tmp_path, capsys):
     """)
 
 
+def test_check_only_glob(tmp_path, capsys):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    workflow1_yml = tmp_path / ".github/workflows/one.yml"
+    workflow1_yml.parent.mkdir(parents=True)
+    workflow1_yml.write_text(textwrap.dedent("""\
+        jobs:
+          test:
+            strategy:
+              matrix:
+                python-version: [3.6]
+    """))
+    assert cpv.check_versions(tmp_path, only={'.github/workflows/*.yml'})
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        .github/workflows/one.yml says: 3.6
+    """)
+
+
 def test_check_only_nothing_matches(tmp_path, capsys):
     setup_py = tmp_path / "setup.py"
     setup_py.write_text(textwrap.dedent("""\
