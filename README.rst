@@ -265,6 +265,26 @@ they'll be ignored (and this will not be considered a failure).
   These scripts are used in several zopefoundation repositories like
   zopefoundation/zope.interface.  It's the least standartized format.
 
+- **.github/workflows/*.yml**: if present, it's expected to have ::
+
+    jobs:
+      (anything):
+        strategy:
+          matrix:
+            python-version:
+              - X.Y
+              - ...
+
+  or ::
+
+    jobs:
+      (anything):
+        strategy:
+          matrix:
+            config
+              - [ X.Y, "pyXY" ]
+              - ...
+
 
 Python versions
 ---------------
