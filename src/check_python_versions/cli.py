@@ -190,7 +190,7 @@ def find_sources(
     sources = []
     for source in ALL_SOURCES:
         if supports_update and source.update is None:
-            continue
+            continue  # pragma: nocover
         pathnames = glob.glob(os.path.join(where, source.filename))
         if not pathnames:
             continue

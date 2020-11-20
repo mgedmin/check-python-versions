@@ -158,7 +158,7 @@ def update_tox_envlist(envlist: str, new_versions: SortedVersionList) -> str:
     trailing_comma = envlist.rstrip().endswith(',')
 
     new_envs = [
-        f"py{ver.major}{ver.minor if ver.minor >= 0 else ''}"
+        toxenv_for_version(ver)
         for ver in new_versions
     ]
 
@@ -215,6 +215,11 @@ def update_tox_envlist(envlist: str, new_versions: SortedVersionList) -> str:
     if trailing_comma:
         new_envlist += ','
     return new_envlist
+
+
+def toxenv_for_version(ver: Version) -> str:
+    """Compute a tox environment name for a Python version."""
+    return f"py{ver.major}{ver.minor if ver.minor >= 0 else ''}"
 
 
 def should_keep(env: str, new_versions: VersionList) -> bool:

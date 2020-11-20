@@ -7,6 +7,7 @@ import pytest
 from check_python_versions.sources.github import (
     get_gha_python_versions,
     parse_gh_ver,
+    update_gha_python_versions,
 )
 from check_python_versions.versions import Version
 
@@ -113,3 +114,213 @@ def test_get_gha_python_versions_no_version_matrix():
 ])
 def test_parse_gh_ver(s, expected):
     assert parse_gh_ver(s) == Version.from_string(expected)
+
+
+def test_update_gha_python_versions():
+    tests_yml = StringIO(textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                python-version:
+                  - 2.7
+                  - 3.5
+                  - 3.6
+                  - 3.7
+                  - 3.8
+            steps:
+            - ...
+    """))
+    tests_yml.name = '.github/workflows/tests.yml'
+    result = update_gha_python_versions(tests_yml, v(["3.8", "3.9", "3.10"]))
+    assert "".join(result) == textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                python-version:
+                  - 3.8
+                  - 3.9
+                  - "3.10"
+            steps:
+            - ...
+    """)
+
+
+def test_update_gha_python_versions_zopefoundation():
+    tests_yml = StringIO(textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                config:
+                # [Python version, tox env]
+                - ["3.8",   "lint"]
+                - ["2.7",   "py27"]
+                - ["3.5",   "py35"]
+                - ["3.6",   "py36"]
+                - ["3.7",   "py37"]
+                - ["3.8",   "py38"]
+                - ["3.9",   "py39"]
+                - ["pypy2", "pypy"]
+                - ["pypy3", "pypy3"]
+                - ["3.8",   "coverage"]
+            steps:
+            - ...
+    """))
+    tests_yml.name = '.github/workflows/tests.yml'
+    result = update_gha_python_versions(tests_yml, v(["2.7", "3.8", "3.9"]))
+    assert "".join(result) == textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                config:
+                # [Python version, tox env]
+                - ["3.8",   "lint"]
+                - ["2.7",   "py27"]
+                - ["3.8",   "py38"]
+                - ["3.9",   "py39"]
+                - ["pypy2", "pypy"]
+                - ["pypy3", "pypy3"]
+                - ["3.8",   "coverage"]
+            steps:
+            - ...
+    """)
+
+
+def test_update_gha_python_versions_quotes_3_10():
+    tests_yml = StringIO(textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                config:
+                # [Python version, tox env]
+                - ["3.8",   "lint"]
+                - ["3.8",   "py38"]
+                - ["3.9",   "py39"]
+                - ["pypy3", "pypy3"]
+                - ["3.8",   "coverage"]
+            steps:
+            - ...
+    """))
+    tests_yml.name = '.github/workflows/tests.yml'
+    result = update_gha_python_versions(tests_yml, v(["3.8", "3.9", "3.10"]))
+    assert "".join(result) == textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                config:
+                # [Python version, tox env]
+                - ["3.8",   "lint"]
+                - ["3.8",   "py38"]
+                - ["3.9",   "py39"]
+                - ["3.10",  "py310"]
+                - ["pypy3", "pypy3"]
+                - ["3.8",   "coverage"]
+            steps:
+            - ...
+    """)
+
+
+def test_update_gha_python_versions_can_drop_pypy():
+    tests_yml = StringIO(textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                config:
+                # [Python version, tox env]
+                - ["3.8",   "lint"]
+                - ["2.7",   "py27"]
+                - ["3.5",   "py35"]
+                - ["3.6",   "py36"]
+                - ["3.7",   "py37"]
+                - ["3.8",   "py38"]
+                - ["3.9",   "py39"]
+                - ["pypy2", "pypy"]
+                - ["pypy3", "pypy3"]
+                - ["3.8",   "coverage"]
+            steps:
+            - ...
+    """))
+    tests_yml.name = '.github/workflows/tests.yml'
+    result = update_gha_python_versions(tests_yml, v(["3.8", "3.9"]))
+    assert "".join(result) == textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                config:
+                # [Python version, tox env]
+                - ["3.8",   "lint"]
+                - ["3.8",   "py38"]
+                - ["3.9",   "py39"]
+                - ["pypy3", "pypy3"]
+                - ["3.8",   "coverage"]
+            steps:
+            - ...
+    """)
+
+
+def test_update_gha_python_versions_can_drop_pypy3():
+    tests_yml = StringIO(textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                config:
+                # [Python version, tox env]
+                - ["2.7",   "py27"]
+                - ["3.5",   "py35"]
+                - ["3.6",   "py36"]
+                - ["pypy2", "pypy"]
+                - ["pypy3", "pypy3"]
+            steps:
+            - ...
+    """))
+    tests_yml.name = '.github/workflows/tests.yml'
+    result = update_gha_python_versions(tests_yml, v(["2.7"]))
+    assert "".join(result) == textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                config:
+                # [Python version, tox env]
+                - ["2.7",   "py27"]
+                - ["pypy2", "pypy"]
+            steps:
+            - ...
+    """)
+
+
+def test_update_gha_python_versions_keeps_what_it_doesnt_understand():
+    tests_yml = StringIO(textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                config:
+                # [Python version, tox env]
+                - ["3.8",   "py38"]
+                - [null, null, null]
+            steps:
+            - ...
+    """))
+    tests_yml.name = '.github/workflows/tests.yml'
+    result = update_gha_python_versions(tests_yml, v(["3.9"]))
+    assert "".join(result) == textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                config:
+                # [Python version, tox env]
+                - ["3.9",   "py39"]
+                - [null, null, null]
+            steps:
+            - ...
+    """)

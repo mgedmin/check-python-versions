@@ -66,6 +66,49 @@ def test_update_yaml_list_keep_indent_comments_and_pypy():
     """)
 
 
+def test_update_yaml_list_keep_before_and_after():
+    source_lines = textwrap.dedent("""\
+        jobs:
+          - lint
+          - py27
+          - py35
+          - coverage
+    """).splitlines(True)
+    result = update_yaml_list(source_lines, "jobs", ["py27", "py38"],
+                              keep=lambda line: line in {'lint', 'coverage'},
+                              filename='ci.yml')
+    assert "".join(result) == textwrap.dedent("""\
+        jobs:
+          - lint
+          - py27
+          - py38
+          - coverage
+    """)
+
+
+def test_update_yaml_list_no_indent():
+    source_lines = textwrap.dedent("""\
+        matrix:
+          python:
+          - 2.7
+          - 3.5
+          os:
+          - linux
+          - windows
+    """).splitlines(True)
+    result = update_yaml_list(source_lines, ("matrix", "python"),
+                              ["2.7", "3.8"], filename='ci.yml')
+    assert "".join(result) == textwrap.dedent("""\
+        matrix:
+          python:
+          - 2.7
+          - 3.8
+          os:
+          - linux
+          - windows
+    """)
+
+
 def test_update_yaml_list_not_found(capsys):
     source_lines = textwrap.dedent("""\
         language: python

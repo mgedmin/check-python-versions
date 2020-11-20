@@ -14,7 +14,9 @@ from typing import Optional, Set, Union
 import yaml
 
 from .base import Source
-from ..utils import FileOrFilename, open_file
+from ..parsers.yaml import quote_string, update_yaml_list
+from ..sources.tox import toxenv_for_version
+from ..utils import FileLines, FileOrFilename, open_file
 from ..versions import SortedVersionList, Version
 
 
@@ -74,8 +76,65 @@ def parse_gh_ver(v: Union[str, float]) -> Version:
         return Version.from_string(v)
 
 
+def update_gha_python_versions(
+    filename: FileOrFilename,
+    new_versions: SortedVersionList,
+) -> FileLines:
+    """Update supported Python versions in a GitHub workflow file.
+
+    Does not touch the file but returns a list of lines with new file contents.
+    """
+    with open_file(filename) as fp:
+        orig_lines = fp.readlines()
+        fp.seek(0)
+        conf = yaml.safe_load(fp)
+    new_lines = orig_lines
+
+    yaml_new_versions = [
+        quote_string(str(v))
+        for v in new_versions
+    ]
+
+    def keep_old(value: str) -> bool:
+        """Determine if a Python version line should be preserved."""
+        parsed = yaml.safe_load(value)
+        if isinstance(parsed, list) and len(parsed) == 2:
+            ver = parse_gh_ver(parsed[0])
+            toxenv = str(parsed[1])
+        else:
+            return True
+        if ver == Version.from_string('PyPy'):
+            return any(v.major == 2 for v in new_versions)
+        if ver == Version.from_string('PyPy3'):
+            return any(v.major == 3 for v in new_versions)
+        return toxenv != toxenv_for_version(ver)
+
+    for job_name, job in conf.get('jobs', {}).items():
+        matrix = job.get('strategy', {}).get('matrix', {})
+        if 'python-version' in matrix:
+            new_lines = update_yaml_list(
+                new_lines,
+                ('jobs', job_name, 'strategy', 'matrix', 'python-version'),
+                yaml_new_versions, filename=fp.name,
+            )
+        if 'config' in matrix:
+            yaml_configs = []
+            for v in new_versions:
+                quoted_ver = quote_string(str(v), '"')
+                toxenv = quote_string(toxenv_for_version(v), '"')
+                yaml_configs.append(f"[{quoted_ver + ',':<8} {toxenv}]")
+            new_lines = update_yaml_list(
+                new_lines,
+                ('jobs', job_name, 'strategy', 'matrix', 'config'),
+                yaml_configs, filename=fp.name,
+                keep=keep_old,
+            )
+
+    return new_lines
+
+
 GitHubActions = Source(
     filename=GHA_WORKFLOW_GLOB,
     extract=get_gha_python_versions,
-    update=None,
+    update=update_gha_python_versions,
 )
