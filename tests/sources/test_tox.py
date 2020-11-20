@@ -125,8 +125,9 @@ def test_update_tox_ini_python_syntax_error(capsys):
 
 
 def test_update_tox_envlist():
-    result = update_tox_envlist('py26,py27,pypy3,flake8', v(['3.6', '3.7']))
-    assert result == 'py36,py37,pypy3,flake8'
+    result = update_tox_envlist('docs,py26,py27,pypy3,flake8',
+                                v(['3.6', '3.7']))
+    assert result == 'docs,py36,py37,pypy3,flake8'
 
 
 @pytest.mark.parametrize('versions, expected', [

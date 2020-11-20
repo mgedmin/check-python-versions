@@ -207,11 +207,15 @@ def update_tox_envlist(envlist: str, new_versions: SortedVersionList) -> str:
         return sep.join(parts)
 
     # Universal expansion, might destroy braced groups
-    keep = [
-        env
-        for env in parse_envlist(envlist) if should_keep(env, new_versions)
-    ]
-    new_envlist = sep.join(new_envs + keep)
+    keep_before: List[str] = []
+    keep_after: List[str] = []
+    keep = keep_before
+    for env in parse_envlist(envlist):
+        if should_keep(env, new_versions):
+            keep.append(env)
+        else:
+            keep = keep_after
+    new_envlist = sep.join(keep_before + new_envs + keep_after)
     if trailing_comma:
         new_envlist += ','
     return new_envlist

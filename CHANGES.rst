@@ -7,6 +7,7 @@ Changelog
 - Initial supprot for GitHub Actions (`issue 22
   <https://github.com/mgedmin/check-python-versions/issues/22>`_).
 - Correctly detect the end of a YAML list even if it's not indented.
+- Try to preserve envlist order in ``tox.ini``.
 
 
 0.16.1 (2020-11-08)
