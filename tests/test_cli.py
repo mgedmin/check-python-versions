@@ -104,7 +104,7 @@ def test_check_unknown(tmp_path, capsys):
     """))
     assert cpv.check_versions(tmp_path) is True
     assert capsys.readouterr().out == textwrap.dedent("""\
-        setup.py says:              (empty)
+        setup.py says:                    (empty)
     """)
 
 
@@ -122,7 +122,7 @@ def test_check_minimal(tmp_path, capsys):
     """))
     assert cpv.check_versions(tmp_path) is True
     assert capsys.readouterr().out == textwrap.dedent("""\
-        setup.py says:              2.7, 3.6
+        setup.py says:                    2.7, 3.6
     """)
 
 
@@ -145,8 +145,8 @@ def test_check_mismatch(tmp_path, capsys):
     """))
     assert cpv.check_versions(tmp_path) is False
     assert capsys.readouterr().out == textwrap.dedent("""\
-        setup.py says:              2.7, 3.6
-        tox.ini says:               2.7
+        setup.py says:                    2.7, 3.6
+        tox.ini says:                     2.7
     """)
 
 
@@ -164,8 +164,8 @@ def test_check_expectation(tmp_path, capsys):
     """))
     assert not cpv.check_versions(tmp_path, expect=v(['2.7', '3.6', '3.7']))
     assert capsys.readouterr().out == textwrap.dedent("""\
-        setup.py says:              2.7, 3.6
-        expected:                   2.7, 3.6, 3.7
+        setup.py says:                    2.7, 3.6
+        expected:                         2.7, 3.6, 3.7
     """)
 
 
@@ -188,7 +188,7 @@ def test_check_only(tmp_path, capsys):
     """))
     assert cpv.check_versions(tmp_path, only='tox.ini')
     assert capsys.readouterr().out == textwrap.dedent("""\
-        tox.ini says:               2.7
+        tox.ini says:                     2.7
     """)
 
 
@@ -525,8 +525,8 @@ def test_main_only(monkeypatch, capsys, tmp_path):
     assert (
         capsys.readouterr().out + '\n'
     ).replace(str(tmp_path) + os.path.sep, 'tmp/') == textwrap.dedent("""\
-        setup.py says:              2.7, 3.6
-        tox.ini says:               2.7, 3.6
+        setup.py says:                    2.7, 3.6
+        tox.ini says:                     2.7, 3.6
 
     """)
 
@@ -556,8 +556,8 @@ def test_main_multiple(monkeypatch, capsys, tmp_path):
     ).replace(str(tmp_path) + os.path.sep, 'tmp/') == textwrap.dedent("""\
         tmp/a:
 
-        setup.py says:              2.7, 3.6
-        expected:                   3.6, 3.7
+        setup.py says:                    2.7, 3.6
+        expected:                         3.6, 3.7
 
 
         tmp/b:
@@ -640,7 +640,7 @@ def test_main_update(monkeypatch, capsys, tmp_path):
 
         Write changes to tmp/setup.py? [y/N]
 
-        setup.py says:              2.7, 3.6, 3.7, 3.8
+        setup.py says:                    2.7, 3.6, 3.7, 3.8
     """)
     assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
         from setuptools import setup
@@ -693,7 +693,7 @@ def test_main_update_rejected(monkeypatch, capsys, tmp_path):
 
         Write changes to tmp/setup.py? [y/N]
 
-        setup.py says:              2.7, 3.6
+        setup.py says:                    2.7, 3.6
     """)
     assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
         from setuptools import setup
@@ -779,7 +779,7 @@ def test_main_update_dry_run(monkeypatch, capsys, tmp_path):
         .expandtabs()
         .replace(' \n', '\n\n')
     ) == textwrap.dedent("""\
-        setup.py says:              2.7, 3.6, 3.7, 3.8
+        setup.py says:                    2.7, 3.6, 3.7, 3.8
     """)
     assert (tmp_path / "setup.py").read_text() == textwrap.dedent("""\
         from setuptools import setup

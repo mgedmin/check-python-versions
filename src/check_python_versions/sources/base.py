@@ -13,4 +13,4 @@ class Source(typing.NamedTuple):
     title: str
     filename: str
     extract: ExtractorFn
-    update: UpdaterFn
+    update: Optional[UpdaterFn] = None

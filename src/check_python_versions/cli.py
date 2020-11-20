@@ -255,6 +255,8 @@ def update_versions(
     replacements: ReplacementDict = {}
 
     for source in ALL_SOURCES:
+        if source.update is None:
+            continue
         if only and source.filename not in only:
             continue
         pathname = os.path.join(where, source.filename)

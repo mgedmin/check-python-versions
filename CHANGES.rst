@@ -1,10 +1,11 @@
 Changelog
 =========
 
-0.16.2 (unreleased)
+0.17.0 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Initial supprot for GitHub Actions (`issue 22
+  <https://github.com/mgedmin/check-python-versions/issues/22>`_).
 
 
 0.16.1 (2020-11-08)
