@@ -186,9 +186,54 @@ def test_check_only(tmp_path, capsys):
         [tox]
         envlist = py27
     """))
-    assert cpv.check_versions(tmp_path, only='tox.ini')
+    assert cpv.check_versions(tmp_path, only={'tox.ini'})
     assert capsys.readouterr().out == textwrap.dedent("""\
         tox.ini says: 2.7
+    """)
+
+
+def test_check_only_glob_source(tmp_path, capsys):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    workflow1_yml = tmp_path / ".github/workflows/one.yml"
+    workflow1_yml.parent.mkdir(parents=True)
+    workflow1_yml.write_text(textwrap.dedent("""\
+        jobs:
+          test:
+            strategy:
+              matrix:
+                python-version: [3.6]
+    """))
+    assert cpv.check_versions(tmp_path, only={'.github/workflows/one.yml'})
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        .github/workflows/one.yml says: 3.6
+    """)
+
+
+def test_check_only_nothing_matches(tmp_path, capsys):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ],
+        )
+    """))
+    assert not cpv.check_versions(tmp_path, only={'nosuchfile'})
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        no file with version information found
     """)
 
 
@@ -556,8 +601,8 @@ def test_main_multiple(monkeypatch, capsys, tmp_path):
     ).replace(str(tmp_path) + os.path.sep, 'tmp/') == textwrap.dedent("""\
         tmp/a:
 
-        setup.py says:                    2.7, 3.6
-        expected:                         3.6, 3.7
+        setup.py says:                2.7, 3.6
+        expected:                     3.6, 3.7
 
 
         tmp/b:

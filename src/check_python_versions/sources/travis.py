@@ -205,7 +205,6 @@ def update_travis_yml_python_versions(
 
 
 Travis = Source(
-    title=TRAVIS_YML,
     filename=TRAVIS_YML,
     extract=get_travis_yml_python_versions,
     update=update_travis_yml_python_versions,

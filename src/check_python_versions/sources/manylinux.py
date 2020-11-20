@@ -88,7 +88,6 @@ def update_manylinux_python_versions(
 
 
 Manylinux = Source(
-    title=MANYLINUX_INSTALL_SH,
     filename=MANYLINUX_INSTALL_SH,
     extract=get_manylinux_python_versions,
     update=update_manylinux_python_versions,

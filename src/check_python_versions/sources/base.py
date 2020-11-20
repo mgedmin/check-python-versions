@@ -27,15 +27,18 @@ class Source:
         self,
         pathname: str,
         versions: SortedVersionList,
+        relpath: str,
     ) -> 'SourceFile':
-        return SourceFile(
-            title=self.title,
+        title = relpath if self.title == self.filename else self.title
+        source = SourceFile(
+            title=title,
             filename=self.filename,
             extract=self.extract,
             update=self.update,
             pathname=pathname,
             versions=versions,
         )
+        return source
 
 
 class SourceFile(Source):

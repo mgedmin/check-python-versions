@@ -183,7 +183,6 @@ def update_appveyor_yml_python_versions(
 
 
 Appveyor = Source(
-    title=APPVEYOR_YML,
     filename=APPVEYOR_YML,
     extract=get_appveyor_yml_python_versions,
     update=update_appveyor_yml_python_versions,

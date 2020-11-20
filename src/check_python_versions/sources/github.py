@@ -4,13 +4,12 @@ Support for GitHub Actions.
 GitHub Actions are very flexible, so this code is going to make some
 simplifying assumptions:
 
-- your workflow is in .github/workflows/tests.yml
 - you use a matrix strategy
   - on 'python-version' that contains python versions, or
   - on 'config' that contains lists of [python_version, tox_env]
 """
 
-from typing import List, Union
+from typing import Optional, Set, Union
 
 import yaml
 
@@ -25,24 +24,29 @@ GHA_WORKFLOW_GLOB = '.github/workflows/*.yml'
 
 def get_gha_python_versions(
     filename: FileOrFilename = GHA_WORKFLOW_FILE,
-) -> SortedVersionList:
+) -> Optional[SortedVersionList]:
     """Extract supported Python versions from a GitHub workflow."""
     with open_file(filename) as fp:
         conf = yaml.safe_load(fp)
 
-    versions: List[Version] = []
+    versions: Set[Version] = set()
+    had_matrix = False
     for job_name, job in conf.get('jobs', {}).items():
         matrix = job.get('strategy', {}).get('matrix', {})
         if 'python-version' in matrix:
-            versions.extend(
+            had_matrix = True
+            versions.update(
                 e for e in map(parse_gh_ver, matrix['python-version']) if e)
         if 'config' in matrix:
-            versions.extend(
+            had_matrix = True
+            versions.update(
                 parse_gh_ver(c[0])
                 for c in matrix['config']
                 if isinstance(c, list)
             )
 
+    if not had_matrix:
+        return None
     return sorted(set(versions))
 
 
@@ -71,8 +75,7 @@ def parse_gh_ver(v: Union[str, float]) -> Version:
 
 
 GitHubActions = Source(
-    title=GHA_WORKFLOW_FILE,
-    filename=GHA_WORKFLOW_FILE,
+    filename=GHA_WORKFLOW_GLOB,
     extract=get_gha_python_versions,
     update=None,
 )

@@ -8,6 +8,7 @@ modifications.
 """
 
 import argparse
+import glob
 import os
 import sys
 from io import StringIO
@@ -183,21 +184,24 @@ def find_sources(
     `update_versions`) without actually performing an update.
 
     ``only`` allows you to check only a subset of the files.
+
+    ``supports_update`` lets you skip sources that don't support updates.
     """
     sources = []
     for source in ALL_SOURCES:
         if supports_update and source.update is None:
             continue
-        if only and source.filename not in only:
+        pathnames = glob.glob(os.path.join(where, source.filename))
+        if not pathnames:
             continue
-        pathname = os.path.join(where, source.filename)
-        if not os.path.exists(pathname):
-            continue
-        versions = source.extract(
-            filename_or_replacement(pathname, replacements))
-        if versions is None:
-            continue
-        sources.append(source.for_file(pathname, versions))
+        for pathname in pathnames:
+            relpath = os.path.relpath(pathname, where)
+            if only and relpath not in only:
+                continue
+            versions = source.extract(
+                filename_or_replacement(pathname, replacements))
+            if versions is not None:
+                sources.append(source.for_file(pathname, versions, relpath))
     return sources
 
 
@@ -223,6 +227,10 @@ def check_versions(
     """
 
     sources = find_sources(where, replacements=replacements, only=only)
+
+    if not sources:
+        print('no file with version information found')
+        return False
 
     width = max(len(source.title) for source in sources) + len(" says:")
 

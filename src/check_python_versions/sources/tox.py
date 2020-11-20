@@ -241,7 +241,6 @@ def should_keep(env: str, new_versions: VersionList) -> bool:
 
 
 Tox = Source(
-    title=TOX_INI,
     filename=TOX_INI,
     extract=get_tox_ini_python_versions,
     update=update_tox_ini_python_versions,

@@ -102,7 +102,7 @@ def test_get_gha_python_versions_no_version_matrix():
             - ...
     """))
     tests_yml.name = '.github/workflows/tests.yml'
-    assert get_gha_python_versions(tests_yml) == []
+    assert get_gha_python_versions(tests_yml) is None
 
 
 @pytest.mark.parametrize('s, expected', [
