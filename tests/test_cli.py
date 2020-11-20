@@ -213,8 +213,11 @@ def test_check_only_glob_source(tmp_path, capsys):
               matrix:
                 python-version: [3.6]
     """))
-    assert cpv.check_versions(tmp_path, only={'.github/workflows/one.yml'})
-    assert capsys.readouterr().out == textwrap.dedent("""\
+    assert cpv.check_versions(tmp_path, only={
+        os.path.join('.github', 'workflows', 'one.yml')
+    })
+    result = capsys.readouterr().out.replace(os.path.sep, '/')
+    assert result == textwrap.dedent("""\
         .github/workflows/one.yml says: 3.6
     """)
 
@@ -241,7 +244,8 @@ def test_check_only_glob(tmp_path, capsys):
                 python-version: [3.6]
     """))
     assert cpv.check_versions(tmp_path, only={'.github/workflows/*.yml'})
-    assert capsys.readouterr().out == textwrap.dedent("""\
+    result = capsys.readouterr().out.replace(os.path.sep, '/')
+    assert result == textwrap.dedent("""\
         .github/workflows/one.yml says: 3.6
     """)
 
