@@ -150,6 +150,10 @@ def update_travis_yml_python_versions(
     old_versions = conf.get('python', [])
     if isinstance(old_versions, (str, int, float)):
         old_versions = [old_versions]
+    for toplevel in 'matrix', 'jobs':
+        for job in conf.get(toplevel, {}).get('include', []):
+            if 'python' in job:
+                old_versions.append(job['python'])
     if old_versions and all(isinstance(v, str) for v in old_versions):
         quote_style = '"'
 

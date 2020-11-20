@@ -453,3 +453,28 @@ def test_update_travis_yml_python_versions_matrix_xenial(monkeypatch):
         install: pip install -e .
         script: pytest tests
     """)
+
+
+def test_update_travis_yml_python_versions_matrix_preserve_quotes():
+    travis_yml = StringIO(textwrap.dedent("""\
+        language: python
+        matrix:
+          include:
+            - python: "2.7"
+            - python: "3.3"
+            - language: c
+        install: pip install tox
+        script: tox -e py
+    """))
+    travis_yml.name = '.travis.yml'
+    result = update_travis_yml_python_versions(travis_yml, v(["3.8", "3.9"]))
+    assert "".join(result) == textwrap.dedent("""\
+        language: python
+        matrix:
+          include:
+            - python: "3.8"
+            - python: "3.9"
+            - language: c
+        install: pip install tox
+        script: tox -e py
+    """)
