@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.17.0 (unreleased)
+0.17.0 (2020-11-20)
 -------------------
 
 - Initial supprot for GitHub Actions (`issue 22
