@@ -150,11 +150,7 @@ def update_travis_yml_python_versions(
     old_versions = conf.get('python', [])
     if isinstance(old_versions, (str, int, float)):
         old_versions = [old_versions]
-    if old_versions and all(
-        '- %s' % quote_string(str(old_v), '"') in ''.join(orig_lines)
-        for old_v in old_versions
-        if set(str(old_v)) <= set('0123456789.')
-    ):
+    if old_versions and all(isinstance(v, str) for v in old_versions):
         quote_style = '"'
 
     yaml_new_versions = [
