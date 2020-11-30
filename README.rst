@@ -9,8 +9,8 @@ check-python-versions
     :target: https://pypi.org/project/check-python-versions/
     :alt: Supported Python versions
 
-.. image:: https://travis-ci.com/mgedmin/check-python-versions.svg?branch=master
-    :target: https://travis-ci.com/mgedmin/check-python-versions
+.. image:: https://github.com/mgedmin/check-python-versions/workflows/build/badge.svg?branch=master
+    :target: https://github.com/mgedmin/check-python-versions/actions
     :alt: Build status
 
 .. image:: https://coveralls.io/repos/mgedmin/check-python-versions/badge.svg?branch=master
