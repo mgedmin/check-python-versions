@@ -14,7 +14,7 @@ coverage:                       ##: measure test coverage
 
 .PHONY: lint
 lint:                           ##: run all linters
-	tox -p auto -e flake8,mypy,isort
+	tox -p auto -e flake8,mypy,isort,check-manifest,check-python-versions
 
 .PHONY: flake8
 flake8:                         ##: check for style problems
