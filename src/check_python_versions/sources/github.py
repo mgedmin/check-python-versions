@@ -62,15 +62,17 @@ def parse_gh_ver(v: Union[str, float]) -> Version:
     - "3.7" (latest bugfix in Python 3.7)
     - "3.7.2" (specific version to be downloaded and installed)
     - "pypy2"/"pypy3"
+    - "pypy-2.7"/"pypy-3.6"
+    - "pypy-3.7-v7.3.3"
 
     https://github.com/actions/python-versions/blob/main/versions-manifest.json
     contains a list of supported CPython versions that can be downloaded
     and installed; this includes prereleases, but doesn't include PyPy.
     """
     v = str(v)
-    if v.startswith('pypy3'):
+    if v.startswith(('pypy3', 'pypy-3')):
         return Version.from_string('PyPy3')
-    elif v.startswith('pypy2'):
+    elif v.startswith(('pypy2', 'pypy-2')):
         return Version.from_string('PyPy')
     else:
         return Version.from_string(v)

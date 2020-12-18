@@ -4,7 +4,9 @@ Changelog
 0.17.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Support ``pypy-N.M[-vX.Y.Z]`` in GitHub Actions, in addition to
+  ``pypy2``/``pypy3`` (`issue 24
+  <https://github.com/mgedmin/check-python-versions/issues/24>`_).
 
 
 0.17.0 (2020-11-20)
