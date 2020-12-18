@@ -340,6 +340,6 @@ Add the following snippet to your ``.pre-commit-config.yaml``.
 
     repos:
     -   repo: https://github.com/mgedmin/check-python-versions
-        rev: "0.17.0"
+        rev: "0.17.1"
         hooks:
         -   id: check-python-versions

@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.17.1 (unreleased)
+0.17.1 (2020-12-18)
 -------------------
 
 - Support ``pypy-N.M[-vX.Y.Z]`` in GitHub Actions, in addition to
