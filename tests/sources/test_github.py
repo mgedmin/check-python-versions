@@ -111,6 +111,9 @@ def test_get_gha_python_versions_no_version_matrix():
     ('3.7', '3.7'),
     ('pypy2', 'PyPy'),
     ('pypy3', 'PyPy3'),
+    ('pypy-2.7', 'PyPy'),
+    ('pypy-3.6', 'PyPy3'),
+    ('pypy-3.7-v7.3.3', 'PyPy3'),
 ])
 def test_parse_gh_ver(s, expected):
     assert parse_gh_ver(s) == Version.from_string(expected)
