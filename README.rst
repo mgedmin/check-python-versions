@@ -22,11 +22,11 @@ This is a tool for Python package maintainers who want to explicitly state
 which Python versions they support.
 
 
-**The problem**: to properly support e.g. Python 2.7 and 3.5+ you have to
+**The problem**: to properly support e.g. Python 2.7 and 3.6+ you have to
 run tests with these Pythons.  This means
 
-- you need a tox.ini with envlist = py27, py35, py36, py37, py38
-- you need a .travis.yml with python: [ 2.7, 3.5, 3.6, 3.7, 3.8 ]
+- you need a tox.ini with envlist = py27, py36, py37, py38, py39
+- you need a .travis.yml with python: [ 2.7, 3.6, 3.7, 3.8, 3.9 ]
 - if you support Windows, you need an appveyor.yml with %PYTHON% set to
   C:\\Python2.7, C:\\Python3.5, and so on
 - if you're building manylinux wheels you need to ... you get the idea
@@ -44,27 +44,27 @@ you if they don't match ::
     $ check-python-versions ~/projects/*
     /home/mg/projects/check-manifest:
 
-    setup.py says:              2.7, 3.5, 3.6, 3.7, 3.8, PyPy
-    - python_requires says:     2.7, 3.5, 3.6, 3.7, 3.8
-    tox.ini says:               2.7, 3.5, 3.6, 3.7, 3.8, PyPy, PyPy3
-    .travis.yml says:           2.7, 3.5, 3.6, 3.7, 3.8, PyPy, PyPy3
-    appveyor.yml says:          2.7, 3.5, 3.6, 3.7, 3.8
+    setup.py says:              2.7, 3.6, 3.7, 3.8, 3.9, PyPy
+    - python_requires says:     2.7, 3.6, 3.7, 3.8, 3.9
+    tox.ini says:               2.7, 3.6, 3.7, 3.8, 3.9, PyPy, PyPy3
+    .travis.yml says:           2.7, 3.6, 3.7, 3.8, 3.9, PyPy, PyPy3
+    appveyor.yml says:          2.7, 3.6, 3.7, 3.8, 3.9
 
 
     /home/mg/projects/dozer:
 
-    setup.py says:              2.7, 3.5, 3.6, 3.7, 3.8
-    tox.ini says:               2.7, 3.5, 3.6, 3.7, 3.8
-    .travis.yml says:           2.7, 3.5, 3.6, 3.7, 3.8
-    appveyor.yml says:          2.7, 3.5, 3.6, 3.7, 3.8
+    setup.py says:              2.7, 3.6, 3.7, 3.8, 3.9
+    tox.ini says:               2.7, 3.6, 3.7, 3.8, 3.9
+    .travis.yml says:           2.7, 3.6, 3.7, 3.8, 3.9
+    appveyor.yml says:          2.7, 3.6, 3.7, 3.8, 3.9
 
 
     /home/mg/projects/eazysvn:
 
-    setup.py says:              2.7, 3.5, 3.6, 3.7, 3.8, PyPy
-    tox.ini says:               2.7, 3.5, 3.6, 3.7, 3.8, PyPy, PyPy3
-    .travis.yml says:           2.7, 3.5, 3.6, 3.7, 3.8, PyPy, PyPy3
-    appveyor.yml says:          2.7, 3.5, 3.6, 3.7, 3.8
+    setup.py says:              2.7, 3.6, 3.7, 3.8, 3.9, PyPy
+    tox.ini says:               2.7, 3.6, 3.7, 3.8, 3.9, PyPy, PyPy3
+    .travis.yml says:           2.7, 3.6, 3.7, 3.8, 3.9, PyPy, PyPy3
+    appveyor.yml says:          2.7, 3.6, 3.7, 3.8, 3.9
 
     ...
 
@@ -110,11 +110,11 @@ Usage
                            e.g. --only tox.ini,appveyor.yml)
 
     updating supported version lists (EXPERIMENTAL):
-      --add VERSIONS       add these versions to supported ones, e.g --add 3.8
+      --add VERSIONS       add these versions to supported ones, e.g --add 3.9
       --drop VERSIONS      drop these versions from supported ones, e.g --drop
                            2.6,3.4
       --update VERSIONS    update the set of supported versions, e.g. --update
-                           2.7,3.5-3.8
+                           2.7,3.5-3.9
       --diff               show a diff of proposed changes
       --dry-run            verify proposed changes without writing them to disk
 
@@ -137,10 +137,10 @@ ones, for a faster turnabout.
 There's also experimental support for updating supported Python versions
 so you can do things like ::
 
-    check-python-versions ~/projects/* --add 3.8 --dry-run --expect 2.7,3.5-3.8
+    check-python-versions ~/projects/* --add 3.9 --dry-run --expect 2.7,3.6-3.9
     check-python-versions ~/projects/* --drop 3.4 --diff
-    check-python-versions ~/projects/* --update 2.7,3.5- --dry-run --diff
-    check-python-versions ~/projects/* --add 3.8 --drop=-2.6,-3.4
+    check-python-versions ~/projects/* --update 2.7,3.6- --dry-run --diff
+    check-python-versions ~/projects/* --add 3.9 --drop=-2.6,-3.5
 
 (the last one will show a diff for each file and ask for interactive
 confirmation before making any changes.)
@@ -303,17 +303,20 @@ in some of the files:
 - **.travis.yml** may have pypy and pypy3 jobs with optional version suffixes
   (e.g. pypy2.7-6.0.0, pypy3.5-6.0.0)
 
+- **.github/workflows/*.yml**: may have pypy/pypy3/pypy-N.M/pypy-N.M-vX.Y.Z
+  jobs.
+
 - **appveyor.yml** and **.manylinux-install.sh** do not usually have pypy tests,
   so check-python-versions cannot recognize them.
 
 These extra Pythons are shown, but not compared for consistency.
 
-Upcoming Python releases (such as 3.9 in setup.py or 3.9-dev in a .travis.yml)
+Upcoming Python releases (such as 3.10 in setup.py or 3.10-dev in a .travis.yml)
 are also shown but do not cause mismatch errors.
 
 In addition, ``python_requires`` in setup.py usually has a lower limit, but no
 upper limit.  check-python-versions will assume this means support up to the
-current Python 3.x release (3.8 at the moment).
+current Python 3.x release (3.9 at the moment).
 
 When you're specifying Python version ranges for --expect, --add, --drop or
 --update, you can use
