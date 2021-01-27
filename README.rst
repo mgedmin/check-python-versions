@@ -307,9 +307,8 @@ in some of the files:
   jobs.
 
 - **appveyor.yml** and **.manylinux-install.sh** do not usually have pypy tests,
-  so check-python-versions cannot recognize them.
-
-These extra Pythons are shown, but not compared for consistency.
+  so check-python-versions cannot recognize them, and these files are excluded
+  from PyPy support consistency checks.
 
 Upcoming Python releases (such as 3.10 in setup.py or 3.10-dev in a .travis.yml)
 are also shown but do not cause mismatch errors.
@@ -330,6 +329,9 @@ When you're specifying Python version ranges for --expect, --add, --drop or
 
 or a comma-separated list of the above (e.g. ``--expect 2.7,3.5-``,
 ``--drop -2.6,-3.4``).
+
+--expect/--add/--drop/--update currently do not allow specifying alternative
+implementations (such as pypy).
 
 
 pre-commit integration
