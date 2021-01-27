@@ -49,6 +49,7 @@ from ..versions import (
     SortedVersionList,
     Version,
     VersionList,
+    expand_pypy,
 )
 
 
@@ -134,7 +135,7 @@ def get_versions_from_classifiers(
         if major in versions and any(
                 v.startswith(f'{major}.') for v in versions):
             versions.remove(major)
-    return sorted(map(Version.from_string, versions))
+    return expand_pypy(list(map(Version.from_string, versions)))
 
 
 def update_classifiers(
@@ -467,6 +468,7 @@ SetupClassifiers = Source(
     filename=SETUP_PY,
     extract=get_supported_python_versions,
     update=update_supported_python_versions,
+    check_pypy_consistency=True,
 )
 
 SetupPythonRequires = Source(
@@ -474,4 +476,5 @@ SetupPythonRequires = Source(
     filename=SETUP_PY,
     extract=get_python_requires,
     update=update_python_requires,
+    check_pypy_consistency=False,
 )

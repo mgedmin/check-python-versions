@@ -150,6 +150,31 @@ def test_check_mismatch(tmp_path, capsys):
     """)
 
 
+def test_check_mismatch_pypy(tmp_path, capsys):
+    setup_py = tmp_path / "setup.py"
+    setup_py.write_text(textwrap.dedent("""\
+        from setuptools import setup
+        setup(
+            name='foo',
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+                'Programming Language :: Python :: Implementation :: PyPy',
+            ],
+        )
+    """))
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        envlist = py27, py36, pypy
+    """))
+    assert cpv.check_versions(tmp_path) is False
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        setup.py says: 2.7, 3.6, PyPy, PyPy3
+        tox.ini says:  2.7, 3.6, PyPy
+    """)
+
+
 def test_check_expectation(tmp_path, capsys):
     setup_py = tmp_path / "setup.py"
     setup_py.write_text(textwrap.dedent("""\
@@ -159,12 +184,13 @@ def test_check_expectation(tmp_path, capsys):
             classifiers=[
                 'Programming Language :: Python :: 2.7',
                 'Programming Language :: Python :: 3.6',
+                'Programming Language :: Python :: Implementation :: PyPy',
             ],
         )
     """))
     assert not cpv.check_versions(tmp_path, expect=v(['2.7', '3.6', '3.7']))
     assert capsys.readouterr().out == textwrap.dedent("""\
-        setup.py says: 2.7, 3.6
+        setup.py says: 2.7, 3.6, PyPy, PyPy3
         expected:      2.7, 3.6, 3.7
     """)
 

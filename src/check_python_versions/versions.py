@@ -104,6 +104,27 @@ def important(versions: Collection[Version]) -> VersionSet:
     }
 
 
+def pypy_versions(versions: Collection[Version]) -> VersionSet:
+    """Filter PyPy versions."""
+    return {
+        v for v in versions
+        if v.prefix.startswith('PyPy')
+    }
+
+
+def expand_pypy(versions: Collection[Version]) -> SortedVersionList:
+    supports_pypy = any(v.prefix == 'PyPy' for v in versions)
+    if not supports_pypy:
+        return sorted(versions)
+    supports_py2 = any(v.major == 2 for v in versions)
+    supports_py3 = any(v.major == 3 for v in versions)
+    return sorted(
+        [v for v in versions if v.prefix != 'PyPy'] +
+        ([Version.from_string('PyPy')] if supports_py2 else []) +
+        ([Version.from_string('PyPy3')] if supports_py3 else [])
+    )
+
+
 def update_version_list(
     versions: VersionList,
     add: Optional[VersionList] = None,

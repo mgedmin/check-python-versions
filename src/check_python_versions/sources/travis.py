@@ -208,4 +208,5 @@ Travis = Source(
     filename=TRAVIS_YML,
     extract=get_travis_yml_python_versions,
     update=update_travis_yml_python_versions,
+    check_pypy_consistency=True,
 )

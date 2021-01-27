@@ -8,8 +8,9 @@ Makes sure the set of supported Python versions is consistent between
 - .travis-ci.yml
 - appveyor.yml
 - (optionally) .manylinux-install.sh as used by various ZopeFoundation projects
+- .github/workflows/*.yml
 
 """
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
-__version__ = '0.17.2.dev0'
+__version__ = '0.18.0.dev0'

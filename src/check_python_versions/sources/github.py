@@ -141,4 +141,5 @@ GitHubActions = Source(
     filename=GHA_WORKFLOW_GLOB,
     extract=get_gha_python_versions,
     update=update_gha_python_versions,
+    check_pypy_consistency=True,
 )

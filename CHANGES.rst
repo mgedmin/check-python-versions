@@ -1,10 +1,14 @@
 Changelog
 =========
 
-0.17.2 (unreleased)
+0.18.0 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- PyPy support is now checked for consistency: if setup.py declares PyPy
+  support, you need to also run tests on PyPy in your primary CI systems (tox,
+  GitHub Actions, Travis CI), and vice versa.  Secondary CI systems (Appveyor,
+  manylinux.sh) are excluded from this check.  `GH #26
+  <https://github.com/mgedmin/check-python-versions/issues/#26>`_.
 
 
 0.17.1 (2020-12-18)

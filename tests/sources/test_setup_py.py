@@ -105,7 +105,7 @@ def test_get_versions_from_classifiers():
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
-    ]) == v(['2.7', '3.6', '3.7', 'PyPy'])
+    ]) == v(['2.7', '3.6', '3.7', 'PyPy', 'PyPy3'])
 
 
 def test_get_versions_from_classifiers_major_only():
