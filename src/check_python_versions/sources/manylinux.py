@@ -91,4 +91,5 @@ Manylinux = Source(
     filename=MANYLINUX_INSTALL_SH,
     extract=get_manylinux_python_versions,
     update=update_manylinux_python_versions,
+    check_pypy_consistency=False,
 )

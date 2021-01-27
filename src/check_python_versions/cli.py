@@ -29,6 +29,7 @@ from .versions import (
     Version,
     VersionList,
     important,
+    pypy_versions,
     update_version_list,
 )
 
@@ -240,11 +241,14 @@ def check_versions(
     width = max(width, min_width)
 
     version_sets = []
+    pypy_version_sets = []
 
     for source in sources:
         print(f"{source.title} says:".ljust(width),
               ", ".join(str(v) for v in source.versions) or "(empty)")
         version_sets.append(important(source.versions))
+        if source.check_pypy_consistency:
+            pypy_version_sets.append(pypy_versions(source.versions))
 
     if not expect:
         expect = version_sets[0]
@@ -252,9 +256,15 @@ def check_versions(
         print("expected:".ljust(width), ', '.join(str(v) for v in expect))
 
     expect = important(expect)
-    return all(
-        expect == v for v in version_sets
-    )
+    if not all(expect == v for v in version_sets):
+        return False
+
+    if pypy_version_sets:
+        expect_pypy = pypy_version_sets[0]
+        if not all(expect_pypy == v for v in pypy_version_sets):
+            return False
+
+    return True
 
 
 def update_versions(

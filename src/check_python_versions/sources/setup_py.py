@@ -49,6 +49,7 @@ from ..versions import (
     SortedVersionList,
     Version,
     VersionList,
+    expand_pypy,
 )
 
 
@@ -78,7 +79,7 @@ def get_supported_python_versions(
     if not isinstance(classifiers, (list, tuple)):
         warn('The value passed to setup(classifiers=...) is not a list')
         return []
-    return get_versions_from_classifiers(classifiers)
+    return expand_pypy(get_versions_from_classifiers(classifiers))
 
 
 def get_python_requires(
@@ -467,6 +468,7 @@ SetupClassifiers = Source(
     filename=SETUP_PY,
     extract=get_supported_python_versions,
     update=update_supported_python_versions,
+    check_pypy_consistency=True,
 )
 
 SetupPythonRequires = Source(
@@ -474,4 +476,5 @@ SetupPythonRequires = Source(
     filename=SETUP_PY,
     extract=get_python_requires,
     update=update_python_requires,
+    check_pypy_consistency=False,
 )
