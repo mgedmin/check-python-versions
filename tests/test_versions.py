@@ -2,7 +2,9 @@ import pytest
 
 from check_python_versions.versions import (
     Version,
+    expand_pypy,
     important,
+    pypy_versions,
     update_version_list,
 )
 
@@ -61,6 +63,26 @@ def test_important(fix_max_python_3_version):
     assert important({
         '2.7', '3.4', '3.7-dev', '3.8', 'nightly', 'PyPy3', 'Jython'
     }) == {'2.7', '3.4'}
+
+
+def test_pypy_versions():
+    assert pypy_versions({
+        Version.from_string(v)
+        for v in ['2.7', '3.4', '3.7-dev', '3.8', 'nightly', 'PyPy3', 'Jython']
+    }) == {Version.from_string(v) for v in ['PyPy3']}
+
+
+@pytest.mark.parametrize("versions, expected", [
+    (['3.6', '2.7'], ['2.7', '3.6']),
+    (['2.7', '3.6', 'PyPy'], ['2.7', '3.6', 'PyPy', 'PyPy3']),
+    (['2.7', 'PyPy'], ['2.7', 'PyPy']),
+    (['3.6', 'PyPy'], ['3.6', 'PyPy3']),
+    (['PyPy'], []),  # lol, garbage in, garbage out
+])
+def test_expand_pypy(versions, expected):
+    assert expand_pypy([Version.from_string(v) for v in versions]) == [
+        Version.from_string(v) for v in expected
+    ]
 
 
 def test_update_version_list():

@@ -79,7 +79,7 @@ def get_supported_python_versions(
     if not isinstance(classifiers, (list, tuple)):
         warn('The value passed to setup(classifiers=...) is not a list')
         return []
-    return expand_pypy(get_versions_from_classifiers(classifiers))
+    return get_versions_from_classifiers(classifiers)
 
 
 def get_python_requires(
@@ -135,7 +135,7 @@ def get_versions_from_classifiers(
         if major in versions and any(
                 v.startswith(f'{major}.') for v in versions):
             versions.remove(major)
-    return sorted(map(Version.from_string, versions))
+    return expand_pypy(list(map(Version.from_string, versions)))
 
 
 def update_classifiers(

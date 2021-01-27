@@ -259,12 +259,12 @@ def check_versions(
     if not all(expect == v for v in version_sets):
         return False
 
-    if pypy_version_sets:
-        expect_pypy = pypy_version_sets[0]
-        if not all(expect_pypy == v for v in pypy_version_sets):
-            return False
+    if not pypy_version_sets:
+        # can't happen: at least one of our sources (setup.py) has pypy info
+        return True  # pragma: nocover
 
-    return True
+    expect_pypy = pypy_version_sets[0]
+    return all(expect_pypy == v for v in pypy_version_sets)
 
 
 def update_versions(
