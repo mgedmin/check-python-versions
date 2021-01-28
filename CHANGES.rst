@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.18.0 (unreleased)
+0.18.0 (2021-01-28)
 -------------------
 
 - PyPy support is now checked for consistency: if setup.py declares PyPy
