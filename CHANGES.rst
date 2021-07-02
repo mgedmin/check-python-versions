@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.18.1 (unreleased)
+0.18.1 (2021-07-02)
 -------------------
 
 - Treat versions like ``3.10.0-beta.3`` as prerelease versions.  `GH #28
