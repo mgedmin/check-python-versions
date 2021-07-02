@@ -4,7 +4,8 @@ Changelog
 0.18.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Treat versions like ``3.10.0-beta.3`` as prerelease versions.  `GH #28
+  <https://github.com/mgedmin/check-python-versions/issues/#28>`_.
 
 
 0.18.0 (2021-01-28)

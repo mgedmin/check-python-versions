@@ -89,7 +89,11 @@ def is_important(v: Union[Version, str]) -> bool:
     upcoming_release = Version(major=3, minor=CURRENT_PYTHON_3_VERSION + 1)
     return (
         not v.prefix.startswith(('PyPy', 'Jython')) and v.prefix != 'nightly'
-        and not v.suffix.endswith('-dev') and v != upcoming_release
+        and '-dev' not in v.suffix
+        and '-alpha' not in v.suffix
+        and '-beta' not in v.suffix
+        and '-rc' not in v.suffix
+        and v != upcoming_release
     )
 
 

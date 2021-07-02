@@ -61,7 +61,8 @@ def test_version_sorting():
 def test_important(fix_max_python_3_version):
     fix_max_python_3_version(7)
     assert important({
-        '2.7', '3.4', '3.7-dev', '3.8', 'nightly', 'PyPy3', 'Jython'
+        '2.7', '3.4', '3.7-dev', '3.8', 'nightly', 'PyPy3', 'Jython',
+        '3.10.0-beta.3', '3.10.0-alpha.1', '3.10.0-rc.2',
     }) == {'2.7', '3.4'}
 
 
