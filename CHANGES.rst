@@ -4,7 +4,9 @@ Changelog
 0.18.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Don't drop all PyPy builds when adding/dropping supported versions to GitHub
+  Actions files that use a build matrix based on ``python-version``.  `GH #29
+  <https://github.com/mgedmin/check-python-versions/issues/#29>`_
 
 
 0.18.1 (2021-07-02)

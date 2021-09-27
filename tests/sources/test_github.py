@@ -299,7 +299,70 @@ def test_update_gha_python_versions_can_drop_pypy():
     """)
 
 
+def test_update_gha_python_versions_can_drop_pypy2():
+    # Reg. test for https://github.com/mgedmin/check-python-versions/issues/29
+    tests_yml = StringIO(textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                python-version:
+                  - "2.7"
+                  - "3.5"
+                  - "3.6"
+                  - "pypy2"
+                  - "pypy3"
+            steps:
+              - ...
+    """))
+    tests_yml.name = '.github/workflows/tests.yml'
+    result = update_gha_python_versions(tests_yml, v(["3.5", "3.6"]))
+    assert "".join(result) == textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                python-version:
+                  - "3.5"
+                  - "3.6"
+                  - "pypy3"
+            steps:
+              - ...
+    """)
+
+
 def test_update_gha_python_versions_can_drop_pypy3():
+    # Reg. test for https://github.com/mgedmin/check-python-versions/issues/29
+    tests_yml = StringIO(textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                python-version:
+                  - "2.7"
+                  - "3.5"
+                  - "3.6"
+                  - "pypy2"
+                  - "pypy3"
+            steps:
+              - ...
+    """))
+    tests_yml.name = '.github/workflows/tests.yml'
+    result = update_gha_python_versions(tests_yml, v(["2.7"]))
+    assert "".join(result) == textwrap.dedent("""\
+        jobs:
+          build:
+            strategy:
+              matrix:
+                python-version:
+                  - "2.7"
+                  - "pypy2"
+            steps:
+              - ...
+    """)
+
+
+def test_update_gha_python_versions_can_drop_pypy3_in_config():
     tests_yml = StringIO(textwrap.dedent("""\
         jobs:
           build:

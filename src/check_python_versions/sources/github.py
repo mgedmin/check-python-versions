@@ -92,7 +92,17 @@ def update_gha_python_versions(
         conf = yaml.safe_load(fp)
     new_lines = orig_lines
 
-    def keep_old(value: str) -> bool:
+    def keep_old_version(value: str) -> bool:
+        """Determine if a Python version line should be preserved."""
+        parsed = yaml.safe_load(value)
+        ver = parse_gh_ver(parsed)
+        if ver == Version.from_string('PyPy'):
+            return any(v.major == 2 for v in new_versions)
+        if ver == Version.from_string('PyPy3'):
+            return any(v.major == 3 for v in new_versions)
+        return False
+
+    def keep_old_config(value: str) -> bool:
         """Determine if a Python version line should be preserved."""
         parsed = yaml.safe_load(value)
         if isinstance(parsed, list) and len(parsed) == 2:
@@ -120,6 +130,7 @@ def update_gha_python_versions(
                 new_lines,
                 ('jobs', job_name, 'strategy', 'matrix', 'python-version'),
                 yaml_new_versions, filename=fp.name,
+                keep=keep_old_version,
             )
         if 'config' in matrix:
             yaml_configs = []
@@ -131,7 +142,7 @@ def update_gha_python_versions(
                 new_lines,
                 ('jobs', job_name, 'strategy', 'matrix', 'config'),
                 yaml_configs, filename=fp.name,
-                keep=keep_old,
+                keep=keep_old_config,
             )
 
     return new_lines
