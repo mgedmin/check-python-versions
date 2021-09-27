@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.18.2 (unreleased)
+0.18.2 (2021-09-27)
 -------------------
 
 - Don't drop all PyPy builds when adding/dropping supported versions to GitHub
