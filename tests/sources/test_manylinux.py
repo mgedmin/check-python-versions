@@ -44,14 +44,6 @@ def test_get_manylinux_python_versions(tmp_path):
     ])
 
 
-def test_get_manylinux_python_versions_empty_file(tmp_path):
-    # Utterly unrealistic test case to get branch coverage back to
-    # 100% on Python 3.10 on GitHub Actions.
-    manylinux_install_sh = tmp_path / ".manylinux-install.sh"
-    manylinux_install_sh.write_text('')
-    assert get_manylinux_python_versions(manylinux_install_sh) == []
-
-
 def test_update_manylinux_python_versions():
     manylinux_install_sh = StringIO(textwrap.dedent(r"""
         #!/usr/bin/env bash
