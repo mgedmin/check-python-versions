@@ -1,10 +1,11 @@
 Changelog
 =========
 
-0.18.3 (unreleased)
+0.19.0 (2021-10-12)
 -------------------
 
-- Nothing changed yet.
+- Add support for Python 3.10: threat it as a released version, run CI tests on
+  3.10.
 
 
 0.18.2 (2021-09-27)
@@ -63,7 +64,7 @@ Changelog
 
 - Add support for Python 3.9.
 
-- Python 3.10 support: sort 3.10 after 3.9, quote "3.10" when
+- Preliminary Python 3.10 support: sort 3.10 after 3.9, quote "3.10" when
   updating YAML files so it doesn't get treated as a floating point
   number (`GH #19
   <https://github.com/mgedmin/check-python-versions/issues/19>`_)
