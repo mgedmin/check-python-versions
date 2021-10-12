@@ -24,6 +24,7 @@ jobs:
           - "3.7"
           - "3.8"
           - "3.9"
+          - "3.10"
           - "pypy3"
 
     steps:
@@ -55,7 +56,10 @@ jobs:
         run: coverage run -m pytest tests
 
       - name: Check test coverage
-        run: coverage report -m --fail-under=100
+        # Coverage tracking is slightly broken on Python 3.10.  The fix is in
+        # coverage 6.0, but coveralls requires coverage < 6.0.  See
+        # https://github.com/TheKevJames/coveralls-python/issues/326
+        run: coverage report -m --fail-under=${{ (matrix.python-version == '3.10') && 99 || 100 }}
 
       - name: Report to coveralls
         run: coveralls
