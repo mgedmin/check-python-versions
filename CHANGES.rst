@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.19.1 (unreleased)
+0.19.1 (2021-10-13)
 -------------------
 
 - Don't complain about unbounded python_requires allowing new Python 3 releases
