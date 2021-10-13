@@ -240,20 +240,30 @@ def check_versions(
 
     width = max(width, min_width)
 
+    for source in sources:
+        print(f"{source.title} says:".ljust(width),
+              ", ".join(str(v) for v in source.versions) or "(empty)")
+
+    if expect:
+        print("expected:".ljust(width), ', '.join(str(v) for v in expect))
+
+    return supported_versions_match(sources, expect)
+
+
+def supported_versions_match(
+    sources: List[SourceFile],
+    expect: Optional[VersionList] = None,
+) -> bool:
     version_sets = []
     pypy_version_sets = []
 
     for source in sources:
-        print(f"{source.title} says:".ljust(width),
-              ", ".join(str(v) for v in source.versions) or "(empty)")
         version_sets.append(important(source.versions))
         if source.check_pypy_consistency:
             pypy_version_sets.append(pypy_versions(source.versions))
 
     if not expect:
         expect = version_sets[0]
-    else:
-        print("expected:".ljust(width), ', '.join(str(v) for v in expect))
 
     expect = important(expect)
     if not all(expect == v for v in version_sets):
