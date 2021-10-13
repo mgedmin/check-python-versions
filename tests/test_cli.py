@@ -9,6 +9,7 @@ from typing import List
 import pytest
 
 import check_python_versions.cli as cpv
+from check_python_versions.sources.base import SourceFile
 from check_python_versions.versions import Version
 
 
@@ -292,6 +293,18 @@ def test_check_only_nothing_matches(tmp_path, capsys):
     assert capsys.readouterr().out == textwrap.dedent("""\
         no file with version information found
     """)
+
+
+def test_supported_versions_match_ignores_python_requires_upper_bound():
+    sources = [
+        SourceFile(title='setup.py', filename='setup.py', extract=None,
+                   check_pypy_consistency=True, has_upper_bound=True,
+                   pathname='setup.py', versions=v(['2.7', '3.6'])),
+        SourceFile(title='python_requires', filename='setup.py', extract=None,
+                   check_pypy_consistency=True, has_upper_bound=False,
+                   pathname='setup.py', versions=v(['2.7', '3.6', '3.7'])),
+    ]
+    assert cpv.supported_versions_match(sources)
 
 
 def test_update_versions(tmp_path, monkeypatch):

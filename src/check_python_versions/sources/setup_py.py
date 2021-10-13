@@ -469,6 +469,7 @@ SetupClassifiers = Source(
     extract=get_supported_python_versions,
     update=update_supported_python_versions,
     check_pypy_consistency=True,
+    has_upper_bound=True,
 )
 
 SetupPythonRequires = Source(
@@ -477,4 +478,5 @@ SetupPythonRequires = Source(
     extract=get_python_requires,
     update=update_python_requires,
     check_pypy_consistency=False,
+    has_upper_bound=False,  # TBH it might have one!
 )

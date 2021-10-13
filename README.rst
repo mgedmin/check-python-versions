@@ -314,8 +314,11 @@ Upcoming Python releases (such as 3.10 in setup.py or 3.10-dev in a .travis.yml)
 are also shown but do not cause mismatch errors.
 
 In addition, ``python_requires`` in setup.py usually has a lower limit, but no
-upper limit.  check-python-versions will assume this means support up to the
-current Python 3.x release (3.9 at the moment).
+upper limit.  check-python-versions will assume this means support up to
+whatever's the latest Python 3.x release mentioned in other data sources, or
+the current 3.x release (3.10 at the moment), whichever is lower.  This means
+that new Python 3 releases don't suddenly cause all your lint checks to fail
+if you use python_requires '>= 3.6' and such.
 
 When you're specifying Python version ranges for --expect, --add, --drop or
 --update, you can use

@@ -92,4 +92,5 @@ Manylinux = Source(
     extract=get_manylinux_python_versions,
     update=update_manylinux_python_versions,
     check_pypy_consistency=False,
+    has_upper_bound=True,
 )

@@ -254,4 +254,5 @@ Tox = Source(
     extract=get_tox_ini_python_versions,
     update=update_tox_ini_python_versions,
     check_pypy_consistency=True,
+    has_upper_bound=True,
 )

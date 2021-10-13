@@ -31,12 +31,14 @@ class Source:
         extract: ExtractorFn,
         update: Optional[UpdaterFn] = None,
         check_pypy_consistency: bool,
+        has_upper_bound: bool,
     ) -> None:
         self.title = title or filename
         self.filename = filename
         self.extract = extract
         self.update = update
         self.check_pypy_consistency = check_pypy_consistency
+        self.has_upper_bound = has_upper_bound
 
     def for_file(
         self,
@@ -51,6 +53,7 @@ class Source:
             extract=self.extract,
             update=self.update,
             check_pypy_consistency=self.check_pypy_consistency,
+            has_upper_bound=self.has_upper_bound,
             pathname=pathname,
             versions=versions,
         )
@@ -72,11 +75,13 @@ class SourceFile(Source):
         extract: ExtractorFn,
         update: Optional[UpdaterFn] = None,
         check_pypy_consistency: bool,
+        has_upper_bound: bool,
         pathname: str,
         versions: SortedVersionList,
     ) -> None:
         super().__init__(
             title=title, filename=filename, extract=extract, update=update,
-            check_pypy_consistency=check_pypy_consistency)
+            check_pypy_consistency=check_pypy_consistency,
+            has_upper_bound=has_upper_bound)
         self.pathname = pathname
         self.versions = versions

@@ -187,4 +187,5 @@ Appveyor = Source(
     extract=get_appveyor_yml_python_versions,
     update=update_appveyor_yml_python_versions,
     check_pypy_consistency=False,
+    has_upper_bound=True,
 )

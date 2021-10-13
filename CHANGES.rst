@@ -4,7 +4,9 @@ Changelog
 0.19.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Don't complain about unbounded python_requires allowing new Python 3 releases
+  when all other sources don't allow it yet.  `GH #31
+  <https://github.com/mgedmin/check-python-versions/issues/31>`_
 
 
 0.19.0 (2021-10-12)

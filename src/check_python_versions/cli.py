@@ -257,10 +257,21 @@ def supported_versions_match(
     version_sets = []
     pypy_version_sets = []
 
+    # This loop covers everything except for setup_requires
     for source in sources:
-        version_sets.append(important(source.versions))
+        if source.has_upper_bound:
+            version_sets.append(important(source.versions))
         if source.check_pypy_consistency:
             pypy_version_sets.append(pypy_versions(source.versions))
+
+    # setup_requires usually has no upper bound, which causes trouble when a
+    # new Python version gets released.  Let's add an artificial upper bound
+    # that matches all the other sources.
+    for source in sources:
+        if not source.has_upper_bound:
+            max_supported_version = max(v for vs in version_sets for v in vs)
+            version_sets.append({v for v in important(source.versions)
+                                 if v <= max_supported_version})
 
     if not expect:
         expect = version_sets[0]
