@@ -26,7 +26,7 @@ isort:                          ##: check for incorrect import ordering
 
 .PHONY: mypy
 mypy:                           ##: check for type errors
-	tox -e coverage
+	tox -e mypy
 
 ##:
 
