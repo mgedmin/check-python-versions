@@ -117,6 +117,14 @@ def pypy_versions(versions: Collection[Version]) -> VersionSet:
 
 
 def expand_pypy(versions: Collection[Version]) -> SortedVersionList:
+    """Determine whether PyPy support means PyPy2 or PyPy3 or both.
+
+    Some data sources (like setup.py classifiers) allow you to indicate PyPy
+    support without specifying whether you mean PyPy2 or PyPy3.  Other data
+    sources (like all CI systems) are more explicit.  To make these version
+    lists directly comparable we need to look at supported CPython versions and
+    translate that knowledge into PyPy versions.
+    """
     supports_pypy = any(v.prefix == 'PyPy' for v in versions)
     if not supports_pypy:
         return sorted(versions)
