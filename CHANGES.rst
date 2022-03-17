@@ -4,7 +4,7 @@ Changelog
 0.19.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Drop support for Python 3.6.
 
 
 0.19.1 (2021-10-13)

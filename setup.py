@@ -51,7 +51,6 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
@@ -60,7 +59,7 @@ setup(
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
     license='GPL',
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     packages=find_packages('src'),
     package_dir={'': 'src'},
     entry_points={
