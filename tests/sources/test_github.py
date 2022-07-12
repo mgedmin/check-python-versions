@@ -60,6 +60,7 @@ def test_get_gha_python_versions_with_includes():
                 include:
                   - python-version: "3.10"
                   - python-version: "pypy3.7"
+                  - something-unrelated: foo
             # ...
     """))
     tests_yml.name = '.github/workflows/tests.yml'
