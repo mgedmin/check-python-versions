@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.19.2 (unreleased)
+0.19.2 (2022-07-12)
 -------------------
 
 - Drop support for Python 3.6.
