@@ -46,6 +46,11 @@ def get_gha_python_versions(
                 for c in matrix['config']
                 if isinstance(c, list)
             )
+        if 'include' in matrix:
+            for extra in matrix['include']:
+                if 'python-version' in extra:
+                    had_matrix = True
+                    versions.add(parse_gh_ver(extra['python-version']))
 
     if not had_matrix:
         return None

@@ -6,6 +6,8 @@ Changelog
 
 - Drop support for Python 3.6.
 
+- Recognize ``include`` directives in GitHub Actions build matrixes.
+
 
 0.19.1 (2021-10-13)
 -------------------

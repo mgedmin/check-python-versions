@@ -47,6 +47,27 @@ def test_get_gha_python_versions():
     ])
 
 
+def test_get_gha_python_versions_with_includes():
+    tests_yml = StringIO(textwrap.dedent("""\
+        name: Python package
+        on: [push]
+        jobs:
+          build:
+            runs-on: ubuntu-latest
+            strategy:
+              matrix:
+                python-version: [3.7, 3.8, 3.9]
+                include:
+                  - python-version: "3.10"
+                  - python-version: "pypy3.7"
+            # ...
+    """))
+    tests_yml.name = '.github/workflows/tests.yml'
+    assert get_gha_python_versions(tests_yml) == v([
+        '3.7', '3.8', '3.9', '3.10', 'PyPy3'
+    ])
+
+
 def test_get_gha_python_versions_zopefoundation():
     tests_yml = StringIO(textwrap.dedent("""\
         name: tests
