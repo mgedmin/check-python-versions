@@ -1,10 +1,11 @@
 Changelog
 =========
 
-0.19.3 (unreleased)
+0.20.0 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add support for Python 3.11: threat it as a released version, run CI tests on
+  3.11.
 
 
 0.19.2 (2022-07-12)
