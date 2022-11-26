@@ -55,7 +55,7 @@ def update_ini_setting(
 
     end = start + 1
     comments = []
-    pending_comments = []  # type: List[str]
+    pending_comments: List[str] = []
     indent = '  '
     for n, line in lines:
         if line.startswith(' '):
