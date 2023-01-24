@@ -11,7 +11,8 @@ and tool.poetry.dependencies.python keyword.
 check-python-versions supports both.
 """
 
-import pytomlpp
+from tomlkit import dumps
+from tomlkit import parse, load
 
 from typing import (
     List,
@@ -38,11 +39,29 @@ from ..versions import (
 PYPROJECT_TOML = 'pyproject.toml'
 
 
+def _load_toml(filename: FileOrFilename):
+    table = {}
+    # tomlkit has two different API to load from file name or file object
+    if isinstance(filename, str):
+        with open_file(filename) as fp:
+            table = load(fp)
+    if isinstance(filename, TextIO):
+        table = load(filename)
+    return table
+
+
+def get_toml_content(
+    filename: FileOrFilename = PYPROJECT_TOML
+) -> FileLines:
+    """Utility method to see if TOML library keeps style and comments."""
+    table = _load_toml(filename)
+    return dumps(table).split('\n')
+
+
 def _get_pyproject_toml_classifiers(
     filename: FileOrFilename = PYPROJECT_TOML
 ) -> List[str]:
-    with open_file(filename) as f:
-        table = pytomlpp.load(f)
+    table = _load_toml(filename)
 
     if 'tool' not in table:
         return []
@@ -57,8 +76,7 @@ def _get_pyproject_toml_classifiers(
 def _get_pyproject_toml_python_requires(
     filename: FileOrFilename = PYPROJECT_TOML
 ) -> List[str]:
-    with open_file(filename) as f:
-        table = pytomlpp.load(f)
+    table = _load_toml(filename)
 
     if 'tool' not in table:
         return []
@@ -83,6 +101,10 @@ def get_supported_python_versions(
         # versions in classifiers.
         return []
 
+    if not isinstance(classifiers, (list, tuple)):
+        warn('The value passed to classifiers is not a list')
+        return []
+
     return get_versions_from_classifiers(classifiers)
 
 
@@ -94,7 +116,7 @@ def get_python_requires(
     if python_requires is None:
         return None
     if not isinstance(python_requires, str):
-        warn('The value passed to python is not a string')
+        warn('The value passed to python dependency is not a string')
         return None
     return parse_python_requires(python_requires)
 
@@ -111,7 +133,7 @@ def update_supported_python_versions(
     if classifiers is None:
         return None
     if not isinstance(classifiers, (list, tuple)):
-        warn('The value passed to setup(classifiers=...) is not a list')
+        warn('The value passed to classifiers is not a list')
         return None
     new_classifiers = update_classifiers(classifiers, new_versions)
     return _update_pyproject_toml_classifiers(filename, new_classifiers)
@@ -126,7 +148,7 @@ def update_python_requires(
     Does not touch the file but returns a list of lines with new file contents.
     """
     python_requires = _get_pyproject_toml_python_requires(filename)
-    if python_requires is None:
+    if python_requires is None or python_requires == []:
         return None
     comma = ', '
     if ',' in python_requires and ', ' not in python_requires:
@@ -147,8 +169,7 @@ def _update_pyproject_toml_classifiers(
     filename: FileOrFilename,
     new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
-    with open_file(filename) as f:
-        table = pytomlpp.load(f)
+    table = _load_toml(filename)
 
     if 'tool' not in table:
         return []
@@ -157,15 +178,14 @@ def _update_pyproject_toml_classifiers(
 
     table['tool']['poetry']['classifiers'] = new_value
 
-    return pytomlpp.dumps(table).split('\n')
+    return dumps(table).split('\n')
 
 
 def _update_pyproject_toml_python_requires(
         filename: FileOrFilename,
         new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
-    with open_file(filename) as f:
-        table = pytomlpp.load(f)
+    table = _load_toml(filename)
 
     if 'tool' not in table:
         return []
@@ -175,7 +195,7 @@ def _update_pyproject_toml_python_requires(
         return []
 
     table['tool']['poetry']['dependencies']['python'] = new_value
-    return pytomlpp.dumps(table).split('\n')
+    return dumps(table).split('\n')
 
 
 PoetryPyProject = Source(
