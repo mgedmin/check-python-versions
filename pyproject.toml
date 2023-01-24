@@ -1,6 +1,5 @@
 [tool.poetry]
     name = "check-python-versions"
-    version = "1.0.0"
     homepage = "https://github.com/mgedmin/check-python-versions"
     description = "Compare supported Python versions in setup.py vs tox.ini et al."
     authors = ["Marius Gedminas <marius@gedmin.as>"]
