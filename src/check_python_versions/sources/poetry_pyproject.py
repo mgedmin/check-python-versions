@@ -14,13 +14,9 @@ check-python-versions supports both.
 import pytomlpp
 
 from typing import (
-    Callable,
-    Dict,
     List,
     Optional,
-    Sequence,
     TextIO,
-    Tuple,
     Union,
     cast,
 )
@@ -150,35 +146,36 @@ def update_python_requires(
 def _update_pyproject_toml_classifiers(
         filename: FileOrFilename,
         new_value: Union[str, List[str]]
-) -> dict:
+) -> Optional[FileLines]:
     with open_file(filename) as f:
         table = pytomlpp.load(f)
 
     if 'tool' not in table:
-        return {}
+        return []
     if 'poetry' not in table['tool']:
-        return {}
+        return []
 
     table['tool']['poetry']['classifiers'] = new_value
-    return table
+
+    return pytomlpp.dumps(table).split('\n')
 
 
 def _update_pyproject_toml_python_requires(
         filename: FileOrFilename,
         new_value: Union[str, List[str]]
-) -> dict:
+) -> Optional[FileLines]:
     with open_file(filename) as f:
         table = pytomlpp.load(f)
 
     if 'tool' not in table:
-        return {}
+        return []
     if 'poetry' not in table['tool']:
-        return {}
+        return []
     if 'dependencies' not in table['tool']['poetry']:
-        return {}
+        return []
 
     table['tool']['poetry']['dependencies']['python'] = new_value
-    return table
+    return pytomlpp.dumps(table).split('\n')
 
 
 PoetryPyProject = Source(
