@@ -21,7 +21,7 @@ def test_get_supported_python_versions(tmp_path):
     filename = tmp_path / "pyproject.toml"
     filename.write_text(textwrap.dedent("""\
         [tool.poetry]
-            name='foo',
+            name='foo'
             classifiers=[
                 'Programming Language :: Python :: 2.7',
                 'Programming Language :: Python :: 3.6',
@@ -48,7 +48,7 @@ def test_get_supported_python_versions_string(tmp_path, capsys):
     filename = tmp_path / "pyproject.toml"
     filename.write_text(textwrap.dedent("""\
         [tool.poetry]
-            name='foo',
+            name='foo'
             classifiers='''
                 Programming Language :: Python :: 2.7
                 Programming Language :: Python :: 3.6
@@ -64,7 +64,7 @@ def test_get_supported_python_versions_string(tmp_path, capsys):
 def test_get_supported_python_versions_from_file_object_cannot_run_pyproject_toml():
     fp = StringIO(textwrap.dedent("""\
         [tool.poetry]
-            name='foo',
+            name='foo'
             classifiers=[
                 'Programming Language :: Python :: %s' % v
                 for v in ['2.7', '3.7']
