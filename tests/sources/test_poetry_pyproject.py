@@ -4,7 +4,7 @@ from typing import List
 
 import pytest
 
-from check_python_versions.sources.poetry_pyproject import (
+from check_python_versions.sources.pyproject import (
     get_python_requires,
     get_supported_python_versions,
     get_toml_content,
