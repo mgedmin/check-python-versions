@@ -327,7 +327,7 @@ def _update_pyproject_toml_python_requires(
     return _updated_table
 
 
-PoetryPyProject = Source(
+PyProject = Source(
     title=PYPROJECT_TOML,
     filename=PYPROJECT_TOML,
     extract=get_supported_python_versions,
@@ -336,7 +336,7 @@ PoetryPyProject = Source(
     has_upper_bound=True,
 )
 
-PoetryPyProjectPythonRequires = Source(
+PyProjectPythonRequires = Source(
     title='- python_requires',
     filename=PYPROJECT_TOML,
     extract=get_python_requires,
