@@ -8,6 +8,10 @@ from check_python_versions.sources.poetry_pyproject import (
     get_python_requires,
     get_supported_python_versions,
     get_toml_content,
+    is_flit_toml,
+    is_poetry_toml,
+    is_setuptools_toml,
+    load_toml,
     update_python_requires,
     update_supported_python_versions,
 )
@@ -266,3 +270,111 @@ def test_update_python_requires_when_missing(capsys):
 #         "Did not understand python_requires formatting in python dependency"
 #         in capsys.readouterr().err
 #     )
+
+
+def test_poetry_toml_from_tools(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [tool.poetry]
+            name='foo'
+    """))
+    _table = load_toml(str(filename))
+    assert is_poetry_toml(_table)
+    assert not is_setuptools_toml(_table)
+    assert not is_flit_toml(_table)
+
+
+def test_poetry_toml_from_build_backend(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [build-system]
+            build-backend = "poetry.core.masonry.api"
+    """))
+    _table = load_toml(str(filename))
+    assert is_poetry_toml(_table)
+    assert not is_setuptools_toml(_table)
+    assert not is_flit_toml(_table)
+
+
+def test_poetry_toml_from_build_requires(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [build-system]
+            requires = ["poetry-core>=1.0.0"]
+    """))
+    _table = load_toml(str(filename))
+    assert is_poetry_toml(_table)
+    assert not is_setuptools_toml(_table)
+    assert not is_flit_toml(_table)
+
+
+def test_setuptools_toml_from_tools(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [tool.setuptools.packages]
+            name='foo'
+    """))
+    _table = load_toml(str(filename))
+    assert is_setuptools_toml(_table)
+    assert not is_poetry_toml(_table)
+    assert not is_flit_toml(_table)
+
+
+def test_setuptools_toml_from_build_backend(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [build-system]
+            build-backend = "setuptools.build_meta"
+    """))
+    _table = load_toml(str(filename))
+    assert is_setuptools_toml(_table)
+    assert not is_poetry_toml(_table)
+    assert not is_flit_toml(_table)
+
+
+def test_setuptools_toml_from_build_requires(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [build-system]
+            requires = ["setuptools"]
+    """))
+    _table = load_toml(str(filename))
+    assert is_setuptools_toml(_table)
+    assert not is_poetry_toml(_table)
+    assert not is_flit_toml(_table)
+
+
+def test_flit_toml_from_tools(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [tool.flit.metadata]
+            module='foo'
+    """))
+    _table = load_toml(str(filename))
+    assert is_flit_toml(_table)
+    assert not is_poetry_toml(_table)
+    assert not is_setuptools_toml(_table)
+
+
+def test_flit_toml_from_build_backend(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [build-system]
+            build-backend = "flit_core.buildapi"
+    """))
+    _table = load_toml(str(filename))
+    assert is_flit_toml(_table)
+    assert not is_poetry_toml(_table)
+    assert not is_setuptools_toml(_table)
+
+
+def test_flit_toml_from_build_requires(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [build-system]
+            requires = ["flit_core >=3.2,<4"]
+    """))
+    _table = load_toml(str(filename))
+    assert is_flit_toml(_table)
+    assert not is_poetry_toml(_table)
+    assert not is_setuptools_toml(_table)
