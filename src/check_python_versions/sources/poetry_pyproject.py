@@ -39,7 +39,7 @@ PYPROJECT_TOML = 'pyproject.toml'
 
 
 def _get_pyproject_toml_classifiers(
-        filename: FileOrFilename = PYPROJECT_TOML
+    filename: FileOrFilename = PYPROJECT_TOML
 ) -> List[str]:
     with open_file(filename) as f:
         table = pytomlpp.load(f)
@@ -55,7 +55,7 @@ def _get_pyproject_toml_classifiers(
 
 
 def _get_pyproject_toml_python_requires(
-        filename: FileOrFilename = PYPROJECT_TOML
+    filename: FileOrFilename = PYPROJECT_TOML
 ) -> List[str]:
     with open_file(filename) as f:
         table = pytomlpp.load(f)
@@ -144,8 +144,8 @@ def update_python_requires(
 
 
 def _update_pyproject_toml_classifiers(
-        filename: FileOrFilename,
-        new_value: Union[str, List[str]]
+    filename: FileOrFilename,
+    new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
     with open_file(filename) as f:
         table = pytomlpp.load(f)
@@ -162,7 +162,7 @@ def _update_pyproject_toml_classifiers(
 
 def _update_pyproject_toml_python_requires(
         filename: FileOrFilename,
-        new_value: Union[str, List[str]]
+        new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
     with open_file(filename) as f:
         table = pytomlpp.load(f)
