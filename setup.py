@@ -68,6 +68,6 @@ setup(
             'check-python-versions = check_python_versions.cli:main',
         ],
     },
-    install_requires=['pyyaml', 'pytomlpp'],
+    install_requires=['pyyaml', 'tomlkit'],
     zip_safe=False,
 )
