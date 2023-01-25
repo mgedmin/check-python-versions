@@ -64,7 +64,7 @@ def test_get_supported_python_versions_keep_comments(tmp_path):
             '    name=\'foo\'',
             '    # toml comment',
             '    classifiers=[',
-            '         \'Programming Language :: Python :: 2.7\',',
+            '        \'Programming Language :: Python :: 2.7\',',
             '        \'Programming Language :: Python :: 3.6\',',
             '        \'Programming Language :: Python :: 3.10\',',
             '    ]',
