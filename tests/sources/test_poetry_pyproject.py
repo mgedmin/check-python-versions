@@ -77,25 +77,6 @@ def test_get_supported_python_versions_string(tmp_path, capsys):
     )
 
 
-# def test_update_supported_python_versions_not_matching(tmp_path, capsys):
-#     filename = tmp_path / "pyproject.toml"
-#     filename.write_text(textwrap.dedent("""\
-#         [tool.poetry]
-#             name='foo'
-#             classifiers=[
-#                 'Programming Language :: Python :: 2.7',
-#                 'Programming Language :: Python :: 3.6',
-#             ]
-#     """))
-#     _what = update_supported_python_versions(str(filename),
-#                                             v(['3.7', '3.8']))
-#     assert _what is None
-#     assert (
-#         'The value passed to classifiers is not a list'
-#         in capsys.readouterr().err
-#     )
-
-
 def test_get_python_requires(tmp_path, fix_max_python_3_version):
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(textwrap.dedent("""\
