@@ -184,57 +184,6 @@ def test_update_python_requires_when_missing(capsys):
 #                 python = ">=2.7,!=3.0.*,!=3.1.*"
 #     """)
 
-#
-# def test_update_python_requires_multiline(fix_max_python_3_version):
-#     fix_max_python_3_version(2)
-#     fp = StringIO(textwrap.dedent("""\
-#         [tool.poetry]
-#             name='foo'
-#             [tool.poetry.dependencies]
-#                 python = ', '.join([
-#                 '>=2.7',
-#                 '!=3.0.*',
-#             ])
-#     """))
-#     fp.name = "pyproject.toml"
-#     result = update_python_requires(fp, v(['2.7', '3.2']))
-#     assert result is not None
-#     assert "".join(result) == textwrap.dedent("""\
-#         [tool.poetry]
-#             name='foo'
-#             [tool.poetry.dependencies]
-#                 python = ', '.join([
-#                 '>=2.7',
-#                 '!=3.0.*',
-#                 '!=3.1.*',
-#             ])
-#     """)
-
-
-# def test_update_python_requires_multiline_variations(fix_max_python_3_version):
-#     fix_max_python_3_version(2)
-#     fp = StringIO(textwrap.dedent("""\
-#         [tool.poetry]
-#             name='foo'
-#             [tool.poetry.dependencies]
-#                 python = ",".join([
-#                 ">=2.7",
-#                 "!=3.0.*",
-#             ])
-#     """))
-#     fp.name = "pyproject.toml"
-#     result = update_python_requires(fp, v(['2.7', '3.2']))
-#     assert result is not None
-#     assert "".join(result) == textwrap.dedent("""\
-#         [tool.poetry]
-#             name='foo'
-#             [tool.poetry.dependencies]
-#                 python = ",".join([
-#                 ">=2.7",
-#                 "!=3.0.*",
-#                 "!=3.1.*",
-#             ])
-#     """)
 
 
 # def test_update_python_requires_multiline_error(capsys):
