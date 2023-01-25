@@ -1,5 +1,6 @@
 import textwrap
 from io import StringIO
+from tomlkit import dumps
 from typing import List
 
 import pytest
@@ -7,18 +8,29 @@ import pytest
 from check_python_versions.sources.pyproject import (
     get_python_requires,
     get_supported_python_versions,
-    get_toml_content,
     is_flit_toml,
     is_poetry_toml,
     is_setuptools_toml,
     load_toml,
     update_python_requires,
 )
+from check_python_versions.utils import (
+    FileLines,
+    FileOrFilename,
+)
 from check_python_versions.versions import Version
 
 
 def v(versions: List[str]) -> List[Version]:
     return [Version.from_string(v) for v in versions]
+
+
+def get_toml_content(
+    filename: FileOrFilename
+) -> FileLines:
+    """Utility method to see if TOML library keeps style and comments."""
+    table = load_toml(filename)
+    return dumps(table).split('\n')
 
 
 def test_get_supported_python_versions(tmp_path):

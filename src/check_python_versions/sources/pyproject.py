@@ -14,7 +14,7 @@ check-python-versions supports both.
 from io import StringIO
 
 from tomlkit import dumps
-from tomlkit import parse, load
+from tomlkit import load
 from tomlkit import TOMLDocument
 
 from typing import (
@@ -71,14 +71,6 @@ def load_toml(filename: FileOrFilename) -> TOMLDocument:
     if isinstance(filename, TextIO):
         table = load(filename)
     return table
-
-
-def get_toml_content(
-    filename: FileOrFilename = PYPROJECT_TOML
-) -> FileLines:
-    """Utility method to see if TOML library keeps style and comments."""
-    table = load_toml(filename)
-    return dumps(table).split('\n')
 
 
 def is_poetry_toml(
@@ -216,8 +208,8 @@ def get_supported_python_versions(
         # versions in classifiers.
         return []
 
-    if not isinstance(classifiers, (list, tuple)):
-        warn('The value passed to classifiers is not a list')
+    if not isinstance(classifiers, list):
+        warn('The value specified for classifiers is not a list')
         return []
 
     return get_versions_from_classifiers(classifiers)
@@ -231,7 +223,7 @@ def get_python_requires(
     if python_requires is None:
         return None
     if not isinstance(python_requires, str):
-        warn('The value passed to python dependency is not a string')
+        warn('The value specified for python dependency is not a string')
         return None
     return parse_python_requires(python_requires)
 
@@ -247,8 +239,8 @@ def update_supported_python_versions(
     classifiers = _get_pyproject_toml_classifiers(filename)
     if classifiers is None:
         return None
-    if not isinstance(classifiers, (list, tuple)):
-        warn('The value passed to classifiers is not a list')
+    if not isinstance(classifiers, list):
+        warn('The value specified for classifiers is not a list')
         return None
     new_classifiers = update_classifiers(classifiers, new_versions)
     return _update_pyproject_toml_classifiers(filename, new_classifiers)
