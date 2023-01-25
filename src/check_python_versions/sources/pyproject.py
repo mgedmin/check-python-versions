@@ -239,7 +239,7 @@ def get_supported_python_versions(
         return []
 
     if not isinstance(classifiers, list):
-        warn('The value specified for classifiers is not a list')
+        warn('The value specified for classifiers is not an array')
         return []
 
     return get_versions_from_classifiers(classifiers)
@@ -271,7 +271,7 @@ def update_supported_python_versions(
     if classifiers is None:
         return None
     if not isinstance(classifiers, list):
-        warn('The value specified for classifiers is not a list')
+        warn('The value specified for classifiers is not an array')
         return None
     new_classifiers = update_classifiers(classifiers, new_versions)
     return _update_pyproject_toml_classifiers(filename, new_classifiers)
