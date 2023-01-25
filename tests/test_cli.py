@@ -70,6 +70,11 @@ def test_is_package(tmp_path):
     assert cpv.is_package(tmp_path)
 
 
+def test_is_package_with_pyproject(tmp_path):
+    (tmp_path / "pyproject.toml").write_text("")
+    assert cpv.is_package(tmp_path)
+
+
 def test_is_package_no_setup_py(tmp_path):
     assert not cpv.is_package(tmp_path)
 
@@ -152,6 +157,78 @@ def test_check_mismatch(tmp_path, capsys):
     """)
 
 
+def test_check_poetry_mismatch(tmp_path, capsys):
+    poetry_pyproject = tmp_path / "pyproject.toml"
+    poetry_pyproject.write_text(textwrap.dedent("""\
+        [tool.poetry]
+            name='foo'
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ]
+    """))
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        envlist = py27
+    """))
+    assert cpv.check_versions(tmp_path) is False
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        pyproject.toml says: 2.7, 3.6
+        tox.ini says:        2.7
+    """)
+
+
+def test_check_setuptools_mismatch(tmp_path, capsys):
+    setuptools_pyproject = tmp_path / "pyproject.toml"
+    setuptools_pyproject.write_text(textwrap.dedent("""\
+        [project]
+            name='foo'
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ]
+        [build-system]
+            requires = ["setuptools", "setuptools-scm"]
+            build-backend = "setuptools.build_meta"
+    """))
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        envlist = py27
+    """))
+    assert cpv.check_versions(tmp_path) is False
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        pyproject.toml says: 2.7, 3.6
+        tox.ini says:        2.7
+    """)
+
+
+def test_check_flit_mismatch(tmp_path, capsys):
+    setuptools_pyproject = tmp_path / "pyproject.toml"
+    setuptools_pyproject.write_text(textwrap.dedent("""\
+        [project]
+            name='foo'
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ]
+        [build-system]
+            requires = ["flit_core >=3.2,<4"]
+            build-backend = "flit_core.buildapi"
+    """))
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        envlist = py27
+    """))
+    assert cpv.check_versions(tmp_path) is False
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        pyproject.toml says: 2.7, 3.6
+        tox.ini says:        2.7
+    """)
+
+
 def test_check_mismatch_pypy(tmp_path, capsys):
     setup_py = tmp_path / "setup.py"
     setup_py.write_text(textwrap.dedent("""\
@@ -208,6 +285,75 @@ def test_check_only(tmp_path, capsys):
                 'Programming Language :: Python :: 3.6',
             ],
         )
+    """))
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        envlist = py27
+    """))
+    assert cpv.check_versions(tmp_path, only={'tox.ini'})
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        tox.ini says: 2.7
+    """)
+
+
+def test_poetry_check_only(tmp_path, capsys):
+    poetry_pyproject = tmp_path / "pyproject.toml"
+    poetry_pyproject.write_text(textwrap.dedent("""\
+        [tool.poetry]
+            name='foo'
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ]
+    """))
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        envlist = py27
+    """))
+    assert cpv.check_versions(tmp_path, only={'tox.ini'})
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        tox.ini says: 2.7
+    """)
+
+
+def test_setuptools_check_only(tmp_path, capsys):
+    setuptools_pyproject = tmp_path / "pyproject.toml"
+    setuptools_pyproject.write_text(textwrap.dedent("""\
+        [project]
+            name='foo'
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ]
+        [build-system]
+            requires = ["setuptools", "setuptools-scm"]
+            build-backend = "setuptools.build_meta"
+    """))
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        envlist = py27
+    """))
+    assert cpv.check_versions(tmp_path, only={'tox.ini'})
+    assert capsys.readouterr().out == textwrap.dedent("""\
+        tox.ini says: 2.7
+    """)
+
+
+def test_flit_check_only(tmp_path, capsys):
+    flit_pyproject = tmp_path / "pyproject.toml"
+    flit_pyproject.write_text(textwrap.dedent("""\
+        [project]
+            name='foo'
+            classifiers=[
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
+            ]
+        [build-system]
+            requires = ["flit_core >=3.2,<4"]
+            build-backend = "flit_core.buildapi"
     """))
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
