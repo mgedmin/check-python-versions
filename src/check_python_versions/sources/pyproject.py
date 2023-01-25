@@ -55,6 +55,7 @@ TOML_REQUIRES_KWD = 'requires'
 # setuptools TOML keywords
 TOML_PROJECT_KWD = 'project'
 TOML_SETUPTOOLS_KWD = 'setuptools'
+TOML_SETUPTOOLS_PYTHON_REQUIRES = 'requires-python'
 
 # flit TOML keywords
 TOML_FLIT_KWD = 'flit'
@@ -149,6 +150,14 @@ def _get_poetry_classifiers(table: TOMLDocument) -> List[str]:
     return table[TOML_TOOL_KWD][TOML_POETRY_KWD][TOML_CLASSIFIERS_KWD]
 
 
+def _get_setuptools_classifiers(table: TOMLDocument) -> List[str]:
+    if TOML_PROJECT_KWD not in table:
+        return []
+    if TOML_CLASSIFIERS_KWD not in table[TOML_PROJECT_KWD]:
+        return []
+    return table[TOML_PROJECT_KWD][TOML_CLASSIFIERS_KWD]
+
+
 def _get_pyproject_toml_classifiers(
     filename: FileOrFilename = PYPROJECT_TOML
 ) -> List[str]:
@@ -156,10 +165,10 @@ def _get_pyproject_toml_classifiers(
     table = load_toml(filename)
     if is_poetry_toml(table):
         _classifiers = _get_poetry_classifiers(table)
+    if is_setuptools_toml(table):
+        _classifiers = _get_setuptools_classifiers(table)
 
     # missing implementation
-    # if is_setuptools_toml(table):
-    #     _classifiers = _get_setuptools_classifiers(table)
     # if is_flit_toml(table):
     #     _classifiers = _get_flit_classifiers(table)
 
@@ -178,6 +187,14 @@ def _get_poetry_python_requires(table: TOMLDocument) -> List[str]:
     return table[TOML_TOOL_KWD][TOML_POETRY_KWD][TOML_DEPENDENCIES_KWD][TOML_PYTHON_KWD]
 
 
+def _get_setuptools_python_requires(table: TOMLDocument) -> List[str]:
+    if TOML_PROJECT_KWD not in table:
+        return []
+    if TOML_SETUPTOOLS_PYTHON_REQUIRES not in table[TOML_PROJECT_KWD]:
+        return []
+    return table[TOML_PROJECT_KWD][TOML_SETUPTOOLS_PYTHON_REQUIRES]
+
+
 def _get_pyproject_toml_python_requires(
     filename: FileOrFilename = PYPROJECT_TOML
 ) -> List[str]:
@@ -185,12 +202,12 @@ def _get_pyproject_toml_python_requires(
     table = load_toml(filename)
     if is_poetry_toml(table):
         _python_requires = _get_poetry_python_requires(table)
+    if is_setuptools_toml(table):
+        _python_requires = _get_setuptools_python_requires(table)
 
     # missing implementation
-    # if is_setuptools_toml(table):
-    #     _classifiers = _get_setuptools_python_requires(table)
     # if is_flit_toml(table):
-    #     _classifiers = _get_flit_python_requires(table)
+    #     _python_requires = _get_flit_python_requires(table)
 
     return _python_requires
 
@@ -283,6 +300,18 @@ def _set_poetry_classifiers(
     return dumps(table).split('\n')
 
 
+def _set_setuptools_classifiers(
+    table: TOMLDocument,
+    new_value: Union[str, List[str]],
+) -> Optional[FileLines]:
+    if TOML_PROJECT_KWD not in table:
+        return []
+    if TOML_CLASSIFIERS_KWD not in table[TOML_PROJECT_KWD]:
+        return []
+    table[TOML_PROJECT_KWD][TOML_CLASSIFIERS_KWD] = new_value
+    return dumps(table).split('\n')
+
+
 def _update_pyproject_toml_classifiers(
     filename: FileOrFilename,
     new_value: Union[str, List[str]],
@@ -291,10 +320,10 @@ def _update_pyproject_toml_classifiers(
     table = load_toml(filename)
     if is_poetry_toml(table):
         _updated_table = _set_poetry_classifiers(table, new_value)
+    if is_setuptools_toml(table):
+        _updated_table = _set_setuptools_classifiers(table, new_value)
 
     # missing implementation
-    # if is_setuptools_toml(table):
-    #     _updated_table = _set_setuptools_classifiers(table)
     # if is_flit_toml(table):
     #     _updated_table = _set_flit_classifiers(table)
 
@@ -315,6 +344,18 @@ def _set_poetry_python_requires(
     return dumps(table).split('\n')
 
 
+def _set_setuptools_python_requires(
+    table: TOMLDocument,
+    new_value: Union[str, List[str]],
+) -> Optional[FileLines]:
+    if TOML_PROJECT_KWD not in table:
+        return []
+    if TOML_SETUPTOOLS_PYTHON_REQUIRES not in table[TOML_PROJECT_KWD]:
+        return []
+    table[TOML_PROJECT_KWD][TOML_SETUPTOOLS_PYTHON_REQUIRES] = new_value
+    return dumps(table).split('\n')
+
+
 def _update_pyproject_toml_python_requires(
         filename: FileOrFilename,
         new_value: Union[str, List[str]],
@@ -323,10 +364,10 @@ def _update_pyproject_toml_python_requires(
     table = load_toml(filename)
     if is_poetry_toml(table):
         _updated_table = _set_poetry_python_requires(table, new_value)
+    if is_setuptools_toml(table):
+        _updated_table = _set_setuptools_python_requires(table, new_value)
 
     # missing implementation
-    # if is_setuptools_toml(table):
-    #     _updated_table = _set_setuptools_python_requires(table)
     # if is_flit_toml(table):
     #     _updated_table = _set_flit_python_requires(table)
 
