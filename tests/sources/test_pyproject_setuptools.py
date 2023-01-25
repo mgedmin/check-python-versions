@@ -96,7 +96,7 @@ def test_get_python_requires(tmp_path, fix_max_python_3_version):
             requires-python = ">=3.6"
         [build-system]
             requires = ["setuptools", "setuptools-scm"]
-            build-backend = "setuptools.build_meta"            
+            build-backend = "setuptools.build_meta"
     """))
     fix_max_python_3_version(7)
     assert get_python_requires(str(pyproject_toml)) == v(['3.6', '3.7'])
@@ -113,7 +113,7 @@ def test_get_python_requires_not_specified(tmp_path, capsys):
             name='foo'
         [build-system]
             requires = ["setuptools", "setuptools-scm"]
-            build-backend = "setuptools.build_meta"            
+            build-backend = "setuptools.build_meta"
     """))
     assert get_python_requires(str(pyproject_toml)) is None
     assert capsys.readouterr().err.strip() == 'The value passed to python dependency is not a string'
@@ -127,7 +127,7 @@ def test_get_python_requires_not_a_string(tmp_path, capsys):
             requires-python = [">=3.6"]
         [build-system]
             requires = ["setuptools", "setuptools-scm"]
-            build-backend = "setuptools.build_meta"            
+            build-backend = "setuptools.build_meta"
     """))
     assert get_python_requires(str(pyproject_toml)) is None
     assert (
@@ -145,7 +145,7 @@ def test_update_python_requires(tmp_path, fix_max_python_3_version):
             requires-python = ">=3.4"
         [build-system]
             requires = ["setuptools", "setuptools-scm"]
-            build-backend = "setuptools.build_meta"            
+            build-backend = "setuptools.build_meta"
     """))
     result = update_python_requires(str(filename), v(['3.5', '3.6', '3.7']))
     assert result is not None
@@ -155,7 +155,7 @@ def test_update_python_requires(tmp_path, fix_max_python_3_version):
             requires-python = ">=3.5"
         [build-system]
             requires = ["setuptools", "setuptools-scm"]
-            build-backend = "setuptools.build_meta"            
+            build-backend = "setuptools.build_meta"
     """)
 
 
@@ -167,7 +167,7 @@ def test_update_python_requires_file_object(fix_max_python_3_version):
             requires-python = ">=3.4"
         [build-system]
             requires = ["setuptools", "setuptools-scm"]
-            build-backend = "setuptools.build_meta"            
+            build-backend = "setuptools.build_meta"
     """))
     fp.name = "pyproject.toml"
     result = update_python_requires(fp, v(['3.5', '3.6', '3.7']))
@@ -178,7 +178,7 @@ def test_update_python_requires_file_object(fix_max_python_3_version):
             requires-python = ">=3.5"
         [build-system]
             requires = ["setuptools", "setuptools-scm"]
-            build-backend = "setuptools.build_meta"            
+            build-backend = "setuptools.build_meta"
     """)
 
 
@@ -188,7 +188,7 @@ def test_update_python_requires_when_missing(capsys):
             name='foo'
         [build-system]
             requires = ["setuptools", "setuptools-scm"]
-            build-backend = "setuptools.build_meta"            
+            build-backend = "setuptools.build_meta"
     """))
     fp.name = "pyproject.toml"
     result = update_python_requires(fp, v(['3.5', '3.6', '3.7']))
@@ -204,7 +204,7 @@ def test_update_python_requires_preserves_style(fix_max_python_3_version):
             requires-python = ">=2.7,!=3.0.*"
         [build-system]
             requires = ["setuptools", "setuptools-scm"]
-            build-backend = "setuptools.build_meta"            
+            build-backend = "setuptools.build_meta"
     """))
     fp.name = "pyproject.toml"
     result = update_python_requires(fp, v(['2.7', '3.2']))
@@ -214,7 +214,7 @@ def test_update_python_requires_preserves_style(fix_max_python_3_version):
             requires-python = ">=2.7,!=3.0.*,!=3.1.*"
         [build-system]
             requires = ["setuptools", "setuptools-scm"]
-            build-backend = "setuptools.build_meta"            
+            build-backend = "setuptools.build_meta"
     """)
 
 
@@ -243,7 +243,7 @@ def test_setuptools_toml_from_tools(tmp_path):
     filename = tmp_path / "pyproject.toml"
     filename.write_text(textwrap.dedent("""\
         [tool.setuptools.packages]
-            name='foo'       
+            name='foo'
     """))
     _table = load_toml(str(filename))
     assert is_setuptools_toml(_table)
