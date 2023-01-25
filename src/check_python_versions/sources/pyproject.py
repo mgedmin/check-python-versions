@@ -102,9 +102,6 @@ def is_setuptools_toml(
 ) -> bool:
     """Utility method to know if pyproject.toml is for setuptool."""
     _ret = False
-    if TOML_TOOL_KWD in table:
-        if TOML_SETUPTOOLS_KWD in table[TOML_TOOL_KWD]:
-            _ret = True
     if TOML_BUILD_SYSTEM_KWD in table:
         if TOML_BUILD_BACKEND_KWD in table[TOML_BUILD_SYSTEM_KWD]:
             if TOML_SETUPTOOLS_KWD in table[TOML_BUILD_SYSTEM_KWD][TOML_BUILD_BACKEND_KWD]:
@@ -112,6 +109,13 @@ def is_setuptools_toml(
         if TOML_REQUIRES_KWD in table[TOML_BUILD_SYSTEM_KWD]:
             if list(filter(lambda x: TOML_SETUPTOOLS_KWD in x, table[TOML_BUILD_SYSTEM_KWD][TOML_REQUIRES_KWD])):
                 _ret = True
+
+    # from https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html#setuptools-specific-configuration
+    #  "[tool.setuptools] table is still in beta"
+    #  "These configurations are completely optional and probably can be skipped when creating simple packages"
+    if TOML_TOOL_KWD in table:
+        if TOML_SETUPTOOLS_KWD in table[TOML_TOOL_KWD]:
+            _ret = True
     return _ret
 
 
