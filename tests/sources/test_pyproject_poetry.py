@@ -235,39 +235,3 @@ def test_poetry_toml_from_build_requires(tmp_path):
     assert is_poetry_toml(_table)
     assert not is_setuptools_toml(_table)
     assert not is_flit_toml(_table)
-
-
-def test_flit_toml_from_tools(tmp_path):
-    filename = tmp_path / "pyproject.toml"
-    filename.write_text(textwrap.dedent("""\
-        [tool.flit.metadata]
-            module='foo'
-    """))
-    _table = load_toml(str(filename))
-    assert is_flit_toml(_table)
-    assert not is_poetry_toml(_table)
-    assert not is_setuptools_toml(_table)
-
-
-def test_flit_toml_from_build_backend(tmp_path):
-    filename = tmp_path / "pyproject.toml"
-    filename.write_text(textwrap.dedent("""\
-        [build-system]
-            build-backend = "flit_core.buildapi"
-    """))
-    _table = load_toml(str(filename))
-    assert is_flit_toml(_table)
-    assert not is_poetry_toml(_table)
-    assert not is_setuptools_toml(_table)
-
-
-def test_flit_toml_from_build_requires(tmp_path):
-    filename = tmp_path / "pyproject.toml"
-    filename.write_text(textwrap.dedent("""\
-        [build-system]
-            requires = ["flit_core >=3.2,<4"]
-    """))
-    _table = load_toml(str(filename))
-    assert is_flit_toml(_table)
-    assert not is_poetry_toml(_table)
-    assert not is_setuptools_toml(_table)
