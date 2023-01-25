@@ -11,6 +11,8 @@ and tool.poetry.dependencies.python keyword.
 check-python-versions supports both.
 """
 
+from io import StringIO
+
 from tomlkit import dumps
 from tomlkit import parse, load
 from tomlkit import TOMLDocument
@@ -62,7 +64,7 @@ def load_toml(filename: FileOrFilename) -> TOMLDocument:
     """Utility method that returns a TOMLDocument."""
     table = {}
     # tomlkit has two different API to load from file name or file object
-    if isinstance(filename, str):
+    if isinstance(filename, str) or isinstance(filename, StringIO):
         with open_file(filename) as fp:
             table = load(fp)
     if isinstance(filename, TextIO):
