@@ -25,7 +25,12 @@ from typing import (
     cast,
 )
 
-from .setup_py import get_versions_from_classifiers, parse_python_requires, update_classifiers, compute_python_requires
+from .setup_py import (
+    get_versions_from_classifiers,
+    parse_python_requires,
+    update_classifiers,
+    compute_python_requires,
+)
 from .base import Source
 from ..utils import (
     FileLines,
@@ -41,27 +46,29 @@ from ..versions import (
 
 PYPROJECT_TOML = 'pyproject.toml'
 
-TOML_CLASSIFIERS_KWD = 'classifiers'
-TOML_DEPENDENCIES_KWD = 'dependencies'
-TOML_PYTHON_KWD = 'python'
-TOML_PYTHON_REQUIRES_KWD = 'requires-python'
+CLASSIFIERS = 'classifiers'
+DEPENDENCIES = 'dependencies'
+PYTHON = 'python'
+PYTHON_REQUIRES = 'requires-python'
 
 # poetry TOML keywords
-TOML_TOOL_KWD = 'tool'
-TOML_POETRY_KWD = 'poetry'
-TOML_BUILD_SYSTEM_KWD = 'build-system'
-TOML_BUILD_BACKEND_KWD = 'build-backend'
-TOML_REQUIRES_KWD = 'requires'
+TOOL = 'tool'
+POETRY = 'poetry'
+BUILD_SYSTEM = 'build-system'
+BUILD_BACKEND = 'build-backend'
+REQUIRES = 'requires'
 
 # setuptools TOML keywords
-TOML_PROJECT_KWD = 'project'
-TOML_SETUPTOOLS_KWD = 'setuptools'
+PROJECT = 'project'
+SETUPTOOLS = 'setuptools'
 
 # flit TOML keywords
-TOML_FLIT_KWD = 'flit'
+FLIT = 'flit'
 
 
-def load_toml(filename: FileOrFilename) -> TOMLDocument:
+def load_toml(
+    filename: FileOrFilename
+) -> TOMLDocument:
     """Utility method that returns a TOMLDocument."""
     table = {}
     # tomlkit has two different API to load from file name or file object
@@ -79,15 +86,17 @@ def is_poetry_toml(
     """Utility method to know if pyproject.toml is for poetry."""
     _ret = False
 
-    if TOML_TOOL_KWD in table:
-        if TOML_POETRY_KWD in table[TOML_TOOL_KWD]:
+    if TOOL in table:
+        if POETRY in table[TOOL]:
             _ret = True
-    if TOML_BUILD_SYSTEM_KWD in table:
-        if TOML_BUILD_BACKEND_KWD in table[TOML_BUILD_SYSTEM_KWD]:
-            if TOML_POETRY_KWD in table[TOML_BUILD_SYSTEM_KWD][TOML_BUILD_BACKEND_KWD]:
+    if BUILD_SYSTEM in table:
+        if BUILD_BACKEND in table[BUILD_SYSTEM]:
+            if POETRY in \
+                    table[BUILD_SYSTEM][BUILD_BACKEND]:
                 _ret = True
-        if TOML_REQUIRES_KWD in table[TOML_BUILD_SYSTEM_KWD]:
-            if list(filter(lambda x: TOML_POETRY_KWD in x, table[TOML_BUILD_SYSTEM_KWD][TOML_REQUIRES_KWD])):
+        if REQUIRES in table[BUILD_SYSTEM]:
+            if list(filter(lambda x: POETRY in x,
+                           table[BUILD_SYSTEM][REQUIRES])):
                 _ret = True
     return _ret
 
@@ -97,19 +106,21 @@ def is_setuptools_toml(
 ) -> bool:
     """Utility method to know if pyproject.toml is for setuptool."""
     _ret = False
-    if TOML_BUILD_SYSTEM_KWD in table:
-        if TOML_BUILD_BACKEND_KWD in table[TOML_BUILD_SYSTEM_KWD]:
-            if TOML_SETUPTOOLS_KWD in table[TOML_BUILD_SYSTEM_KWD][TOML_BUILD_BACKEND_KWD]:
+    if BUILD_SYSTEM in table:
+        if BUILD_BACKEND in table[BUILD_SYSTEM]:
+            if SETUPTOOLS in \
+                    table[BUILD_SYSTEM][BUILD_BACKEND]:
                 _ret = True
-        if TOML_REQUIRES_KWD in table[TOML_BUILD_SYSTEM_KWD]:
-            if list(filter(lambda x: TOML_SETUPTOOLS_KWD in x, table[TOML_BUILD_SYSTEM_KWD][TOML_REQUIRES_KWD])):
+        if REQUIRES in table[BUILD_SYSTEM]:
+            if list(filter(lambda x: SETUPTOOLS in x,
+                           table[BUILD_SYSTEM][REQUIRES])):
                 _ret = True
 
-    # from https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html#setuptools-specific-configuration
     #  "[tool.setuptools] table is still in beta"
-    #  "These configurations are completely optional and probably can be skipped when creating simple packages"
-    if TOML_TOOL_KWD in table:
-        if TOML_SETUPTOOLS_KWD in table[TOML_TOOL_KWD]:
+    #  "These configurations are completely optional
+    #    and probably can be skipped when creating simple packages"
+    if TOOL in table:
+        if SETUPTOOLS in table[TOOL]:
             _ret = True
     return _ret
 
@@ -119,35 +130,46 @@ def is_flit_toml(
 ) -> bool:
     """Utility method to know if pyproject.toml is for flit."""
     _ret = False
-    if TOML_TOOL_KWD in table:
-        if TOML_FLIT_KWD in table[TOML_TOOL_KWD]:
+    if TOOL in table:
+        if FLIT in table[TOOL]:
             _ret = True
-    if TOML_BUILD_SYSTEM_KWD in table:
-        if TOML_BUILD_BACKEND_KWD in table[TOML_BUILD_SYSTEM_KWD]:
-            if TOML_FLIT_KWD in table[TOML_BUILD_SYSTEM_KWD][TOML_BUILD_BACKEND_KWD]:
+    if BUILD_SYSTEM in table:
+        if BUILD_BACKEND in \
+                table[BUILD_SYSTEM]:
+            if FLIT in \
+                    table[BUILD_SYSTEM][BUILD_BACKEND]:
                 _ret = True
-        if TOML_REQUIRES_KWD in table[TOML_BUILD_SYSTEM_KWD]:
-            if list(filter(lambda x: TOML_FLIT_KWD in x, table[TOML_BUILD_SYSTEM_KWD][TOML_REQUIRES_KWD])):
+        if REQUIRES in \
+                table[BUILD_SYSTEM]:
+            if list(filter(lambda x: FLIT in x,
+                           table[BUILD_SYSTEM][REQUIRES])):
                 _ret = True
     return _ret
 
 
-def _get_poetry_classifiers(table: TOMLDocument) -> List[str]:
-    if TOML_TOOL_KWD not in table:
+def _get_poetry_classifiers(
+    table: TOMLDocument
+) -> List[str]:
+    if TOOL not in table:
         return []
-    if TOML_POETRY_KWD not in table[TOML_TOOL_KWD]:
+    if POETRY not in \
+            table[TOOL]:
         return []
-    if TOML_CLASSIFIERS_KWD not in table[TOML_TOOL_KWD][TOML_POETRY_KWD]:
+    if CLASSIFIERS not in \
+            table[TOOL][POETRY]:
         return []
-    return table[TOML_TOOL_KWD][TOML_POETRY_KWD][TOML_CLASSIFIERS_KWD]
+    return table[TOOL][POETRY][CLASSIFIERS]
 
 
-def _get_setuptools_flit_classifiers(table: TOMLDocument) -> List[str]:
-    if TOML_PROJECT_KWD not in table:
+def _get_setuptools_flit_classifiers(
+    table: TOMLDocument
+) -> List[str]:
+    if PROJECT not in table:
         return []
-    if TOML_CLASSIFIERS_KWD not in table[TOML_PROJECT_KWD]:
+    if CLASSIFIERS not in \
+            table[PROJECT]:
         return []
-    return table[TOML_PROJECT_KWD][TOML_CLASSIFIERS_KWD]
+    return table[PROJECT][CLASSIFIERS]
 
 
 def _get_pyproject_toml_classifiers(
@@ -163,24 +185,31 @@ def _get_pyproject_toml_classifiers(
     return _classifiers
 
 
-def _get_poetry_python_requires(table: TOMLDocument) -> List[str]:
-    if TOML_TOOL_KWD not in table:
+def _get_poetry_python_requires(
+    table: TOMLDocument
+) -> List[str]:
+    if TOOL not in table:
         return []
-    if TOML_POETRY_KWD not in table[TOML_TOOL_KWD]:
+    if POETRY not in table[TOOL]:
         return []
-    if TOML_DEPENDENCIES_KWD not in table[TOML_TOOL_KWD][TOML_POETRY_KWD]:
+    if DEPENDENCIES not in \
+            table[TOOL][POETRY]:
         return []
-    if TOML_PYTHON_KWD not in table[TOML_TOOL_KWD][TOML_POETRY_KWD][TOML_DEPENDENCIES_KWD]:
+    if PYTHON not in \
+            table[TOOL][POETRY][DEPENDENCIES]:
         return []
-    return table[TOML_TOOL_KWD][TOML_POETRY_KWD][TOML_DEPENDENCIES_KWD][TOML_PYTHON_KWD]
+    return table[TOOL][POETRY][DEPENDENCIES][PYTHON]
 
 
-def _get_setuptools_flit_python_requires(table: TOMLDocument) -> List[str]:
-    if TOML_PROJECT_KWD not in table:
+def _get_setuptools_flit_python_requires(
+    table: TOMLDocument
+) -> List[str]:
+    if PROJECT not in table:
         return []
-    if TOML_PYTHON_REQUIRES_KWD not in table[TOML_PROJECT_KWD]:
+    if PYTHON_REQUIRES not in \
+            table[PROJECT]:
         return []
-    return table[TOML_PROJECT_KWD][TOML_PYTHON_REQUIRES_KWD]
+    return table[PROJECT][PYTHON_REQUIRES]
 
 
 def _get_pyproject_toml_python_requires(
@@ -199,13 +228,14 @@ def _get_pyproject_toml_python_requires(
 def get_supported_python_versions(
     filename: FileOrFilename = PYPROJECT_TOML
 ) -> SortedVersionList:
-    """Extract supported Python versions from classifiers in pyproject.toml ."""
+    """Extract supported Python versions from classifiers in pyproject.toml."""
     classifiers = _get_pyproject_toml_classifiers(filename)
 
     if classifiers is None:
-        # Note: do not return None because pyproject.toml is not an optional source!
-        # We want errors to show up if pyproject.toml fails to declare Python
-        # versions in classifiers.
+        # Note: do not return None because pyproject.toml is
+        # not an optional source!
+        # We want errors to show up if pyproject.toml fails to
+        # declare Python versions in classifiers.
         return []
 
     if not isinstance(classifiers, list):
@@ -218,7 +248,8 @@ def get_supported_python_versions(
 def get_python_requires(
     pyproject_toml: FileOrFilename = PYPROJECT_TOML,
 ) -> Optional[SortedVersionList]:
-    """Extract supported Python versions from python_requires in pyproject.toml."""
+    """Extract supported Python versions from python_requires in
+    pyproject.toml."""
     python_requires = _get_pyproject_toml_python_requires(pyproject_toml)
     if python_requires is None:
         return None
@@ -263,24 +294,24 @@ def update_python_requires(
     space = ''
     if '> ' in python_requires or '= ' in python_requires:
         space = ' '
-    new_python_requires = compute_python_requires(
+    new_requires = compute_python_requires(
         new_versions, comma=comma, space=space)
     if is_file_object(filename):
         # Make sure we can read it twice please.
         # XXX: I don't like this.
         cast(TextIO, filename).seek(0)
-    return _update_pyproject_toml_python_requires(filename, new_python_requires)
+    return _update_pyproject_python_requires(filename, new_requires)
 
 
 def _set_poetry_classifiers(
     table: TOMLDocument,
     new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
-    if TOML_TOOL_KWD not in table:
+    if TOOL not in table:
         return []
-    if TOML_POETRY_KWD not in table[TOML_TOOL_KWD]:
+    if POETRY not in table[TOOL]:
         return []
-    table[TOML_TOOL_KWD][TOML_POETRY_KWD][TOML_CLASSIFIERS_KWD] = new_value
+    table[TOOL][POETRY][CLASSIFIERS] = new_value
     return dumps(table).split('\n')
 
 
@@ -288,11 +319,11 @@ def _set_setuptools_flit_classifiers(
     table: TOMLDocument,
     new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
-    if TOML_PROJECT_KWD not in table:
+    if PROJECT not in table:
         return []
-    if TOML_CLASSIFIERS_KWD not in table[TOML_PROJECT_KWD]:
+    if CLASSIFIERS not in table[PROJECT]:
         return []
-    table[TOML_PROJECT_KWD][TOML_CLASSIFIERS_KWD] = new_value
+    table[PROJECT][CLASSIFIERS] = new_value
     return dumps(table).split('\n')
 
 
@@ -314,13 +345,13 @@ def _set_poetry_python_requires(
     table: TOMLDocument,
     new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
-    if TOML_TOOL_KWD not in table:
+    if TOOL not in table:
         return []
-    if TOML_POETRY_KWD not in table[TOML_TOOL_KWD]:
+    if POETRY not in table[TOOL]:
         return []
-    if TOML_DEPENDENCIES_KWD not in table[TOML_TOOL_KWD][TOML_POETRY_KWD]:
+    if DEPENDENCIES not in table[TOOL][POETRY]:
         return []
-    table[TOML_TOOL_KWD][TOML_POETRY_KWD][TOML_DEPENDENCIES_KWD][TOML_PYTHON_KWD] = new_value
+    table[TOOL][POETRY][DEPENDENCIES][PYTHON] = new_value
     return dumps(table).split('\n')
 
 
@@ -328,17 +359,17 @@ def _set_setuptools_flit_python_requires(
     table: TOMLDocument,
     new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
-    if TOML_PROJECT_KWD not in table:
+    if PROJECT not in table:
         return []
-    if TOML_PYTHON_REQUIRES_KWD not in table[TOML_PROJECT_KWD]:
+    if PYTHON_REQUIRES not in table[PROJECT]:
         return []
-    table[TOML_PROJECT_KWD][TOML_PYTHON_REQUIRES_KWD] = new_value
+    table[PROJECT][PYTHON_REQUIRES] = new_value
     return dumps(table).split('\n')
 
 
-def _update_pyproject_toml_python_requires(
-        filename: FileOrFilename,
-        new_value: Union[str, List[str]],
+def _update_pyproject_python_requires(
+    filename: FileOrFilename,
+    new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
     _updated_table = []
     table = load_toml(filename)

@@ -81,7 +81,8 @@ def test_check_not_a_directory(tmp_path, capsys):
 
 def test_check_not_a_package(tmp_path, capsys):
     assert not cpv.check_package(tmp_path)
-    assert capsys.readouterr().out == 'no setup.py or pyproject.toml -- not a Python package?\n'
+    assert capsys.readouterr().out == 'no setup.py or pyproject.toml' \
+                                      ' -- not a Python package?\n'
 
 
 def test_check_package(tmp_path):

@@ -3,8 +3,6 @@ from io import StringIO
 from tomlkit import dumps
 from typing import List
 
-import pytest
-
 from check_python_versions.sources.pyproject import (
     get_python_requires,
     get_supported_python_versions,
@@ -44,7 +42,8 @@ def test_get_supported_python_versions(tmp_path):
                 'Programming Language :: Python :: 3.10',
             ]
     """))
-    assert get_supported_python_versions(str(filename)) == v(['2.7', '3.6', '3.10'])
+    assert get_supported_python_versions(str(filename)) == \
+           v(['2.7', '3.6', '3.10'])
 
 
 def test_get_supported_python_versions_keep_comments(tmp_path):
@@ -60,15 +59,16 @@ def test_get_supported_python_versions_keep_comments(tmp_path):
             ]
     """))
 
-    assert get_toml_content(str(filename)) == ['[tool.poetry]',
-                                               '    name=\'foo\'',
-                                               '    # toml comment',
-                                               '    classifiers=[',
-                                               '        \'Programming Language :: Python :: 2.7\',',
-                                               '        \'Programming Language :: Python :: 3.6\',',
-                                               '        \'Programming Language :: Python :: 3.10\',',
-                                               '    ]',
-                                               '']
+    assert get_toml_content(str(filename)) == \
+           ['[tool.poetry]',
+            '    name=\'foo\'',
+            '    # toml comment',
+            '    classifiers=[',
+            '         \'Programming Language :: Python :: 2.7\',',
+            '        \'Programming Language :: Python :: 3.6\',',
+            '        \'Programming Language :: Python :: 3.10\',',
+            '    ]',
+            '']
 
 
 def test_update_supported_python_versions_not_a_list(tmp_path, capsys):
@@ -111,7 +111,8 @@ def test_get_python_requires_not_specified(tmp_path, capsys):
             name='foo'
     """))
     assert get_python_requires(str(pyproject_toml)) is None
-    assert capsys.readouterr().err.strip() == 'The value specified for python dependency is not a string'
+    assert capsys.readouterr().err.strip() == \
+           'The value specified for python dependency is not a string'
 
 
 def test_get_python_requires_not_a_string(tmp_path, capsys):
@@ -208,7 +209,8 @@ def test_update_python_requires_multiline_error(capsys):
     assert result == ['[tool.poetry]',
                       "    name='foo'",
                       '    [tool.poetry.dependencies]',
-                      '        python = ">=2.7, !=3.0.*, !=3.1.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*, !=3.7.*, '
+                      '        python = ">=2.7, !=3.0.*, !=3.1.*, !=3.3.*,'
+                      ' !=3.4.*, !=3.5.*, !=3.6.*, !=3.7.*, '
                       '!=3.8.*, !=3.9.*, !=3.10.*, !=3.11.*"',
                       '']
 
