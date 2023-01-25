@@ -60,7 +60,7 @@ def test_get_supported_python_versions_keep_comments(tmp_path):
                                                '']
 
 
-def test_get_supported_python_versions_string(tmp_path, capsys):
+def test_update_supported_python_versions_not_a_list(tmp_path, capsys):
     filename = tmp_path / "pyproject.toml"
     filename.write_text(textwrap.dedent("""\
         [tool.poetry]
