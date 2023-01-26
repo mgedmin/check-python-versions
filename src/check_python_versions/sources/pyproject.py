@@ -51,9 +51,9 @@ FLIT = 'flit'
 
 def load_toml(
     filename: FileOrFilename
-) -> TOMLDocument:
+) -> Optional[TOMLDocument]:
     """Utility method that returns a TOMLDocument."""
-    table = {}
+    table: Optional[TOMLDocument] = None
     # tomlkit has two different API to load from file name or file object
     if isinstance(filename, str) or isinstance(filename, StringIO):
         with open_file(filename) as fp:
@@ -141,7 +141,7 @@ def _get_poetry_classifiers(
     if CLASSIFIERS not in \
             table[TOOL][POETRY]:
         return []
-    return table[TOOL][POETRY][CLASSIFIERS]
+    return cast(List[str], table[TOOL][POETRY][CLASSIFIERS])
 
 
 def _get_setuptools_flit_classifiers(
@@ -152,7 +152,7 @@ def _get_setuptools_flit_classifiers(
     if CLASSIFIERS not in \
             table[PROJECT]:
         return []
-    return table[PROJECT][CLASSIFIERS]
+    return cast(List[str], table[PROJECT][CLASSIFIERS])
 
 
 def _get_pyproject_toml_classifiers(
@@ -181,7 +181,7 @@ def _get_poetry_python_requires(
     if PYTHON not in \
             table[TOOL][POETRY][DEPENDENCIES]:
         return []
-    return table[TOOL][POETRY][DEPENDENCIES][PYTHON]
+    return cast(List[str], table[TOOL][POETRY][DEPENDENCIES][PYTHON])
 
 
 def _get_setuptools_flit_python_requires(
@@ -192,7 +192,7 @@ def _get_setuptools_flit_python_requires(
     if PYTHON_REQUIRES not in \
             table[PROJECT]:
         return []
-    return table[PROJECT][PYTHON_REQUIRES]
+    return cast(List[str], table[PROJECT][PYTHON_REQUIRES])
 
 
 def _get_pyproject_toml_python_requires(
@@ -295,7 +295,8 @@ def _set_poetry_classifiers(
     if POETRY not in table[TOOL]:
         return []
     table[TOOL][POETRY][CLASSIFIERS] = new_value
-    return dumps(table).split('\n')
+    _ret = cast(Optional[List[str]], dumps(table).split('\n'))
+    return _ret
 
 
 def _set_setuptools_flit_classifiers(
@@ -307,14 +308,15 @@ def _set_setuptools_flit_classifiers(
     if CLASSIFIERS not in table[PROJECT]:
         return []
     table[PROJECT][CLASSIFIERS] = new_value
-    return dumps(table).split('\n')
+    _ret = cast(Optional[List[str]], dumps(table).split('\n'))
+    return _ret
 
 
 def _update_pyproject_toml_classifiers(
     filename: FileOrFilename,
     new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
-    _updated_table = []
+    _updated_table: Optional[FileLines] = []
     table = load_toml(filename)
     if is_poetry_toml(table):
         _updated_table = _set_poetry_classifiers(table, new_value)
@@ -335,7 +337,8 @@ def _set_poetry_python_requires(
     if DEPENDENCIES not in table[TOOL][POETRY]:
         return []
     table[TOOL][POETRY][DEPENDENCIES][PYTHON] = new_value
-    return dumps(table).split('\n')
+    _ret = cast(Optional[FileLines], dumps(table).split('\n'))
+    return _ret
 
 
 def _set_setuptools_flit_python_requires(
@@ -347,14 +350,15 @@ def _set_setuptools_flit_python_requires(
     if PYTHON_REQUIRES not in table[PROJECT]:
         return []
     table[PROJECT][PYTHON_REQUIRES] = new_value
-    return dumps(table).split('\n')
+    _ret = cast(Optional[FileLines], dumps(table).split('\n'))
+    return _ret
 
 
 def _update_pyproject_python_requires(
     filename: FileOrFilename,
     new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
-    _updated_table = []
+    _updated_table: Optional[FileLines] = []
     table = load_toml(filename)
     if is_poetry_toml(table):
         _updated_table = _set_poetry_python_requires(table, new_value)
