@@ -12,36 +12,19 @@ check-python-versions supports both.
 """
 
 from io import StringIO
+from typing import List, Optional, TextIO, Union, cast
 
-from tomlkit import dumps
-from tomlkit import load
-from tomlkit import TOMLDocument
+from tomlkit import TOMLDocument, dumps, load
 
-from typing import (
-    List,
-    Optional,
-    TextIO,
-    Union,
-    cast,
-)
-
+from .base import Source
 from .setup_py import (
+    compute_python_requires,
     get_versions_from_classifiers,
     parse_python_requires,
     update_classifiers,
-    compute_python_requires,
 )
-from .base import Source
-from ..utils import (
-    FileLines,
-    FileOrFilename,
-    is_file_object,
-    open_file,
-    warn,
-)
-from ..versions import (
-    SortedVersionList,
-)
+from ..utils import FileLines, FileOrFilename, is_file_object, open_file, warn
+from ..versions import SortedVersionList
 
 
 PYPROJECT_TOML = 'pyproject.toml'
