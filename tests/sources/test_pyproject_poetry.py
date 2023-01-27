@@ -91,7 +91,7 @@ def test_update_supported_python_versions_not_a_list(tmp_path, capsys):
 
 
 def test_update_supported_python_versions_poetry(tmp_path, capsys):
-    filename = tmp_path / "setup.py"
+    filename = tmp_path / "pyproject.toml"
     filename.write_text(textwrap.dedent("""\
         [tool.poetry]
             name='foo'
@@ -110,7 +110,7 @@ def test_update_supported_python_versions_poetry(tmp_path, capsys):
 
 
 def test_update_supported_python_versions_not_poetry_table(tmp_path, capsys):
-    filename = tmp_path / "setup.py"
+    filename = tmp_path / "pyproject.toml"
     filename.write_text(textwrap.dedent("""\
         [project]
             name='foo'
@@ -128,7 +128,7 @@ def test_update_supported_python_versions_not_poetry_table(tmp_path, capsys):
 
 
 def test_update_supported_python_versions_poetry_not_list(tmp_path, capsys):
-    filename = tmp_path / "setup.py"
+    filename = tmp_path / "pyproject.toml"
     filename.write_text(textwrap.dedent("""\
         [tool.poetry]
             name='foo'
