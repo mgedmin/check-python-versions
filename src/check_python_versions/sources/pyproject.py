@@ -290,10 +290,6 @@ def _set_poetry_classifiers(
     table: TOMLDocument,
     new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
-    if TOOL not in table:
-        return []
-    if POETRY not in table[TOOL]:
-        return []
     table[TOOL][POETRY][CLASSIFIERS] = new_value
     _ret = cast(Optional[List[str]], dumps(table).split('\n'))
     return _ret
@@ -303,10 +299,6 @@ def _set_setuptools_flit_classifiers(
     table: TOMLDocument,
     new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
-    if PROJECT not in table:
-        return []
-    if CLASSIFIERS not in table[PROJECT]:
-        return []
     table[PROJECT][CLASSIFIERS] = new_value
     _ret = cast(Optional[List[str]], dumps(table).split('\n'))
     return _ret
@@ -330,12 +322,6 @@ def _set_poetry_python_requires(
     table: TOMLDocument,
     new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
-    if TOOL not in table:
-        return []
-    if POETRY not in table[TOOL]:
-        return []
-    if DEPENDENCIES not in table[TOOL][POETRY]:
-        return []
     table[TOOL][POETRY][DEPENDENCIES][PYTHON] = new_value
     _ret = cast(Optional[FileLines], dumps(table).split('\n'))
     return _ret
@@ -345,10 +331,6 @@ def _set_setuptools_flit_python_requires(
     table: TOMLDocument,
     new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
-    if PROJECT not in table:
-        return []
-    if PYTHON_REQUIRES not in table[PROJECT]:
-        return []
     table[PROJECT][PYTHON_REQUIRES] = new_value
     _ret = cast(Optional[FileLines], dumps(table).split('\n'))
     return _ret
