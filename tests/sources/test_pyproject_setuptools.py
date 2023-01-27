@@ -11,10 +11,12 @@ from check_python_versions.sources.pyproject import (
     is_setuptools_toml,
     load_toml,
     update_python_requires,
+    update_supported_python_versions,
 )
 from check_python_versions.utils import (
     FileLines,
     FileOrFilename,
+    open_file,
 )
 from check_python_versions.versions import Version
 
@@ -80,6 +82,19 @@ def test_get_supported_python_versions_keep_comments(tmp_path):
             '']
 
 
+def test_supported_python_versions_setuptools_no_tools_table(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [fake-table]
+            name='foo'
+        [build-system]
+            requires = ["setuptools", "setuptools-scm"]
+            build-backend = "setuptools.build_meta"
+    """))
+    with open_file(str(filename)) as _file_obj:
+        assert get_supported_python_versions(_file_obj) == []
+
+
 def test_update_supported_python_versions_not_a_list(tmp_path, capsys):
     filename = tmp_path / "pyproject.toml"
     filename.write_text(textwrap.dedent("""\
@@ -98,6 +113,57 @@ def test_update_supported_python_versions_not_a_list(tmp_path, capsys):
         "The value specified for classifiers is not an array"
         in capsys.readouterr().err
     )
+
+
+def test_update_supported_python_versions_setuptools(tmp_path, capsys):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [project]
+            name='foo'
+            classifiers=[
+                'Programming Language :: Python :: 3.6'
+            ]
+        [build-system]
+            requires = ["setuptools", "setuptools-scm"]
+            build-backend = "setuptools.build_meta"
+    """))
+    result = update_supported_python_versions(str(filename),
+                                              v(['3.7', '3.8']))
+    assert result == ['[project]',
+                      "    name='foo'",
+                      '    classifiers=['
+                      '"Programming Language :: Python :: 3.7", '
+                      '"Programming Language :: Python :: 3.8"]',
+                      '[build-system]',
+                      '    requires = ["setuptools", "setuptools-scm"]',
+                      '    build-backend = "setuptools.build_meta"',
+                      '']
+
+
+def test_get_python_requires_setuptools_no_project_table(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [fake-project]
+            name='foo'
+        [build-system]
+            requires = ["setuptools", "setuptools-scm"]
+            build-backend = "setuptools.build_meta"
+    """))
+    with open_file(str(filename)) as _file_obj:
+        assert get_python_requires(_file_obj) is None
+
+
+def test_supported_python_versions_setuptools_no_classifier(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [project]
+            name='foo'
+        [build-system]
+            requires = ["setuptools", "setuptools-scm"]
+            build-backend = "setuptools.build_meta"
+    """))
+    with open_file(str(filename)) as _file_obj:
+        assert get_supported_python_versions(_file_obj) == []
 
 
 def test_get_python_requires(tmp_path, fix_max_python_3_version):

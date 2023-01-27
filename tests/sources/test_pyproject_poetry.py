@@ -11,10 +11,12 @@ from check_python_versions.sources.pyproject import (
     is_setuptools_toml,
     load_toml,
     update_python_requires,
+    update_supported_python_versions,
 )
 from check_python_versions.utils import (
     FileLines,
     FileOrFilename,
+    open_file,
 )
 from check_python_versions.versions import Version
 
@@ -88,6 +90,92 @@ def test_update_supported_python_versions_not_a_list(tmp_path, capsys):
     )
 
 
+def test_update_supported_python_versions_poetry(tmp_path, capsys):
+    filename = tmp_path / "setup.py"
+    filename.write_text(textwrap.dedent("""\
+        [tool.poetry]
+            name='foo'
+            classifiers=[
+                'Programming Language :: Python :: 3.6'
+            ]
+    """))
+    result = update_supported_python_versions(str(filename),
+                                              v(['3.7', '3.8']))
+    assert result == ['[tool.poetry]',
+                      "    name='foo'",
+                      '    classifiers=['
+                      '"Programming Language :: Python :: 3.7", '
+                      '"Programming Language :: Python :: 3.8"]',
+                      '']
+
+
+def test_update_supported_python_versions_not_poetry_table(tmp_path, capsys):
+    filename = tmp_path / "setup.py"
+    filename.write_text(textwrap.dedent("""\
+        [project]
+            name='foo'
+            classifiers=[
+                'Programming Language :: Python :: 3.6'
+            ]
+        [build-system]
+            build-backend = "poetry.core.masonry.api"
+    """))
+    result = update_supported_python_versions(str(filename),
+                                              v(['3.7', '3.8']))
+    assert result is None
+    assert capsys.readouterr().err.strip() == \
+           'The value specified for classifiers is not an array'
+
+
+def test_update_supported_python_versions_poetry_not_list(tmp_path, capsys):
+    filename = tmp_path / "setup.py"
+    filename.write_text(textwrap.dedent("""\
+        [tool.poetry]
+            name='foo'
+    """))
+    result = update_supported_python_versions(str(filename),
+                                              v(['3.7', '3.8']))
+    assert result is None
+    assert capsys.readouterr().err.strip() == \
+           'The value specified for classifiers is not an array'
+
+
+def test_supported_python_versions_poetry_no_tools_table(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [project]
+            name='foo'
+        [build-system]
+            build-backend = "poetry.core.masonry.api"
+    """))
+    with open_file(str(filename)) as _file_obj:
+        assert get_supported_python_versions(_file_obj) == []
+
+
+def test_supported_python_versions_poetry_no_poetry_table(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [tool]
+            name='foo'
+        [build-system]
+            build-backend = "poetry.core.masonry.api"
+    """))
+    with open_file(str(filename)) as _file_obj:
+        assert get_supported_python_versions(_file_obj) == []
+
+
+def test_supported_python_versions_poetry_no_classifier(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [tool.poetry]
+            name='foo'
+        [build-system]
+            build-backend = "poetry.core.masonry.api"
+    """))
+    with open_file(str(filename)) as _file_obj:
+        assert get_supported_python_versions(_file_obj) == []
+
+
 def test_get_python_requires(tmp_path, fix_max_python_3_version):
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(textwrap.dedent("""\
@@ -102,6 +190,45 @@ def test_get_python_requires(tmp_path, fix_max_python_3_version):
     assert get_python_requires(str(pyproject_toml)) == v([
         '3.6', '3.7', '3.8', '3.9', '3.10',
     ])
+
+
+def test_set_poetry_python_requires(tmp_path, fix_max_python_3_version):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(textwrap.dedent("""\
+        [tool.poetry]
+            name='foo'
+            [tool.poetry.dependencies]
+                python = ">=3.6"
+    """))
+    fix_max_python_3_version(8)
+    _ret = update_python_requires(str(pyproject_toml), v(['3.6', '3.7']))
+    assert "\n".join(_ret) == textwrap.dedent("""\
+            [tool.poetry]
+                name='foo'
+                [tool.poetry.dependencies]
+                    python = ">=3.6, !=3.8.*"
+        """)
+
+
+def test_set_poetry_python_requires_with_space(
+    tmp_path,
+    fix_max_python_3_version,
+):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(textwrap.dedent("""\
+        [tool.poetry]
+            name='foo'
+            [tool.poetry.dependencies]
+                python = "> 3.6"
+    """))
+    fix_max_python_3_version(8)
+    _ret = update_python_requires(str(pyproject_toml), v(['3.6', '3.7']))
+    assert "\n".join(_ret) == textwrap.dedent("""\
+            [tool.poetry]
+                name='foo'
+                [tool.poetry.dependencies]
+                    python = ">= 3.6, != 3.8.*"
+        """)
 
 
 def test_get_python_requires_not_specified(tmp_path, capsys):
@@ -128,6 +255,42 @@ def test_get_python_requires_not_a_string(tmp_path, capsys):
         'The value specified for python dependency is not a string'
         in capsys.readouterr().err
     )
+
+
+def test_get_python_requires_poetry_no_tools_table(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [project]
+            name='foo'
+        [build-system]
+            build-backend = "poetry.core.masonry.api"
+    """))
+    with open_file(str(filename)) as _file_obj:
+        assert get_python_requires(_file_obj) is None
+
+
+def test_get_python_requires_poetry_no_poetry_table(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [tool]
+            name='foo'
+        [build-system]
+            build-backend = "poetry.core.masonry.api"
+    """))
+    with open_file(str(filename)) as _file_obj:
+        assert get_python_requires(_file_obj) is None
+
+
+def test_get_python_requires_poetry_no_python(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [tool.poetry]
+            name='foo'
+            [tool.poetry.dependencies]
+                package-one = "^1.0"
+    """))
+    with open_file(str(filename)) as _file_obj:
+        assert get_python_requires(_file_obj) is None
 
 
 def test_update_python_requires(tmp_path, fix_max_python_3_version):
@@ -213,6 +376,17 @@ def test_update_python_requires_multiline_error(capsys):
                       ' !=3.4.*, !=3.5.*, !=3.6.*, !=3.7.*, '
                       '!=3.8.*, !=3.9.*, !=3.10.*, !=3.11.*"',
                       '']
+
+
+def test_poetry_toml_from_tools_io_file(tmp_path):
+    filename = tmp_path / "pyproject.toml"
+    filename.write_text(textwrap.dedent("""\
+        [tool.poetry]
+            name='foo'
+    """))
+    with open_file(str(filename)) as _file_obj:
+        _table = load_toml(_file_obj)
+        assert is_poetry_toml(_table)
 
 
 def test_poetry_toml_from_tools(tmp_path):

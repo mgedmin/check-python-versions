@@ -10,7 +10,7 @@ and tool.poetry.dependencies.python keyword.
 
 check-python-versions supports both.
 """
-
+import io
 from io import StringIO
 from typing import List, Optional, TextIO, Union, cast
 
@@ -58,7 +58,7 @@ def load_toml(
     if isinstance(filename, str) or isinstance(filename, StringIO):
         with open_file(filename) as fp:
             table = load(fp)
-    if isinstance(filename, TextIO):
+    if isinstance(filename, io.TextIOWrapper):
         table = load(filename)
     return table
 
@@ -170,35 +170,35 @@ def _get_pyproject_toml_classifiers(
 
 def _get_poetry_python_requires(
     table: TOMLDocument
-) -> List[str]:
+) -> Optional[str]:
     if TOOL not in table:
-        return []
+        return None
     if POETRY not in table[TOOL]:
-        return []
+        return None
     if DEPENDENCIES not in \
             table[TOOL][POETRY]:
-        return []
+        return None
     if PYTHON not in \
             table[TOOL][POETRY][DEPENDENCIES]:
-        return []
-    return cast(List[str], table[TOOL][POETRY][DEPENDENCIES][PYTHON])
+        return None
+    return cast(str, table[TOOL][POETRY][DEPENDENCIES][PYTHON])
 
 
 def _get_setuptools_flit_python_requires(
     table: TOMLDocument
-) -> List[str]:
+) -> Optional[str]:
     if PROJECT not in table:
-        return []
+        return None
     if PYTHON_REQUIRES not in \
             table[PROJECT]:
-        return []
-    return cast(List[str], table[PROJECT][PYTHON_REQUIRES])
+        return None
+    return cast(str, table[PROJECT][PYTHON_REQUIRES])
 
 
 def _get_pyproject_toml_python_requires(
     filename: FileOrFilename = PYPROJECT_TOML
-) -> List[str]:
-    _python_requires = []
+) -> Optional[str]:
+    _python_requires = None
     table = load_toml(filename)
     if is_poetry_toml(table):
         _python_requires = _get_poetry_python_requires(table)
@@ -214,11 +214,8 @@ def get_supported_python_versions(
     """Extract supported Python versions from classifiers in pyproject.toml."""
     classifiers = _get_pyproject_toml_classifiers(filename)
 
-    if classifiers is None:
-        # Note: do not return None because pyproject.toml is
-        # not an optional source!
-        # We want errors to show up if pyproject.toml fails to
-        # declare Python versions in classifiers.
+    if not classifiers:
+        # classifier can be an empty list when nothing found
         return []
 
     if not isinstance(classifiers, list):
@@ -234,9 +231,8 @@ def get_python_requires(
     """Extract supported Python versions from python_requires in
     pyproject.toml."""
     python_requires = _get_pyproject_toml_python_requires(pyproject_toml)
-    if python_requires is None:
-        return None
-    if not isinstance(python_requires, str):
+    if not python_requires or not isinstance(python_requires, str):
+        # python_requires can be None
         warn('The value specified for python dependency is not a string')
         return None
     return parse_python_requires(python_requires)
@@ -251,9 +247,8 @@ def update_supported_python_versions(
     Does not touch the file but returns a list of lines with new file contents.
     """
     classifiers = _get_pyproject_toml_classifiers(filename)
-    if classifiers is None:
-        return None
-    if not isinstance(classifiers, list):
+    # classifiers is an optional list
+    if not isinstance(classifiers, list) or not classifiers:
         warn('The value specified for classifiers is not an array')
         return None
     new_classifiers = update_classifiers(classifiers, new_versions)
@@ -269,7 +264,7 @@ def update_python_requires(
     Does not touch the file but returns a list of lines with new file contents.
     """
     python_requires = _get_pyproject_toml_python_requires(filename)
-    if python_requires is None or python_requires == []:
+    if python_requires is None:
         return None
     comma = ', '
     if ',' in python_requires and ', ' not in python_requires:
@@ -308,7 +303,7 @@ def _update_pyproject_toml_classifiers(
     filename: FileOrFilename,
     new_value: Union[str, List[str]],
 ) -> Optional[FileLines]:
-    _updated_table: Optional[FileLines] = []
+    _updated_table: Optional[FileLines] = None
     table = load_toml(filename)
     if is_poetry_toml(table):
         _updated_table = _set_poetry_classifiers(table, new_value)
