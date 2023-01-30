@@ -104,8 +104,11 @@ def tox_env_to_py_version(env: str) -> Optional[Version]:
         env = env.partition('-')[0]
     if env.startswith('pypy'):
         return Version.from_string('PyPy' + env[4:])
-    elif env.startswith('py') and len(env) >= 4 and env[2:].isdigit():
-        return Version.from_string(f'{env[2]}.{env[3:]}')
+    elif env.startswith('py'):
+        if len(env) >= 4 and env[2:].isdigit():
+            return Version.from_string(f'{env[2]}.{env[3:]}')
+        if '.' in env:
+            return Version.from_string(f'{env[2]}.{env[4:]}')
     else:
         return None
 

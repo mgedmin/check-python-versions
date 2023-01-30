@@ -28,6 +28,15 @@ def test_get_tox_ini_python_versions(tmp_path):
     assert get_tox_ini_python_versions(tox_ini) == v(['2.7', '3.6', '3.10'])
 
 
+def test_get_tox_ini_dotted_python_versions(tmp_path):
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        envlist = py2.7,py3.6,py27-docs,pylint,py3.10
+    """))
+    assert get_tox_ini_python_versions(tox_ini) == v(['2.7', '3.6', '3.10'])
+
+
 def test_get_tox_ini_python_versions_syntax_error(tmp_path):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
