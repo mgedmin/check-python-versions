@@ -14,6 +14,10 @@ import sys
 from io import StringIO
 from typing import Callable, Collection, Dict, List, Optional, Tuple
 
+from python_active_versions.python_active_versions import (
+    get_active_python_versions,
+)
+
 from . import __version__
 from .sources.all import ALL_SOURCES
 from .sources.base import SourceFile
@@ -370,6 +374,9 @@ def _main() -> None:
     parser.add_argument('--skip-non-packages', action='store_true',
                         help='skip arguments that are not Python packages'
                              ' without warning about them')
+    parser.add_argument('--python-versions', action='store_true',
+                        default=False,
+                        help='show active python versions')
     parser.add_argument('--only', metavar='FILES',
                         help='check only the specified files'
                              ' (comma-separated list, e.g.'
@@ -456,6 +463,14 @@ def _main() -> None:
                 sys.exit("\nmismatch!")
         elif multiple:
             print("\n\nall ok!")
+
+    if args.python_versions and not (args.add or args.drop or args.update):
+        _python_versions = get_active_python_versions(docker_images=False,
+                                                      log_level='WARNING')
+        print('\n\nActive Python versions:')
+        for _version in _python_versions:
+            print(f"version: {_version['version']} - "
+                  f"latest software: {_version['latest_sw']}")
 
 
 def main() -> None:
