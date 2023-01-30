@@ -68,6 +68,6 @@ setup(
             'check-python-versions = check_python_versions.cli:main',
         ],
     },
-    install_requires=['pyyaml'],
+    install_requires=['pyyaml', 'python-active-versions>=1.3.0'],
     zip_safe=False,
 )
