@@ -25,6 +25,7 @@ from ..versions import SortedVersionList, Version, VersionList
 
 
 TOX_INI = 'tox.ini'
+has_dotted_env = False
 
 
 def get_tox_ini_python_versions(
@@ -99,6 +100,8 @@ def tox_env_to_py_version(env: str) -> Optional[Version]:
     If the environment name has dashes, only the first part is considered,
     e.g. py34-django20 becomes '3.4', and jython-docs becomes 'jython'.
     """
+    global has_dotted_env
+    has_dotted_env = False  # reset global state before check
     if '-' in env:
         # e.g. py34-coverage, pypy-subunit
         env = env.partition('-')[0]
@@ -108,6 +111,7 @@ def tox_env_to_py_version(env: str) -> Optional[Version]:
         if len(env) >= 4 and env[2:].isdigit():
             return Version.from_string(f'{env[2]}.{env[3:]}')
         if '.' in env:
+            has_dotted_env = True
             return Version.from_string(f'{env[2]}.{env[4:]}')
     else:
         return None
@@ -159,6 +163,11 @@ def update_tox_envlist(envlist: str, new_versions: SortedVersionList) -> str:
         sep = ','
 
     trailing_comma = envlist.rstrip().endswith(',')
+
+    global has_dotted_env
+    has_dotted_env = False  # reset global state before check
+    if '.' in envlist:
+        has_dotted_env = True
 
     new_envs = [
         toxenv_for_version(ver)
@@ -226,7 +235,11 @@ def update_tox_envlist(envlist: str, new_versions: SortedVersionList) -> str:
 
 def toxenv_for_version(ver: Version) -> str:
     """Compute a tox environment name for a Python version."""
-    return f"py{ver.major}{ver.minor if ver.minor >= 0 else ''}"
+    global has_dotted_env
+    _ret_str = f"py{ver.major}" \
+               f"{'.' if has_dotted_env else ''}" \
+               f"{ver.minor if ver.minor >= 0 else ''}"
+    return _ret_str
 
 
 def should_keep(env: str, new_versions: VersionList) -> bool:
@@ -239,7 +252,11 @@ def should_keep(env: str, new_versions: VersionList) -> bool:
     or 3.x version respectively in ``new_versions``.
 
     """
-    if not re.match(r'py(py)?\d*($|-)', env):
+    global has_dotted_env
+    _base_regex = r'py(py)?\d*($|-)'
+    if has_dotted_env:
+        _base_regex = r'py(py)?\d*(\.\d*)?($|-)'
+    if not re.match(_base_regex, env):
         return True
     if env == 'pypy':
         return any(ver.major == 2 for ver in new_versions)

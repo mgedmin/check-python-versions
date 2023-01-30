@@ -116,6 +116,32 @@ def test_update_tox_ini_python_versions():
     """)
 
 
+def test_update_tox_ini_dotted_python_versions():
+    fp = StringIO(textwrap.dedent("""\
+        [tox]
+        envlist = py2.6, py2.7
+    """))
+    fp.name = 'tox.ini'
+    result = update_tox_ini_python_versions(fp, v(['3.6', '3.7', '3.10']))
+    assert "".join(result) == textwrap.dedent("""\
+        [tox]
+        envlist = py3.6, py3.7, py3.10
+    """)
+
+
+def test_update_tox_ini_one_dotted_python_versions():
+    fp = StringIO(textwrap.dedent("""\
+        [tox]
+        envlist = py26, py2.7
+    """))
+    fp.name = 'tox.ini'
+    result = update_tox_ini_python_versions(fp, v(['3.6', '3.7', '3.10']))
+    assert "".join(result) == textwrap.dedent("""\
+        [tox]
+        envlist = py3.6, py3.7, py3.10
+    """)
+
+
 def test_update_tox_ini_python_syntax_error(capsys):
     fp = StringIO(textwrap.dedent("""\
         [tox
