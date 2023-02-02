@@ -70,8 +70,7 @@ def is_poetry_toml(table: TOMLDocument) -> bool:
             _ret = True
     if BUILD_SYSTEM in table:
         if BUILD_BACKEND in table[BUILD_SYSTEM]:
-            if POETRY in \
-                    table[BUILD_SYSTEM][BUILD_BACKEND]:
+            if POETRY in table[BUILD_SYSTEM][BUILD_BACKEND]:
                 _ret = True
         if REQUIRES in table[BUILD_SYSTEM]:
             if list(filter(lambda x: POETRY in x,
@@ -85,8 +84,7 @@ def is_setuptools_toml(table: TOMLDocument) -> bool:
     _ret = False
     if BUILD_SYSTEM in table:
         if BUILD_BACKEND in table[BUILD_SYSTEM]:
-            if SETUPTOOLS in \
-                    table[BUILD_SYSTEM][BUILD_BACKEND]:
+            if SETUPTOOLS in table[BUILD_SYSTEM][BUILD_BACKEND]:
                 _ret = True
         if REQUIRES in table[BUILD_SYSTEM]:
             if list(filter(lambda x: SETUPTOOLS in x,
@@ -109,13 +107,10 @@ def is_flit_toml(table: TOMLDocument) -> bool:
         if FLIT in table[TOOL]:
             _ret = True
     if BUILD_SYSTEM in table:
-        if BUILD_BACKEND in \
-                table[BUILD_SYSTEM]:
-            if FLIT in \
-                    table[BUILD_SYSTEM][BUILD_BACKEND]:
+        if BUILD_BACKEND in table[BUILD_SYSTEM]:
+            if FLIT in table[BUILD_SYSTEM][BUILD_BACKEND]:
                 _ret = True
-        if REQUIRES in \
-                table[BUILD_SYSTEM]:
+        if REQUIRES in table[BUILD_SYSTEM]:
             if list(filter(lambda x: FLIT in x,
                            table[BUILD_SYSTEM][REQUIRES])):
                 _ret = True
@@ -125,11 +120,9 @@ def is_flit_toml(table: TOMLDocument) -> bool:
 def _get_poetry_classifiers(table: TOMLDocument) -> List[str]:
     if TOOL not in table:
         return []
-    if POETRY not in \
-            table[TOOL]:
+    if POETRY not in table[TOOL]:
         return []
-    if CLASSIFIERS not in \
-            table[TOOL][POETRY]:
+    if CLASSIFIERS not in table[TOOL][POETRY]:
         return []
     return cast(List[str], table[TOOL][POETRY][CLASSIFIERS])
 
@@ -137,8 +130,7 @@ def _get_poetry_classifiers(table: TOMLDocument) -> List[str]:
 def _get_setuptools_flit_classifiers(table: TOMLDocument) -> List[str]:
     if PROJECT not in table:
         return []
-    if CLASSIFIERS not in \
-            table[PROJECT]:
+    if CLASSIFIERS not in table[PROJECT]:
         return []
     return cast(List[str], table[PROJECT][CLASSIFIERS])
 
@@ -161,11 +153,9 @@ def _get_poetry_python_requires(table: TOMLDocument) -> Optional[str]:
         return None
     if POETRY not in table[TOOL]:
         return None
-    if DEPENDENCIES not in \
-            table[TOOL][POETRY]:
+    if DEPENDENCIES not in table[TOOL][POETRY]:
         return None
-    if PYTHON not in \
-            table[TOOL][POETRY][DEPENDENCIES]:
+    if PYTHON not in table[TOOL][POETRY][DEPENDENCIES]:
         return None
     return cast(str, table[TOOL][POETRY][DEPENDENCIES][PYTHON])
 
@@ -173,8 +163,7 @@ def _get_poetry_python_requires(table: TOMLDocument) -> Optional[str]:
 def _get_setuptools_flit_python_requires(table: TOMLDocument) -> Optional[str]:
     if PROJECT not in table:
         return None
-    if PYTHON_REQUIRES not in \
-            table[PROJECT]:
+    if PYTHON_REQUIRES not in table[PROJECT]:
         return None
     return cast(str, table[PROJECT][PYTHON_REQUIRES])
 
