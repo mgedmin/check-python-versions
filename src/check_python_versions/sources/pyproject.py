@@ -49,9 +49,7 @@ SETUPTOOLS = 'setuptools'
 FLIT = 'flit'
 
 
-def load_toml(
-    filename: FileOrFilename
-) -> Optional[TOMLDocument]:
+def load_toml(filename: FileOrFilename) -> Optional[TOMLDocument]:
     """Utility method that returns a TOMLDocument."""
     table: Optional[TOMLDocument] = None
     # tomlkit has two different API to load from file name or file object
@@ -63,9 +61,7 @@ def load_toml(
     return table
 
 
-def is_poetry_toml(
-    table: TOMLDocument
-) -> bool:
+def is_poetry_toml(table: TOMLDocument) -> bool:
     """Utility method to know if pyproject.toml is for poetry."""
     _ret = False
 
@@ -84,9 +80,7 @@ def is_poetry_toml(
     return _ret
 
 
-def is_setuptools_toml(
-    table: TOMLDocument
-) -> bool:
+def is_setuptools_toml(table: TOMLDocument) -> bool:
     """Utility method to know if pyproject.toml is for setuptool."""
     _ret = False
     if BUILD_SYSTEM in table:
@@ -108,9 +102,7 @@ def is_setuptools_toml(
     return _ret
 
 
-def is_flit_toml(
-    table: TOMLDocument
-) -> bool:
+def is_flit_toml(table: TOMLDocument) -> bool:
     """Utility method to know if pyproject.toml is for flit."""
     _ret = False
     if TOOL in table:
@@ -130,9 +122,7 @@ def is_flit_toml(
     return _ret
 
 
-def _get_poetry_classifiers(
-    table: TOMLDocument
-) -> List[str]:
+def _get_poetry_classifiers(table: TOMLDocument) -> List[str]:
     if TOOL not in table:
         return []
     if POETRY not in \
@@ -144,9 +134,7 @@ def _get_poetry_classifiers(
     return cast(List[str], table[TOOL][POETRY][CLASSIFIERS])
 
 
-def _get_setuptools_flit_classifiers(
-    table: TOMLDocument
-) -> List[str]:
+def _get_setuptools_flit_classifiers(table: TOMLDocument) -> List[str]:
     if PROJECT not in table:
         return []
     if CLASSIFIERS not in \
@@ -156,7 +144,7 @@ def _get_setuptools_flit_classifiers(
 
 
 def _get_pyproject_toml_classifiers(
-    filename: FileOrFilename = PYPROJECT_TOML
+    filename: FileOrFilename = PYPROJECT_TOML,
 ) -> List[str]:
     _classifiers = []
     table = load_toml(filename)
@@ -168,9 +156,7 @@ def _get_pyproject_toml_classifiers(
     return _classifiers
 
 
-def _get_poetry_python_requires(
-    table: TOMLDocument
-) -> Optional[str]:
+def _get_poetry_python_requires(table: TOMLDocument) -> Optional[str]:
     if TOOL not in table:
         return None
     if POETRY not in table[TOOL]:
@@ -184,9 +170,7 @@ def _get_poetry_python_requires(
     return cast(str, table[TOOL][POETRY][DEPENDENCIES][PYTHON])
 
 
-def _get_setuptools_flit_python_requires(
-    table: TOMLDocument
-) -> Optional[str]:
+def _get_setuptools_flit_python_requires(table: TOMLDocument) -> Optional[str]:
     if PROJECT not in table:
         return None
     if PYTHON_REQUIRES not in \
@@ -196,7 +180,7 @@ def _get_setuptools_flit_python_requires(
 
 
 def _get_pyproject_toml_python_requires(
-    filename: FileOrFilename = PYPROJECT_TOML
+    filename: FileOrFilename = PYPROJECT_TOML,
 ) -> Optional[str]:
     _python_requires = None
     table = load_toml(filename)
@@ -209,7 +193,7 @@ def _get_pyproject_toml_python_requires(
 
 
 def get_supported_python_versions(
-    filename: FileOrFilename = PYPROJECT_TOML
+    filename: FileOrFilename = PYPROJECT_TOML,
 ) -> SortedVersionList:
     """Extract supported Python versions from classifiers in pyproject.toml."""
     classifiers = _get_pyproject_toml_classifiers(filename)
