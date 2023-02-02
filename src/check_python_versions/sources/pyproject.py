@@ -96,19 +96,17 @@ def is_setuptools_toml(table: TOMLDocument) -> bool:
 
 def is_flit_toml(table: TOMLDocument) -> bool:
     """Utility method to know if pyproject.toml is for flit."""
-    _ret = False
-    if TOOL in table:
-        if FLIT in table[TOOL]:
-            _ret = True
+
+    if FLIT in table.get(TOOL, {}):
+        return True
+
     if BUILD_SYSTEM in table:
-        if BUILD_BACKEND in table[BUILD_SYSTEM]:
-            if FLIT in table[BUILD_SYSTEM][BUILD_BACKEND]:
-                _ret = True
-        if REQUIRES in table[BUILD_SYSTEM]:
-            if list(filter(lambda x: FLIT in x,
-                           table[BUILD_SYSTEM][REQUIRES])):
-                _ret = True
-    return _ret
+        if FLIT in table[BUILD_SYSTEM].get(BUILD_BACKEND, ''):
+            return True
+        if any(FLIT in x for x in table[BUILD_SYSTEM].get(REQUIRES, [])):
+            return True
+
+    return False
 
 
 def _get_poetry_classifiers(table: TOMLDocument) -> List[str]:
