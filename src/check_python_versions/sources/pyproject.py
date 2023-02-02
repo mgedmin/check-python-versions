@@ -78,23 +78,20 @@ def is_poetry_toml(table: TOMLDocument) -> bool:
 
 def is_setuptools_toml(table: TOMLDocument) -> bool:
     """Utility method to know if pyproject.toml is for setuptool."""
-    _ret = False
+
     if BUILD_SYSTEM in table:
-        if BUILD_BACKEND in table[BUILD_SYSTEM]:
-            if SETUPTOOLS in table[BUILD_SYSTEM][BUILD_BACKEND]:
-                _ret = True
-        if REQUIRES in table[BUILD_SYSTEM]:
-            if list(filter(lambda x: SETUPTOOLS in x,
-                           table[BUILD_SYSTEM][REQUIRES])):
-                _ret = True
+        if SETUPTOOLS in table[BUILD_SYSTEM].get(BUILD_BACKEND, ''):
+            return True
+        if any(SETUPTOOLS in x for x in table[BUILD_SYSTEM].get(REQUIRES, [])):
+            return True
 
     #  "[tool.setuptools] table is still in beta"
     #  "These configurations are completely optional
     #    and probably can be skipped when creating simple packages"
-    if TOOL in table:
-        if SETUPTOOLS in table[TOOL]:
-            _ret = True
-    return _ret
+    if SETUPTOOLS in table.get(TOOL, {}):
+        return True
+
+    return False
 
 
 def is_flit_toml(table: TOMLDocument) -> bool:
