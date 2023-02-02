@@ -1,10 +1,12 @@
 Changelog
 =========
 
-0.20.1 (unreleased)
+0.21.0 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add support for pyproject.toml (specifically, Flit, Poetry, and setuptools).
+  Contributed by Gabriele Pongelli.  `GH #34
+  <https://github.com/mgedmin/check-python-versions/pull/34>`_
 
 
 0.20.0 (2022-10-27)
