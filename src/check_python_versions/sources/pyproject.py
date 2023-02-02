@@ -63,20 +63,17 @@ def load_toml(filename: FileOrFilename) -> Optional[TOMLDocument]:
 
 def is_poetry_toml(table: TOMLDocument) -> bool:
     """Utility method to know if pyproject.toml is for poetry."""
-    _ret = False
 
-    if TOOL in table:
-        if POETRY in table[TOOL]:
-            _ret = True
+    if POETRY in table.get(TOOL, {}):
+        return True
+
     if BUILD_SYSTEM in table:
-        if BUILD_BACKEND in table[BUILD_SYSTEM]:
-            if POETRY in table[BUILD_SYSTEM][BUILD_BACKEND]:
-                _ret = True
-        if REQUIRES in table[BUILD_SYSTEM]:
-            if list(filter(lambda x: POETRY in x,
-                           table[BUILD_SYSTEM][REQUIRES])):
-                _ret = True
-    return _ret
+        if POETRY in table[BUILD_SYSTEM].get(BUILD_BACKEND, ''):
+            return True
+        if any(POETRY in x for x in table[BUILD_SYSTEM].get(REQUIRES, [])):
+            return True
+
+    return False
 
 
 def is_setuptools_toml(table: TOMLDocument) -> bool:
