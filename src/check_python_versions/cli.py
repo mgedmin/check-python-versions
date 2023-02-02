@@ -104,9 +104,9 @@ def is_package(where: str = '.') -> bool:
 
     Does not emit any diagnostics.
     """
-    # TODO: support setup.py-less packages that use pyproject.toml instead
     setup_py = os.path.join(where, 'setup.py')
-    return os.path.exists(setup_py)
+    pyproject_toml = os.path.join(where, 'pyproject.toml')
+    return os.path.exists(setup_py) or os.path.exists(pyproject_toml)
 
 
 PrintFn = Callable[..., None]
@@ -126,7 +126,7 @@ def check_package(where: str = '.', *, print: PrintFn = print) -> bool:
         return False
 
     if not is_package(where):
-        print("no setup.py -- not a Python package?")
+        print("no setup.py or pyproject.toml -- not a Python package?")
         return False
 
     return True

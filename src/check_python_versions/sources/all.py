@@ -1,6 +1,7 @@
 from .appveyor import Appveyor
 from .github import GitHubActions
 from .manylinux import Manylinux
+from .pyproject import PyProject, PyProjectPythonRequires
 from .setup_py import SetupClassifiers, SetupPythonRequires
 from .tox import Tox
 from .travis import Travis
@@ -12,6 +13,8 @@ from .travis import Travis
 ALL_SOURCES = [
     SetupClassifiers,
     SetupPythonRequires,
+    PyProject,
+    PyProjectPythonRequires,
     Tox,
     Travis,
     GitHubActions,
