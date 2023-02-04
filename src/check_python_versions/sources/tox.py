@@ -25,7 +25,6 @@ from ..versions import SortedVersionList, Version, VersionList
 
 
 TOX_INI = 'tox.ini'
-has_dotted_env = False
 
 
 def get_tox_ini_python_versions(
@@ -100,19 +99,15 @@ def tox_env_to_py_version(env: str) -> Optional[Version]:
     If the environment name has dashes, only the first part is considered,
     e.g. py34-django20 becomes '3.4', and jython-docs becomes 'jython'.
     """
-    global has_dotted_env
-    has_dotted_env = False  # reset global state before check
     if '-' in env:
         # e.g. py34-coverage, pypy-subunit
         env = env.partition('-')[0]
     if env.startswith('pypy'):
         return Version.from_string('PyPy' + env[4:])
-    elif env.startswith('py'):
-        if len(env) >= 4 and env[2:].isdigit():
-            return Version.from_string(f'{env[2]}.{env[3:]}')
-        if '.' in env:
-            has_dotted_env = True
-            return Version.from_string(f'{env[2]}.{env[4:]}')
+    elif env.startswith('py') and len(env) >= 4 and env[2:].isdigit():
+        return Version.from_string(f'{env[2]}.{env[3:]}')
+    elif env.startswith('py') and '.' in env:
+        return Version.from_string(f'{env[2:]}', has_dot=True)
     else:
         return None
 
@@ -163,11 +158,6 @@ def update_tox_envlist(envlist: str, new_versions: SortedVersionList) -> str:
         sep = ','
 
     trailing_comma = envlist.rstrip().endswith(',')
-
-    global has_dotted_env
-    has_dotted_env = False  # reset global state before check
-    if '.' in envlist:
-        has_dotted_env = True
 
     new_envs = [
         toxenv_for_version(ver)
@@ -233,10 +223,10 @@ def update_tox_envlist(envlist: str, new_versions: SortedVersionList) -> str:
     return new_envlist
 
 
-def toxenv_for_version(ver: Version, use_dots: bool = False) -> str:
+def toxenv_for_version(ver: Version) -> str:
     """Compute a tox environment name for a Python version."""
     _ret_str = f"py{ver.major}" \
-               f"{'.' if use_dots else ''}" \
+               f"{'.' if ver.has_dot else ''}" \
                f"{ver.minor if ver.minor >= 0 else ''}"
     return _ret_str
 
