@@ -13,6 +13,10 @@ def test_version_from_string() -> None:
     assert Version.from_string('3') == Version(major=3)
     assert Version.from_string('3.0') == Version(major=3, minor=0)
     assert Version.from_string('3.6') == Version(major=3, minor=6)
+    assert Version.from_string('3.6') == \
+           Version(major=3, minor=6, has_dot=False)
+    assert Version.from_string('3.6', has_dot=True) == \
+           Version(major=3, minor=6, has_dot=True)
     assert Version.from_string('3.10-dev') == Version('', 3, 10, '-dev')
     assert Version.from_string('PyPy') == Version('PyPy')
     assert Version.from_string('PyPy3') == Version('PyPy', 3)
@@ -26,6 +30,8 @@ def test_version_repr() -> None:
     assert repr(Version(major=3)) == 'Version(major=3)'
     assert repr(Version(major=3, minor=0)) == 'Version(major=3, minor=0)'
     assert repr(Version(major=3, minor=6)) == 'Version(major=3, minor=6)'
+    assert repr(Version(major=3, minor=6, has_dot=True)) == \
+           'Version(major=3, minor=6, dot=True)'
     assert repr(Version(major=3, minor=10, suffix='-dev')) == \
         "Version(major=3, minor=10, suffix='-dev')"
     assert repr(Version(prefix='PyPy')) == "Version(prefix='PyPy')"
