@@ -233,11 +233,10 @@ def update_tox_envlist(envlist: str, new_versions: SortedVersionList) -> str:
     return new_envlist
 
 
-def toxenv_for_version(ver: Version) -> str:
+def toxenv_for_version(ver: Version, use_dots: bool = False) -> str:
     """Compute a tox environment name for a Python version."""
-    global has_dotted_env
     _ret_str = f"py{ver.major}" \
-               f"{'.' if has_dotted_env else ''}" \
+               f"{'.' if use_dots else ''}" \
                f"{ver.minor if ver.minor >= 0 else ''}"
     return _ret_str
 
@@ -252,11 +251,7 @@ def should_keep(env: str, new_versions: VersionList) -> bool:
     or 3.x version respectively in ``new_versions``.
 
     """
-    global has_dotted_env
-    _base_regex = r'py(py)?\d*($|-)'
-    if has_dotted_env:
-        _base_regex = r'py(py)?\d*(\.\d*)?($|-)'
-    if not re.match(_base_regex, env):
+    if not re.match(r'py(py)?(\d[.])?\d*($|-)', env):
         return True
     if env == 'pypy':
         return any(ver.major == 2 for ver in new_versions)
