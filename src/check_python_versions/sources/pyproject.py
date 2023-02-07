@@ -1,14 +1,39 @@
 """
 Support for pyproject.toml.
 
-There are two ways of declaring Python versions in a pyproject.toml:
-classifiers like
+There are several build tools that use pyproject.toml to specify metadata.
+Some of them use the PEP 621::
 
-    Programming Language :: Python :: 3.8
+    [project]
+    classifiers = [
+        ...
+        "Programming Language :: Python :: 3.8",
+        ...
+    ]
+    requires-python = ">= 3.8"
 
-and tool.poetry.dependencies.python keyword.
+check-python-versions also supports old-style flit and poetry metadata::
 
-check-python-versions supports both.
+    [tool.flit.metadata]
+    classifiers = [
+        ...
+        "Programming Language :: Python :: 3.8",
+        ...
+    ]
+    requires-python = ">= 3.8"
+
+    [tool.poetry]
+    classifiers = [
+        ...
+        "Programming Language :: Python :: 3.8",
+        ...
+    ]
+
+tool.poetry.dependencies.python uses a different syntax and is not supported::
+
+    [tool.poetry.dependencies]
+    python = "^3.8"   # not supported yet
+
 """
 from typing import List, Optional, TextIO, Union, cast
 
