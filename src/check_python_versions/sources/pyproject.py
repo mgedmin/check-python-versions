@@ -41,13 +41,13 @@ import tomlkit
 from tomlkit import TOMLDocument, dumps, load
 
 from .base import Source
-from .setup_py import (
-    compute_python_requires,
-    parse_python_requires,
-)
 from ..parsers.classifiers import (
     get_versions_from_classifiers,
     update_classifiers,
+)
+from ..parsers.requires_python import (
+    compute_python_requires,
+    parse_python_requires,
 )
 from ..utils import FileLines, FileOrFilename, open_file, warn
 from ..versions import SortedVersionList
