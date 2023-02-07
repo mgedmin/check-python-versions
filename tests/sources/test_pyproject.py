@@ -264,3 +264,13 @@ def test_update_python_requires_setuptools(tmp_path, fix_max_python_3_version):
         requires = ["setuptools", "setuptools-scm"]
         build-backend = "setuptools.build_meta"
     """)
+
+
+def test_update_python_requires_not_specified(tmp_path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(textwrap.dedent("""\
+        [project]
+        name = 'foo'
+    """))
+    result = update_python_requires(pyproject_toml, v(['3.9']))
+    assert result is None
