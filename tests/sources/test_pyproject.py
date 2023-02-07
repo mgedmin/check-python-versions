@@ -239,7 +239,6 @@ def test_get_python_requires_badly_specified(tmp_path, capsys):
     )
 
 
-@pytest.mark.xfail(reason="This is currently broken")
 def test_update_python_requires_setuptools(tmp_path, fix_max_python_3_version):
     fix_max_python_3_version(9)
     pyproject_toml = tmp_path / "pyproject.toml"

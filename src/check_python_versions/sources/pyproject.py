@@ -242,10 +242,9 @@ def get_supported_python_versions(
     return get_versions_from_classifiers(classifiers or [])
 
 
-def get_python_requires(
+def _get_pyproject_toml_requires_python(
     filename: FileOrFilename = PYPROJECT_TOML,
-) -> Optional[SortedVersionList]:
-    """Extract Python versions from require-python in pyproject.toml."""
+) -> Tuple[TOMLDocument, str, Optional[str]]:
 
     with open_file(filename) as fp:
         document = load(fp)
@@ -256,10 +255,23 @@ def get_python_requires(
             break
 
     if python_requires is None:
-        return None
+        return document, path, None
 
     if not isinstance(python_requires, str):
         warn(f'The value specified for {path}.requires-python is not a string')
+        return document, path, None
+
+    return document, path, python_requires
+
+
+def get_python_requires(
+    filename: FileOrFilename = PYPROJECT_TOML,
+) -> Optional[SortedVersionList]:
+    """Extract Python versions from require-python in pyproject.toml."""
+
+    _d, _p, python_requires = _get_pyproject_toml_requires_python(filename)
+
+    if python_requires is None:
         return None
 
     return parse_python_requires(python_requires)
@@ -296,22 +308,27 @@ def update_python_requires(
 
     Does not touch the file but returns a list of lines with new file contents.
     """
-    python_requires = _get_pyproject_toml_python_requires(filename)
+
+    document, path, python_requires = _get_pyproject_toml_requires_python(
+        filename)
+
     if python_requires is None:
         return None
+
     comma = ', '
     if ',' in python_requires and ', ' not in python_requires:
         comma = ','
     space = ''
     if '> ' in python_requires or '= ' in python_requires:
         space = ' '
+
     new_requires = compute_python_requires(
         new_versions, comma=comma, space=space)
-    if is_file_object(filename):
-        # Make sure we can read it twice please.
-        # XXX: I don't like this.
-        cast(TextIO, filename).seek(0)
-    return _update_pyproject_python_requires(filename, new_requires)
+
+    table = traverse(document, path)
+    table['requires-python'] = new_requires
+
+    return dumps(document).splitlines(True)
 
 
 def _set_poetry_classifiers(
