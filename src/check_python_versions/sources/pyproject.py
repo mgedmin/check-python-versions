@@ -35,7 +35,7 @@ tool.poetry.dependencies.python uses a different syntax and is not supported::
     python = "^3.8"   # not supported yet
 
 """
-from typing import List, Optional, TextIO, Union, cast
+from typing import TYPE_CHECKING, Any, List, Optional, TextIO, Union, cast
 
 from tomlkit import TOMLDocument, dumps, load
 
@@ -48,6 +48,11 @@ from .setup_py import (
 )
 from ..utils import FileLines, FileOrFilename, is_file_object, open_file, warn
 from ..versions import SortedVersionList
+
+
+if TYPE_CHECKING:
+    from tomlkit.container import Container
+    from tomlkit.items import Item
 
 
 PYPROJECT_TOML = 'pyproject.toml'
@@ -190,33 +195,66 @@ def _get_pyproject_toml_python_requires(
     return _python_requires
 
 
+def traverse(document: TOMLDocument, path: str, default: Any = None) -> Any:
+    obj: Union[Container, Item] = document
+    for step in path.split('.'):
+        if not isinstance(obj, dict):
+            # complain
+            return default
+        if step not in obj:
+            return default
+        obj = obj[step]
+    return obj
+
+
 def get_supported_python_versions(
     filename: FileOrFilename = PYPROJECT_TOML,
 ) -> SortedVersionList:
     """Extract supported Python versions from classifiers in pyproject.toml."""
-    classifiers = _get_pyproject_toml_classifiers(filename)
 
-    if not classifiers:
-        # classifier can be an empty list when nothing found
+    with open_file(filename) as fp:
+        document = load(fp)
+
+    for path in 'project', 'tool.flit.metadata', 'tool.poetry':
+        classifiers = traverse(document, f"{path}.classifiers")
+        if classifiers is not None:
+            break
+
+    if classifiers is None:
         return []
 
     if not isinstance(classifiers, list):
-        warn('The value specified for classifiers is not an array')
+        warn(f'The value specified for {path}.classifiers is not an array')
+        return []
+
+    if not all(isinstance(s, str) for s in classifiers):
+        warn(f'The value specified for {path}.classifiers'
+             ' is not an array of strings')
         return []
 
     return get_versions_from_classifiers(classifiers)
 
 
 def get_python_requires(
-    pyproject_toml: FileOrFilename = PYPROJECT_TOML,
+    filename: FileOrFilename = PYPROJECT_TOML,
 ) -> Optional[SortedVersionList]:
-    """Extract supported Python versions from python_requires in
-    pyproject.toml."""
-    python_requires = _get_pyproject_toml_python_requires(pyproject_toml)
-    if not python_requires or not isinstance(python_requires, str):
-        # python_requires can be None
-        warn('The value specified for python dependency is not a string')
+    """Extract Python versions from require-python in pyproject.toml."""
+
+    with open_file(filename) as fp:
+        document = load(fp)
+
+    for path in 'project', 'tool.flit.metadata':
+        python_requires = traverse(document, f"{path}.requires-python")
+        if python_requires is not None:
+            break
+
+    if python_requires is None:
         return None
+
+    if not isinstance(python_requires, str):
+        warn(f'The value specified for {path}.requires-python is not a string')
+        return None
+
     return parse_python_requires(python_requires)
 
 
