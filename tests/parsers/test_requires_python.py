@@ -4,6 +4,7 @@ import pytest
 
 from check_python_versions.parsers.requires_python import (
     compute_python_requires,
+    detect_style,
     parse_python_requires,
 )
 from check_python_versions.versions import Version
@@ -115,6 +116,15 @@ def test_parse_python_requires_syntax_errors(capsys, specifier):
         f'Bad python_requires specifier: {specifier}'
         in capsys.readouterr().err
     )
+
+
+@pytest.mark.parametrize("python_requires, comma, space", [
+    (">=3.8", ", ", ""),
+    (">= 3.8", ", ", " "),
+    (">=2.7,!=3.0", ",", ""),
+])
+def test_detect_style(python_requires, comma, space):
+    assert detect_style(python_requires) == dict(comma=comma, space=space)
 
 
 @pytest.mark.parametrize('versions, expected', [

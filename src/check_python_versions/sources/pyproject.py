@@ -40,6 +40,8 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 import tomlkit
 from tomlkit import TOMLDocument, dumps, load
 
+from check_python_versions.parsers.requires_python import detect_style
+
 from .base import Source
 from ..parsers.classifiers import (
     get_versions_from_classifiers,
@@ -184,18 +186,11 @@ def update_python_requires(
     if python_requires is None:
         return None
 
-    comma = ', '
-    if ',' in python_requires and ', ' not in python_requires:
-        comma = ','
-    space = ''
-    if '> ' in python_requires or '= ' in python_requires:
-        space = ' '
-
-    new_requires = compute_python_requires(
-        new_versions, comma=comma, space=space)
+    style = detect_style(python_requires)
+    new_python_requires = compute_python_requires(new_versions, **style)
 
     table = traverse(document, path)
-    table['requires-python'] = new_requires
+    table['requires-python'] = new_python_requires
 
     return dumps(document).splitlines(True)
 

@@ -14,6 +14,12 @@ from ..versions import (
 )
 
 
+try:
+    from typing import TypedDict
+except ImportError:  # pragma: nocover
+    from typing_extensions import TypedDict
+
+
 def parse_python_requires(s: str) -> Optional[SortedVersionList]:
     """Compute Python versions allowed by a python_requires expression."""
 
@@ -188,6 +194,26 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
             if all(constraint((major, minor)) for constraint in constraints):
                 versions.append(Version.from_string(f'{major}.{minor}'))
     return versions
+
+
+class PythonRequiresStyle(TypedDict):
+    comma: str
+    space: str
+
+
+def detect_style(python_requires: str) -> PythonRequiresStyle:
+    """Determine how a python_requires string was formatted.
+
+    The return value is a dict of kwargs that can be splatted
+    into compute_python_requires(..., **style).
+    """
+    comma = ', '
+    if ',' in python_requires and ', ' not in python_requires:
+        comma = ','
+    space = ''
+    if '> ' in python_requires or '= ' in python_requires:
+        space = ' '
+    return dict(comma=comma, space=space)
 
 
 def compute_python_requires(

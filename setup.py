@@ -68,6 +68,10 @@ setup(
             'check-python-versions = check_python_versions.cli:main',
         ],
     },
-    install_requires=['pyyaml', 'tomlkit'],
+    install_requires=[
+        'pyyaml',
+        'tomlkit',
+        'typing_extensions; python_version < "3.8"',
+    ],
     zip_safe=False,
 )

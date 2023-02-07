@@ -30,6 +30,7 @@ from ..parsers.python import (
 )
 from ..parsers.requires_python import (
     compute_python_requires,
+    detect_style,
     parse_python_requires,
 )
 from ..utils import (
@@ -112,16 +113,10 @@ def update_python_requires(
     Does not touch the file but returns a list of lines with new file contents.
     """
     python_requires = get_setup_py_keyword(filename, 'python_requires')
-    if python_requires is None:
+    if not isinstance(python_requires, str):
         return None
-    comma = ', '
-    if ',' in python_requires and ', ' not in python_requires:
-        comma = ','
-    space = ''
-    if '> ' in python_requires or '= ' in python_requires:
-        space = ' '
-    new_python_requires = compute_python_requires(
-        new_versions, comma=comma, space=space)
+    style = detect_style(python_requires)
+    new_python_requires = compute_python_requires(new_versions, **style)
     if is_file_object(filename):
         # Make sure we can read it twice please.
         # XXX: I don't like this.
