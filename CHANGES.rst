@@ -4,9 +4,12 @@ Changelog
 0.21.0 (unreleased)
 -------------------
 
-- Add support for pyproject.toml (specifically, Flit, Poetry, and setuptools).
+- Add support for pyproject.toml (primarily, Flit, Poetry, and setuptools,
+  but any build system that specifies static PEP 621 metadata should work).
   Contributed by Gabriele Pongelli.  `GH #34
   <https://github.com/mgedmin/check-python-versions/pull/34>`_
+
+  Note: Poetry's tool.poetry.dependencies.python is not (yet) supported.
 
 
 0.20.0 (2022-10-27)
