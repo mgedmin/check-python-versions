@@ -43,8 +43,10 @@ from tomlkit import TOMLDocument, dumps, load
 from .base import Source
 from .setup_py import (
     compute_python_requires,
-    get_versions_from_classifiers,
     parse_python_requires,
+)
+from ..parsers.classifiers import (
+    get_versions_from_classifiers,
     update_classifiers,
 )
 from ..utils import FileLines, FileOrFilename, open_file, warn
