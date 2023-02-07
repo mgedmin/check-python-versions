@@ -13,4 +13,5 @@ source =
 exclude_lines =
     pragma: nocover
     pragma: windows
+    if TYPE_CHECKING:
     if __name__ == .__main__.:

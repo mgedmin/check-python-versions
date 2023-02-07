@@ -35,16 +35,7 @@ tool.poetry.dependencies.python uses a different syntax and is not supported::
     python = "^3.8"   # not supported yet
 
 """
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    List,
-    Optional,
-    TextIO,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
 import tomlkit
 from tomlkit import TOMLDocument, dumps, load
@@ -56,140 +47,16 @@ from .setup_py import (
     parse_python_requires,
     update_classifiers,
 )
-from ..utils import FileLines, FileOrFilename, is_file_object, open_file, warn
+from ..utils import FileLines, FileOrFilename, open_file, warn
 from ..versions import SortedVersionList
+
+
+PYPROJECT_TOML = 'pyproject.toml'
 
 
 if TYPE_CHECKING:
     from tomlkit.container import Container
     from tomlkit.items import Item
-
-
-PYPROJECT_TOML = 'pyproject.toml'
-
-CLASSIFIERS = 'classifiers'
-DEPENDENCIES = 'dependencies'
-PYTHON = 'python'
-PYTHON_REQUIRES = 'requires-python'
-
-# poetry TOML keywords
-TOOL = 'tool'
-POETRY = 'poetry'
-BUILD_SYSTEM = 'build-system'
-BUILD_BACKEND = 'build-backend'
-REQUIRES = 'requires'
-
-# setuptools TOML keywords
-PROJECT = 'project'
-SETUPTOOLS = 'setuptools'
-
-# flit TOML keywords
-FLIT = 'flit'
-
-
-def load_toml(filename: FileOrFilename) -> TOMLDocument:
-    """Utility method that returns a TOMLDocument."""
-    with open_file(filename) as fp:
-        return load(fp)
-
-
-def is_poetry_toml(table: TOMLDocument) -> bool:
-    """Utility method to know if pyproject.toml is for poetry."""
-
-    if POETRY in table.get(TOOL, {}):
-        return True
-
-    if BUILD_SYSTEM in table:
-        if POETRY in table[BUILD_SYSTEM].get(BUILD_BACKEND, ''):
-            return True
-        if any(POETRY in x for x in table[BUILD_SYSTEM].get(REQUIRES, [])):
-            return True
-
-    return False
-
-
-def is_setuptools_toml(table: TOMLDocument) -> bool:
-    """Utility method to know if pyproject.toml is for setuptool."""
-
-    if BUILD_SYSTEM in table:
-        if SETUPTOOLS in table[BUILD_SYSTEM].get(BUILD_BACKEND, ''):
-            return True
-        if any(SETUPTOOLS in x for x in table[BUILD_SYSTEM].get(REQUIRES, [])):
-            return True
-
-    #  "[tool.setuptools] table is still in beta"
-    #  "These configurations are completely optional
-    #    and probably can be skipped when creating simple packages"
-    if SETUPTOOLS in table.get(TOOL, {}):
-        return True
-
-    return False
-
-
-def is_flit_toml(table: TOMLDocument) -> bool:
-    """Utility method to know if pyproject.toml is for flit."""
-
-    if FLIT in table.get(TOOL, {}):
-        return True
-
-    if BUILD_SYSTEM in table:
-        if FLIT in table[BUILD_SYSTEM].get(BUILD_BACKEND, ''):
-            return True
-        if any(FLIT in x for x in table[BUILD_SYSTEM].get(REQUIRES, [])):
-            return True
-
-    return False
-
-
-def _get_poetry_classifiers(table: TOMLDocument) -> List[str]:
-    if TOOL not in table:
-        return []
-    if POETRY not in table[TOOL]:
-        return []
-    if CLASSIFIERS not in table[TOOL][POETRY]:
-        return []
-    return cast(List[str], table[TOOL][POETRY][CLASSIFIERS])
-
-
-def _get_setuptools_flit_classifiers(table: TOMLDocument) -> List[str]:
-    if PROJECT not in table:
-        return []
-    if CLASSIFIERS not in table[PROJECT]:
-        return []
-    return cast(List[str], table[PROJECT][CLASSIFIERS])
-
-
-def _get_poetry_python_requires(table: TOMLDocument) -> Optional[str]:
-    if TOOL not in table:
-        return None
-    if POETRY not in table[TOOL]:
-        return None
-    if DEPENDENCIES not in table[TOOL][POETRY]:
-        return None
-    if PYTHON not in table[TOOL][POETRY][DEPENDENCIES]:
-        return None
-    return cast(str, table[TOOL][POETRY][DEPENDENCIES][PYTHON])
-
-
-def _get_setuptools_flit_python_requires(table: TOMLDocument) -> Optional[str]:
-    if PROJECT not in table:
-        return None
-    if PYTHON_REQUIRES not in table[PROJECT]:
-        return None
-    return cast(str, table[PROJECT][PYTHON_REQUIRES])
-
-
-def _get_pyproject_toml_python_requires(
-    filename: FileOrFilename = PYPROJECT_TOML,
-) -> Optional[str]:
-    _python_requires = None
-    table = load_toml(filename)
-    if is_poetry_toml(table):
-        _python_requires = _get_poetry_python_requires(table)
-    if is_setuptools_toml(table) or is_flit_toml(table):
-        _python_requires = _get_setuptools_flit_python_requires(table)
-
-    return _python_requires
 
 
 def traverse(document: TOMLDocument, path: str, default: Any = None) -> Any:
@@ -329,70 +196,6 @@ def update_python_requires(
     table['requires-python'] = new_requires
 
     return dumps(document).splitlines(True)
-
-
-def _set_poetry_classifiers(
-    table: TOMLDocument,
-    new_value: Union[str, List[str]],
-) -> Optional[FileLines]:
-    table[TOOL][POETRY][CLASSIFIERS] = new_value
-    _ret = cast(Optional[List[str]], dumps(table).split('\n'))
-    return _ret
-
-
-def _set_setuptools_flit_classifiers(
-    table: TOMLDocument,
-    new_value: Union[str, List[str]],
-) -> Optional[FileLines]:
-    table[PROJECT][CLASSIFIERS] = new_value
-    _ret = cast(Optional[List[str]], dumps(table).split('\n'))
-    return _ret
-
-
-def _update_pyproject_toml_classifiers(
-    filename: FileOrFilename,
-    new_value: Union[str, List[str]],
-) -> Optional[FileLines]:
-    _updated_table: Optional[FileLines] = None
-    table = load_toml(filename)
-    if is_poetry_toml(table):
-        _updated_table = _set_poetry_classifiers(table, new_value)
-    if is_setuptools_toml(table) or is_flit_toml(table):
-        _updated_table = _set_setuptools_flit_classifiers(table, new_value)
-
-    return _updated_table
-
-
-def _set_poetry_python_requires(
-    table: TOMLDocument,
-    new_value: Union[str, List[str]],
-) -> Optional[FileLines]:
-    table[TOOL][POETRY][DEPENDENCIES][PYTHON] = new_value
-    _ret = cast(Optional[FileLines], dumps(table).split('\n'))
-    return _ret
-
-
-def _set_setuptools_flit_python_requires(
-    table: TOMLDocument,
-    new_value: Union[str, List[str]],
-) -> Optional[FileLines]:
-    table[PROJECT][PYTHON_REQUIRES] = new_value
-    _ret = cast(Optional[FileLines], dumps(table).split('\n'))
-    return _ret
-
-
-def _update_pyproject_python_requires(
-    filename: FileOrFilename,
-    new_value: Union[str, List[str]],
-) -> Optional[FileLines]:
-    _updated_table: Optional[FileLines] = []
-    table = load_toml(filename)
-    if is_poetry_toml(table):
-        _updated_table = _set_poetry_python_requires(table, new_value)
-    if is_setuptools_toml(table) or is_flit_toml(table):
-        _updated_table = _set_setuptools_flit_python_requires(table, new_value)
-
-    return _updated_table
 
 
 PyProject = Source(
