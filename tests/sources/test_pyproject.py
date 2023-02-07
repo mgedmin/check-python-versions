@@ -131,7 +131,6 @@ def test_get_supported_python_versions_bad_data_type(tmp_path, capsys):
     )
 
 
-@pytest.mark.xfail(reason="This is currently broken")
 def test_update_supported_python_versions_setuptools(tmp_path, capsys):
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(textwrap.dedent("""\
@@ -148,13 +147,14 @@ def test_update_supported_python_versions_setuptools(tmp_path, capsys):
     result = update_supported_python_versions(pyproject_toml,
                                               v(['3.7', '3.8']))
     assert result is not None  # make mypy happy
+    # I would love to preserve the existing quote style, but it's too hard
     assert "".join(result) == textwrap.dedent("""\
         [project]
             name='foo'
             # comments are preserved btw
             classifiers=[
-                'Programming Language :: Python :: 3.7',
-                'Programming Language :: Python :: 3.8',
+                "Programming Language :: Python :: 3.7",
+                "Programming Language :: Python :: 3.8",
             ]
         [build-system]
             requires = ["setuptools", "setuptools-scm"]

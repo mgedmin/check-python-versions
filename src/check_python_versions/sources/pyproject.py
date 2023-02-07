@@ -35,8 +35,18 @@ tool.poetry.dependencies.python uses a different syntax and is not supported::
     python = "^3.8"   # not supported yet
 
 """
-from typing import TYPE_CHECKING, Any, List, Optional, TextIO, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    Union,
+    cast,
+)
 
+import tomlkit
 from tomlkit import TOMLDocument, dumps, load
 
 from .base import Source
@@ -149,19 +159,6 @@ def _get_setuptools_flit_classifiers(table: TOMLDocument) -> List[str]:
     return cast(List[str], table[PROJECT][CLASSIFIERS])
 
 
-def _get_pyproject_toml_classifiers(
-    filename: FileOrFilename = PYPROJECT_TOML,
-) -> List[str]:
-    _classifiers = []
-    table = load_toml(filename)
-    if is_poetry_toml(table):
-        _classifiers = _get_poetry_classifiers(table)
-    if is_setuptools_toml(table) or is_flit_toml(table):
-        _classifiers = _get_setuptools_flit_classifiers(table)
-
-    return _classifiers
-
-
 def _get_poetry_python_requires(table: TOMLDocument) -> Optional[str]:
     if TOOL not in table:
         return None
@@ -207,10 +204,10 @@ def traverse(document: TOMLDocument, path: str, default: Any = None) -> Any:
     return obj
 
 
-def get_supported_python_versions(
+def _get_pyproject_toml_classifiers(
     filename: FileOrFilename = PYPROJECT_TOML,
-) -> SortedVersionList:
-    """Extract supported Python versions from classifiers in pyproject.toml."""
+) -> Tuple[TOMLDocument, str, Optional[List[str]]]:
+    """Extract the list of PyPI classifiers from a pyproject.toml"""
 
     with open_file(filename) as fp:
         document = load(fp)
@@ -221,18 +218,28 @@ def get_supported_python_versions(
             break
 
     if classifiers is None:
-        return []
+        return document, path, None
 
     if not isinstance(classifiers, list):
         warn(f'The value specified for {path}.classifiers is not an array')
-        return []
+        return document, path, None
 
     if not all(isinstance(s, str) for s in classifiers):
         warn(f'The value specified for {path}.classifiers'
              ' is not an array of strings')
-        return []
+        return document, path, None
 
-    return get_versions_from_classifiers(classifiers)
+    return document, path, classifiers
+
+
+def get_supported_python_versions(
+    filename: FileOrFilename = PYPROJECT_TOML,
+) -> SortedVersionList:
+    """Extract supported Python versions from classifiers in pyproject.toml."""
+
+    _d, _p, classifiers = _get_pyproject_toml_classifiers(filename)
+
+    return get_versions_from_classifiers(classifiers or [])
 
 
 def get_python_requires(
@@ -266,13 +273,19 @@ def update_supported_python_versions(
 
     Does not touch the file but returns a list of lines with new file contents.
     """
-    classifiers = _get_pyproject_toml_classifiers(filename)
-    # classifiers is an optional list
-    if not isinstance(classifiers, list) or not classifiers:
-        warn('The value specified for classifiers is not an array')
+
+    document, path, classifiers = _get_pyproject_toml_classifiers(filename)
+
+    if classifiers is None:
         return None
+
     new_classifiers = update_classifiers(classifiers, new_versions)
-    return _update_pyproject_toml_classifiers(filename, new_classifiers)
+
+    table = traverse(document, path)
+    table['classifiers'] = a = tomlkit.array().multiline(True)
+    a.extend(new_classifiers)
+
+    return dumps(document).splitlines(True)
 
 
 def update_python_requires(
