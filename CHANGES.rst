@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.21.0 (unreleased)
+0.21.0 (2023-02-08)
 -------------------
 
 - Add support for pyproject.toml (primarily, Flit, Poetry, and setuptools,
