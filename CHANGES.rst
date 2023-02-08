@@ -1,10 +1,10 @@
 Changelog
 =========
 
-0.21.1 (unreleased)
+0.21.1 (2023-02-08)
 -------------------
 
-- Nothing changed yet.
+- Document pyproject.toml support in the README.
 
 
 0.21.0 (2023-02-08)
