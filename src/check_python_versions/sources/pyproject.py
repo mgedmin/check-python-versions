@@ -140,12 +140,12 @@ def get_python_requires(
 ) -> Optional[SortedVersionList]:
     """Extract Python versions from require-python in pyproject.toml."""
 
-    _d, _p, python_requires = _get_pyproject_toml_requires_python(filename)
+    _d, path, python_requires = _get_pyproject_toml_requires_python(filename)
 
     if python_requires is None:
         return None
 
-    return parse_python_requires(python_requires)
+    return parse_python_requires(python_requires, f"{path}.requires-python")
 
 
 def update_supported_python_versions(

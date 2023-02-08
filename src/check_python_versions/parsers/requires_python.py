@@ -20,7 +20,9 @@ except ImportError:  # pragma: nocover
     from typing_extensions import TypedDict
 
 
-def parse_python_requires(s: str) -> Optional[SortedVersionList]:
+def parse_python_requires(
+    s: str, name: str = "python_requires"
+) -> Optional[SortedVersionList]:
     """Compute Python versions allowed by a python_requires expression."""
 
     # https://www.python.org/dev/peps/pep-0440/#version-specifiers
@@ -57,7 +59,7 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
 
     #
     # We are not doing a strict PEP-440 implementation here because if
-    # python_reqiures allows, say, Python 2.7.16, then we want to report that
+    # python_requires allows, say, Python 2.7.16, then we want to report that
     # as Python 2.7.  In each handler ``candidate`` is a two-tuple (X, Y)
     # that represents any Python version between X.Y.0 and X.Y.<whatever>.
     #
@@ -168,7 +170,7 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
     for specifier in map(str.strip, s.split(',')):
         m = rx.match(specifier)
         if not m:
-            warn(f'Bad python_requires specifier: {specifier}')
+            warn(f'Bad {name} specifier: {specifier}')
             continue
         op, arg = m.groups()
         ver: Constraint = tuple(
@@ -178,7 +180,7 @@ def parse_python_requires(s: str) -> Optional[SortedVersionList]:
         try:
             constraints.append(handlers[op](ver))
         except BadConstraint as error:
-            warn(f'Bad python_requires specifier: {specifier} ({error})')
+            warn(f'Bad {name} specifier: {specifier} ({error})')
 
     if not constraints:
         return None
