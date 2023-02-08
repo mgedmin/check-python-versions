@@ -12,7 +12,7 @@ Some of them use the PEP 621::
     ]
     requires-python = ">= 3.8"
 
-check-python-versions also supports old-style flit and poetry metadata::
+check-python-versions also supports old-style Flit and Poetry metadata::
 
     [tool.flit.metadata]
     classifiers = [
@@ -29,8 +29,6 @@ check-python-versions also supports old-style flit and poetry metadata::
         ...
     ]
 
-tool.poetry.dependencies.python uses a different syntax and is not supported::
-
     [tool.poetry.dependencies]
     python = "^3.8"   # not supported yet
 
@@ -40,15 +38,20 @@ from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 import tomlkit
 from tomlkit import TOMLDocument, dumps, load
 
-from check_python_versions.parsers.requires_python import detect_style
+from check_python_versions.parsers.poetry_version_spec import (
+    compute_poetry_spec,
+    detect_poetry_version_spec_style,
+)
 
 from .base import Source
 from ..parsers.classifiers import (
     get_versions_from_classifiers,
     update_classifiers,
 )
+from ..parsers.poetry_version_spec import parse_poetry_version_constraint
 from ..parsers.requires_python import (
     compute_python_requires,
+    detect_style,
     parse_python_requires,
 )
 from ..utils import FileLines, FileOrFilename, open_file, warn
@@ -120,8 +123,12 @@ def _get_pyproject_toml_requires_python(
     with open_file(filename) as fp:
         document = load(fp)
 
-    for path in 'project', 'tool.flit.metadata':
-        python_requires = traverse(document, f"{path}.requires-python")
+    for path in (
+        "project.requires-python",
+        "tool.flit.metadata.requires-python",
+        "tool.poetry.dependencies.python",
+    ):
+        python_requires = traverse(document, path)
         if python_requires is not None:
             break
 
@@ -129,7 +136,7 @@ def _get_pyproject_toml_requires_python(
         return document, path, None
 
     if not isinstance(python_requires, str):
-        warn(f'The value specified for {path}.requires-python is not a string')
+        warn(f'The value specified for {path} is not a string')
         return document, path, None
 
     return document, path, python_requires
@@ -145,7 +152,10 @@ def get_python_requires(
     if python_requires is None:
         return None
 
-    return parse_python_requires(python_requires, f"{path}.requires-python")
+    if path == 'tool.poetry.dependencies.python':
+        return parse_poetry_version_constraint(python_requires, path)
+    else:
+        return parse_python_requires(python_requires, path)
 
 
 def update_supported_python_versions(
@@ -186,11 +196,18 @@ def update_python_requires(
     if python_requires is None:
         return None
 
-    style = detect_style(python_requires)
-    new_python_requires = compute_python_requires(new_versions, **style)
+    if path == 'tool.poetry.dependencies.python':
+        style = detect_poetry_version_spec_style(python_requires)
+        new_python_spec = compute_poetry_spec(new_versions, **style)
 
-    table = traverse(document, path)
-    table['requires-python'] = new_python_requires
+        table = traverse(document, path.rpartition('.')[0])
+        table['python'] = new_python_spec
+    else:
+        style = detect_style(python_requires)
+        new_python_requires = compute_python_requires(new_versions, **style)
+
+        table = traverse(document, path.rpartition('.')[0])
+        table['requires-python'] = new_python_requires
 
     return dumps(document).splitlines(True)
 

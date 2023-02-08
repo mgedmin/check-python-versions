@@ -4,6 +4,9 @@ from typing import List, cast
 import pytest
 from tomlkit.toml_document import TOMLDocument
 
+from check_python_versions.parsers.poetry_version_spec import (
+    parse_poetry_version_constraint,
+)
 from check_python_versions.sources.pyproject import (
     get_python_requires,
     get_supported_python_versions,
@@ -204,8 +207,6 @@ def test_get_python_requires_flit(tmp_path, fix_max_python_3_version):
     assert get_python_requires(pyproject_toml) == v(['3.8', '3.9'])
 
 
-@pytest.mark.xfail(
-    reason="Poetry-style Python requirements need implementation")
 def test_get_python_requires_poetry(tmp_path, fix_max_python_3_version):
     fix_max_python_3_version(9)
     pyproject_toml = tmp_path / "pyproject.toml"
@@ -276,6 +277,33 @@ def test_update_python_requires_setuptools(tmp_path, fix_max_python_3_version):
         [build-system]
         requires = ["setuptools", "setuptools-scm"]
         build-backend = "setuptools.build_meta"
+    """)
+
+
+@pytest.mark.parametrize("previous, versions, expected", [
+    ('>=3.8', '3.8', '3.8.*'),
+    ('>=3.8', '3.8 3.9', '>=3.8, <3.10'),
+    ('>=3.8', '3.8 3.9 3.10', '>=3.8'),
+    ('^3.8', '3.8', '~3.8'),
+    ('^3.8', '3.8 3.9', '>=3.8, <3.10'),
+    ('^3.8', '3.8 3.9 3.10', '^3.8'),
+])
+def test_update_python_requires_poetry(
+    tmp_path, fix_max_python_3_version, previous, versions, expected
+):
+    fix_max_python_3_version(10)
+    # double-check that the test data is correct
+    assert parse_poetry_version_constraint(expected) == v(versions.split())
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(textwrap.dedent(f"""\
+        [tool.poetry.dependencies]
+        python = "{previous}"
+    """))
+    result = update_python_requires(pyproject_toml, v(versions.split()))
+    assert result is not None  # make mypy happy
+    assert "".join(result) == textwrap.dedent(f"""\
+        [tool.poetry.dependencies]
+        python = "{expected}"
     """)
 
 

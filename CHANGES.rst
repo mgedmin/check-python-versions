@@ -9,8 +9,6 @@ Changelog
   Contributed by Gabriele Pongelli.  `GH #34
   <https://github.com/mgedmin/check-python-versions/pull/34>`_
 
-  Note: Poetry's tool.poetry.dependencies.python is not (yet) supported.
-
 
 0.20.0 (2022-10-27)
 -------------------
