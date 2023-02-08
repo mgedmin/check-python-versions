@@ -17,6 +17,7 @@ from ..versions import (
     VersionList,
 )
 
+
 try:
     from typing import TypedDict
 except ImportError:  # pragma: nocover
@@ -76,7 +77,7 @@ def parse_poetry_version_constraint(
         if constraint[-1] == '*':
             raise BadConstraint('^ does not allow a .*')
         return lambda candidate: (
-            candidate >= constraint[:2] and candidate < (constraint[0] + 1,))
+            candidate >= constraint[:2] and candidate[:1] <= constraint[:1])
 
     @handler('~')
     def tilde_version(constraint: Constraint) -> CheckFn:

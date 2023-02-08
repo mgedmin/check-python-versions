@@ -197,14 +197,14 @@ def update_python_requires(
         return None
 
     if path == 'tool.poetry.dependencies.python':
-        style = detect_poetry_version_spec_style(python_requires)
-        new_python_spec = compute_poetry_spec(new_versions, **style)
+        new_python_spec = compute_poetry_spec(
+            new_versions, **detect_poetry_version_spec_style(python_requires))
 
         table = traverse(document, path.rpartition('.')[0])
         table['python'] = new_python_spec
     else:
-        style = detect_style(python_requires)
-        new_python_requires = compute_python_requires(new_versions, **style)
+        new_python_requires = compute_python_requires(
+            new_versions, **detect_style(python_requires))
 
         table = traverse(document, path.rpartition('.')[0])
         table['requires-python'] = new_python_requires
