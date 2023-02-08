@@ -30,7 +30,7 @@ check-python-versions also supports old-style Flit and Poetry metadata::
     ]
 
     [tool.poetry.dependencies]
-    python = "^3.8"   # not supported yet
+    python = "^3.8"
 
 """
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union

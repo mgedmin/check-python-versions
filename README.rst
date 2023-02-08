@@ -152,8 +152,9 @@ bugs (and please file issues).
 Files
 -----
 
-**setup.py** is the only required file; if any of the others are missing,
-they'll be ignored (and this will not be considered a failure).
+**setup.py** or **pyproject.toml** is the only required file; if any of the
+others are missing, they'll be ignored (and this will not be considered a
+failure).
 
 - **setup.py**: the ``classifiers`` argument passed to ``setup()`` is expected
   to have classifiers of the form::
@@ -186,6 +187,40 @@ they'll be ignored (and this will not be considered a failure).
   check-python-versions will attempt to parse the file and walk the AST to
   extract the ``python_requires`` value.  It expects to find a string literal
   or a simple expression of the form ``"literal".join(["...", "..."])``.
+
+- **pyproject.toml**: can have any of these::
+
+    # PEP 621 static metadata
+
+    [project]
+    classifiers = [
+        ...
+        "Programming Language :: Python :: 3.8",
+        ...
+    ]
+    requires-python = ">= 3.8"
+
+    # old-style Flit metadata
+
+    [tool.flit.metadata]
+    classifiers = [
+        ...
+        "Programming Language :: Python :: 3.8",
+        ...
+    ]
+    requires-python = ">= 3.8"
+
+    # Poetry metadata
+
+    [tool.poetry]
+    classifiers = [
+        ...
+        "Programming Language :: Python :: 3.8",
+        ...
+    ]
+
+    [tool.poetry.dependencies]
+    python = "^3.8"
 
 - **tox.ini**: if present, it's expected to have ::
 
@@ -292,7 +327,7 @@ Python versions
 In addition to CPython X.Y, check-python-versions will recognize PyPy and PyPy3
 in some of the files:
 
-- **setup.py** may have a ::
+- **setup.py** or **pyproject.toml** may have a ::
 
         'Programming Language :: Python :: Implementation :: PyPy',
 
@@ -310,13 +345,14 @@ in some of the files:
   so check-python-versions cannot recognize them, and these files are excluded
   from PyPy support consistency checks.
 
-Upcoming Python releases (such as 3.10 in setup.py or 3.10-dev in a .travis.yml)
+Upcoming Python releases (such as 3.12 in setup.py or 3.12-dev in a .travis.yml)
 are also shown but do not cause mismatch errors.
 
-In addition, ``python_requires`` in setup.py usually has a lower limit, but no
-upper limit.  check-python-versions will assume this means support up to
+In addition, ``python_requires`` in setup.py or ``requires-python`` in
+pyproject.toml usually has a lower limit, but no upper limit.
+check-python-versions will assume this means support up to
 whatever's the latest Python 3.x release mentioned in other data sources, or
-the current 3.x release (3.10 at the moment), whichever is lower.  This means
+the current 3.x release (3.11 at the moment), whichever is lower.  This means
 that new Python 3 releases don't suddenly cause all your lint checks to fail
 if you use python_requires '>= 3.6' and such.
 
