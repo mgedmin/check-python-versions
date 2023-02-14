@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.21.2 (unreleased)
+0.21.2 (2023-02-14)
 -------------------
 
 - Ignore pyproject.toml that has no static metadata instead of
