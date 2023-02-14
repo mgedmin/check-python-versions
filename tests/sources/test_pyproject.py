@@ -110,9 +110,9 @@ def test_get_supported_python_versions_bad_data_in_list(tmp_path, capsys):
     """))
     assert get_supported_python_versions(pyproject_toml) == []
     assert (
-        "The value specified for project.classifiers is not an array of"
-        " strings"
-        in capsys.readouterr().err
+        "The value specified for project.classifiers in /tmp/pyproject.toml"
+        " is not an array of strings"
+        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
     )
 
 
@@ -129,8 +129,9 @@ def test_get_supported_python_versions_bad_data_type(tmp_path, capsys):
     """))
     assert get_supported_python_versions(pyproject_toml) == []
     assert (
-        "The value specified for project.classifiers is not an array"
-        in capsys.readouterr().err
+        "The value specified for project.classifiers in /tmp/pyproject.toml"
+        " is not an array"
+        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
     )
 
 
@@ -235,8 +236,10 @@ def test_get_python_requires_badly_specified(tmp_path, capsys):
         requires-python = []
     """))
     assert get_python_requires(pyproject_toml) is None
-    assert capsys.readouterr().err == (
-        "The value specified for project.requires-python is not a string\n"
+    assert (
+        "The value specified for project.requires-python in"
+        " /tmp/pyproject.toml is not a string"
+        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
     )
 
 
@@ -248,8 +251,10 @@ def test_get_python_requires_bad_format(tmp_path, capsys):
         requires-python = "something recentish"
     """))
     assert get_python_requires(pyproject_toml) is None
-    assert capsys.readouterr().err == (
-        "Bad project.requires-python specifier: something recentish\n"
+    assert (
+        "Bad project.requires-python specifier in /tmp/pyproject.toml:"
+        " something recentish"
+        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
     )
 
 

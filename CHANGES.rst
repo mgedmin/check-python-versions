@@ -8,6 +8,9 @@ Changelog
   causing a mismatch error.  `GH #41
   <https://github.com/mgedmin/check-python-versions/issues/#41>`_.
 
+- Make sure all the error messages about parsing issues mention the name of the
+  file that contains the error.
+
 
 0.21.1 (2023-02-08)
 -------------------

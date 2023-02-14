@@ -27,6 +27,8 @@ except ImportError:  # pragma: nocover
 def parse_poetry_version_constraint(
     s: str,
     name: str = "tool.poetry.dependencies.python",
+    *,
+    filename: str = 'pyproject.toml',
 ) -> Optional[SortedVersionList]:
     """Compute Python versions allowed by Poetry version constraints."""
 
@@ -191,7 +193,7 @@ def parse_poetry_version_constraint(
     for specifier in map(str.strip, s.split(',')):
         m = rx.match(specifier)
         if not m:
-            warn(f'Bad {name} specifier: {specifier}')
+            warn(f'Bad {name} specifier in {filename}: {specifier}')
             continue
         op, arg = m.groups()
         ver: Constraint = tuple(
@@ -201,7 +203,7 @@ def parse_poetry_version_constraint(
         try:
             constraints.append(handlers[op](ver))
         except BadConstraint as error:
-            warn(f'Bad {name} specifier: {specifier} ({error})')
+            warn(f'Bad {name} specifier in {filename}: {specifier} ({error})')
 
     if not constraints:
         return None

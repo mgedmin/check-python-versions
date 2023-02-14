@@ -3,7 +3,7 @@ from io import StringIO
 
 import pytest
 
-from check_python_versions.utils import confirm, get_indent, pipe
+from check_python_versions.utils import confirm, file_name, get_indent, pipe
 
 
 @pytest.mark.parametrize(['line', 'expected'], [
@@ -17,6 +17,13 @@ from check_python_versions.utils import confirm, get_indent, pipe
 ])
 def test_get_indent(line, expected):
     assert get_indent(line) == expected
+
+
+def test_file_name(tmp_path):
+    tmpfile = tmp_path / 'test.txt'
+    assert file_name(tmpfile) == str(tmpfile)
+    with open(tmpfile, 'w') as fp:
+        assert file_name(fp) == str(tmpfile)
 
 
 def test_pipe():

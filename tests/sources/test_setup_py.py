@@ -67,8 +67,9 @@ def test_get_supported_python_versions_string(tmp_path, capsys):
     """))
     assert get_supported_python_versions(filename) == []
     assert (
-        "The value passed to setup(classifiers=...) is not a list"
-        in capsys.readouterr().err
+        "The value passed to setup(classifiers=...) in /tmp/setup.py"
+        " is not a list"
+        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
     )
 
 
@@ -102,8 +103,8 @@ def test_update_supported_python_versions_not_literal(tmp_path, capsys):
     assert update_supported_python_versions(filename,
                                             v(['3.7', '3.8'])) is None
     assert (
-        'Non-literal classifiers= passed to setup()'
-        in capsys.readouterr().err
+        'Non-literal classifiers= passed to setup() in /tmp/setup.py'
+        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
     )
 
 
@@ -122,8 +123,9 @@ def test_update_supported_python_versions_not_a_list(tmp_path, capsys):
     assert update_supported_python_versions(filename,
                                             v(['3.7', '3.8'])) is None
     assert (
-        'The value passed to setup(classifiers=...) is not a list'
-        in capsys.readouterr().err
+        'The value passed to setup(classifiers=...) in /tmp/setup.py'
+        ' is not a list'
+        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
     )
 
 
@@ -167,8 +169,9 @@ def test_get_python_requires_not_a_string(tmp_path, capsys):
     """))
     assert get_python_requires(setup_py) is None
     assert (
-        'The value passed to setup(python_requires=...) is not a string'
-        in capsys.readouterr().err
+        'The value passed to setup(python_requires=...) in /tmp/setup.py'
+        ' is not a string'
+        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
     )
 
 
@@ -181,7 +184,10 @@ def test_get_setup_py_keyword_syntax_error(tmp_path, capsys):
         # uh do I need to close parens?  what if I forget? ;)
     """))
     assert get_setup_py_keyword(setup_py, 'name') is None
-    assert 'Could not parse' in capsys.readouterr().err
+    assert (
+        'Could not parse /tmp/setup.py'
+        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
+    )
 
 
 def test_get_setup_py_keyword_dotted_call(tmp_path, capsys):

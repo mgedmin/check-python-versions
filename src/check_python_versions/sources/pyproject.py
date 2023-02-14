@@ -42,6 +42,7 @@ from check_python_versions.parsers.poetry_version_spec import (
     compute_poetry_spec,
     detect_poetry_version_spec_style,
 )
+from check_python_versions.utils import file_name
 
 from .base import Source
 from ..parsers.classifiers import (
@@ -95,14 +96,15 @@ def _get_pyproject_toml_classifiers(
         return document, path, None
 
     if not isinstance(classifiers, list):
-        warn(f'The value specified for {path}.classifiers is not an array')
+        warn(f'The value specified for {path}.classifiers in {fp.name}'
+             ' is not an array')
         # Returning None means that pyproject.toml doesn't have metadata.
         # Returning [] is likely to cause a mismatch with other
         # metadata sources, making the problem more noticeable.
         return document, path, []
 
     if not all(isinstance(s, str) for s in classifiers):
-        warn(f'The value specified for {path}.classifiers'
+        warn(f'The value specified for {path}.classifiers in {fp.name}'
              ' is not an array of strings')
         # Returning None means that pyproject.toml doesn't have metadata.
         # Returning [] is likely to cause a mismatch with other
@@ -145,7 +147,7 @@ def _get_pyproject_toml_requires_python(
         return document, path, None
 
     if not isinstance(python_requires, str):
-        warn(f'The value specified for {path} is not a string')
+        warn(f'The value specified for {path} in {fp.name} is not a string')
         return document, path, None
 
     return document, path, python_requires
@@ -162,9 +164,11 @@ def get_python_requires(
         return None
 
     if path == 'tool.poetry.dependencies.python':
-        return parse_poetry_version_constraint(python_requires, path)
+        return parse_poetry_version_constraint(
+            python_requires, path, filename=file_name(filename))
     else:
-        return parse_python_requires(python_requires, path)
+        return parse_python_requires(
+            python_requires, path, filename=file_name(filename))
 
 
 def update_supported_python_versions(

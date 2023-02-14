@@ -113,7 +113,8 @@ def test_unexpected_dot_star(fix_max_python_3_version, capsys, op):
     fix_max_python_3_version(7)
     assert parse_poetry_version_constraint(f'{op} 3.6.*', 'version') is None
     assert (
-        f'Bad version specifier: {op} 3.6.* ({op} does not allow a .*)'
+        'Bad version specifier in pyproject.toml:'
+        f' {op} 3.6.* ({op} does not allow a .*)'
         in capsys.readouterr().err
     )
 
@@ -127,7 +128,7 @@ def test_unexpected_dot_star(fix_max_python_3_version, capsys, op):
 def test_parse_python_requires_syntax_errors(capsys, specifier):
     assert parse_poetry_version_constraint(specifier, 'version') is None
     assert (
-        f'Bad version specifier: {specifier}'
+        f'Bad version specifier in pyproject.toml: {specifier}'
         in capsys.readouterr().err
     )
 

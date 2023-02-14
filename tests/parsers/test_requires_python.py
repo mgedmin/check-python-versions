@@ -25,7 +25,7 @@ def test_parse_python_requires_approximately(constraint, result):
 def test_parse_python_requires_approximately_not_enough_dots(capsys):
     assert parse_python_requires('~= 2') is None
     assert (
-        'Bad python_requires specifier: ~= 2'
+        'Bad python_requires specifier in setup.py: ~= 2'
         ' (~= requires a version with at least one dot)'
         in capsys.readouterr().err
     )
@@ -99,7 +99,8 @@ def test_parse_python_requires_unexpected_dot_star(fix_max_python_3_version,
     fix_max_python_3_version(7)
     assert parse_python_requires(f'{op} 3.6.*') is None
     assert (
-        f'Bad python_requires specifier: {op} 3.6.* ({op} does not allow a .*)'
+        'Bad python_requires specifier in setup.py:'
+        f' {op} 3.6.* ({op} does not allow a .*)'
         in capsys.readouterr().err
     )
 
@@ -113,7 +114,7 @@ def test_parse_python_requires_unexpected_dot_star(fix_max_python_3_version,
 def test_parse_python_requires_syntax_errors(capsys, specifier):
     assert parse_python_requires(specifier) is None
     assert (
-        f'Bad python_requires specifier: {specifier}'
+        f'Bad python_requires specifier in setup.py: {specifier}'
         in capsys.readouterr().err
     )
 

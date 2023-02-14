@@ -36,6 +36,7 @@ from ..parsers.requires_python import (
 from ..utils import (
     FileLines,
     FileOrFilename,
+    file_name,
     is_file_object,
     open_file,
     pipe,
@@ -68,7 +69,8 @@ def get_supported_python_versions(
         # versions in classifiers.
         return []
     if not isinstance(classifiers, (list, tuple)):
-        warn('The value passed to setup(classifiers=...) is not a list')
+        warn(f'The value passed to setup(classifiers=...) in {filename}'
+             ' is not a list')
         return []
     return get_versions_from_classifiers(classifiers)
 
@@ -81,9 +83,10 @@ def get_python_requires(
     if python_requires is None:
         return None
     if not isinstance(python_requires, str):
-        warn('The value passed to setup(python_requires=...) is not a string')
+        warn('The value passed to setup(python_requires=...)'
+             f' in {file_name(setup_py)} is not a string')
         return None
-    return parse_python_requires(python_requires)
+    return parse_python_requires(python_requires, filename=file_name(setup_py))
 
 
 def update_supported_python_versions(
@@ -98,7 +101,8 @@ def update_supported_python_versions(
     if classifiers is None:
         return None
     if not isinstance(classifiers, (list, tuple)):
-        warn('The value passed to setup(classifiers=...) is not a list')
+        warn('The value passed to setup(classifiers=...) in'
+             f' {file_name(filename)} is not a list')
         return None
     new_classifiers = update_classifiers(classifiers, new_versions)
     return update_setup_py_keyword(filename, 'classifiers', new_classifiers)
@@ -144,7 +148,9 @@ def get_setup_py_keyword(
             return None
     node = find_call_kwarg_in_ast(tree, ('setup', 'setuptools.setup'), keyword,
                                   filename=f.name)
-    return eval_ast_node(node, keyword) if node is not None else None
+    if node is None:
+        return None
+    return eval_ast_node(node, keyword, filename=f.name)
 
 
 def update_setup_py_keyword(
@@ -159,7 +165,7 @@ def update_setup_py_keyword(
     with open_file(setup_py) as f:
         lines = f.readlines()
     new_lines = update_call_arg_in_source(lines, ('setup', 'setuptools.setup'),
-                                          keyword, new_value)
+                                          keyword, new_value, filename=f.name)
     return new_lines
 
 

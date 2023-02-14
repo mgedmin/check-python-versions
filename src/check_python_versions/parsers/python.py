@@ -34,6 +34,8 @@ def update_call_arg_in_source(
     function: OneOrMore[str],
     keyword: str,
     new_value: Union[str, List[str]],
+    *,
+    filename: str = 'setup.py',
 ) -> FileLines:
     """Update a function call statement in Python source file.
 
@@ -54,7 +56,7 @@ def update_call_arg_in_source(
             fname = m.group(1)
             break
     else:
-        warn(f'Did not find {function[0]}() call')
+        warn(f'Did not find {function[0]}() call in {filename}')
         return source_lines
     eq = '='
     rx = re.compile(
@@ -68,7 +70,8 @@ def update_call_arg_in_source(
             first_indent = m.group('indent')
             break
     else:
-        warn(f'Did not find {keyword}= argument in {fname}() call')
+        warn(f'Did not find {keyword}= argument in {fname}() call'
+             f' in {filename}')
         return source_lines
 
     quote_style = '"'
@@ -101,7 +104,7 @@ def update_call_arg_in_source(
             else:
                 warn(
                     f'Did not understand {keyword}= formatting'
-                    f' in {fname}() call'
+                    f' in {fname}() call in {filename}'
                 )
                 return source_lines
     elif rest.endswith('.join(['):
@@ -117,7 +120,7 @@ def update_call_arg_in_source(
         else:
             warn(
                 f'Did not understand {keyword}= formatting'
-                f' in {fname}() call'
+                f' in {fname}() call in {filename}'
             )
             return source_lines
     else:
@@ -196,7 +199,12 @@ def name_matches(funcname: str, node: ast.AST) -> bool:
     return isinstance(node, ast.Name) and node.id == funcname
 
 
-def eval_ast_node(node: ast.AST, keyword: str) -> Optional[AstValue]:
+def eval_ast_node(
+    node: ast.AST,
+    keyword: str,
+    *,
+    filename: str = 'setup.py',
+) -> Optional[AstValue]:
     """Partially evaluate an AST node.
 
     ``keyword`` is used for error reporting.
@@ -220,7 +228,7 @@ def eval_ast_node(node: ast.AST, keyword: str) -> Optional[AstValue]:
                 values.append(value)
                 continue
             if not warned:
-                warn(f'Non-literal {keyword}= passed to setup(),'
+                warn(f'Non-literal {keyword}= passed to setup() in {filename},'
                      ' skipping some values')
                 warned = True
         if warned and not values:
@@ -240,11 +248,12 @@ def eval_ast_node(node: ast.AST, keyword: str) -> Optional[AstValue]:
         except ValueError:
             pass
     if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
-        left = eval_ast_node(node.left, keyword)
-        right = eval_ast_node(node.right, keyword)
+        left = eval_ast_node(node.left, keyword, filename=filename)
+        right = eval_ast_node(node.right, keyword, filename=filename)
         if left is not None and right is not None:
             if type(left) != type(right):
-                warn(f'{keyword}= is computed by adding incompatible types:'
+                warn(f'{keyword}= in {filename} is computed by adding'
+                     ' incompatible types:'
                      f' {type(left).__name__} and {type(right).__name__}')
                 return None
             # Not sure how to make mypy accept this:
@@ -254,5 +263,5 @@ def eval_ast_node(node: ast.AST, keyword: str) -> Optional[AstValue]:
             return right
         if left is not None and right is None:
             return left
-    warn(f'Non-literal {keyword}= passed to setup()')
+    warn(f'Non-literal {keyword}= passed to setup() in {filename}')
     return None

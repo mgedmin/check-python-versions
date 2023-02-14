@@ -28,7 +28,7 @@ def test_find_call_kwarg_in_ast_dotted():
 
 def test_find_call_kwarg_in_ast_alternatives():
     tree = ast.parse('mod.foo(bar="gronk")')
-    node = find_call_kwarg_in_ast(tree, {'foo', 'mod.foo'}, 'bar',
+    node = find_call_kwarg_in_ast(tree, ['foo', 'mod.foo'], 'bar',
                                   filename='a.py')
     assert isinstance(node, ast.Str)
     assert node.s == "gronk"
@@ -85,7 +85,7 @@ def test_eval_ast_node_skips_computed_values(code, expected, capsys):
     assert node is not None
     assert eval_ast_node(node, 'bar') == expected
     assert (
-        'Non-literal bar= passed to setup(), skipping some values'
+        'Non-literal bar= passed to setup() in setup.py, skipping some values'
         in capsys.readouterr().err
     )
 
@@ -99,7 +99,10 @@ def test_eval_ast_node_failures(code, capsys):
     tree = ast.parse(f'foo(bar={code})')
     node = find_call_kwarg_in_ast(tree, 'foo', 'bar', filename='setup.py')
     assert eval_ast_node(node, 'bar') is None
-    assert 'Non-literal bar= passed to setup()' in capsys.readouterr().err
+    assert (
+        'Non-literal bar= passed to setup() in setup.py'
+        in capsys.readouterr().err
+    )
 
 
 @pytest.mark.parametrize('code', [
@@ -110,7 +113,8 @@ def test_eval_ast_node_type_mismatch(code, capsys):
     node = find_call_kwarg_in_ast(tree, 'foo', 'bar', filename='setup.py')
     assert eval_ast_node(node, 'bar') is None
     assert (
-        'bar= is computed by adding incompatible types: list and str'
+        'bar= in setup.py is computed by adding incompatible types:'
+        ' list and str'
         in capsys.readouterr().err
     )
 

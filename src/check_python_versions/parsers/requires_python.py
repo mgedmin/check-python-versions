@@ -21,7 +21,10 @@ except ImportError:  # pragma: nocover
 
 
 def parse_python_requires(
-    s: str, name: str = "python_requires"
+    s: str,
+    name: str = "python_requires",
+    *,
+    filename: str = "setup.py",
 ) -> Optional[SortedVersionList]:
     """Compute Python versions allowed by a python_requires expression."""
 
@@ -170,7 +173,7 @@ def parse_python_requires(
     for specifier in map(str.strip, s.split(',')):
         m = rx.match(specifier)
         if not m:
-            warn(f'Bad {name} specifier: {specifier}')
+            warn(f'Bad {name} specifier in {filename}: {specifier}')
             continue
         op, arg = m.groups()
         ver: Constraint = tuple(
@@ -180,7 +183,7 @@ def parse_python_requires(
         try:
             constraints.append(handlers[op](ver))
         except BadConstraint as error:
-            warn(f'Bad {name} specifier: {specifier} ({error})')
+            warn(f'Bad {name} specifier in {filename}: {specifier} ({error})')
 
     if not constraints:
         return None

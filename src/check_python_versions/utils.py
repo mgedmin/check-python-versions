@@ -52,6 +52,14 @@ def is_file_object(filename_or_file_object: FileOrFilename) -> bool:
     return hasattr(filename_or_file_object, 'read')
 
 
+def file_name(filename_or_file_object: FileOrFilename) -> str:
+    """Return the name of the file."""
+    if is_file_object(filename_or_file_object):
+        return cast(TextIO, filename_or_file_object).name
+    else:
+        return str(filename_or_file_object)
+
+
 @contextmanager
 def open_file(filename_or_file_object: FileOrFilename) -> Iterator[TextIO]:
     """Context manager for opening files."""
