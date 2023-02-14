@@ -77,7 +77,7 @@ def test_get_supported_python_versions_no_metadata_table(tmp_path):
         [tool.unrelated]
         config = 42
     """))
-    assert get_supported_python_versions(pyproject_toml) == []
+    assert get_supported_python_versions(pyproject_toml) is None
 
 
 def test_get_supported_python_versions_dynamic_classifiers(tmp_path):
@@ -90,7 +90,7 @@ def test_get_supported_python_versions_dynamic_classifiers(tmp_path):
         requires = ["setuptools", "setuptools-scm"]
         build-backend = "setuptools.build_meta"
     """))
-    assert get_supported_python_versions(pyproject_toml) == []
+    assert get_supported_python_versions(pyproject_toml) is None
 
 
 def test_get_supported_python_versions_bad_data_in_list(tmp_path, capsys):

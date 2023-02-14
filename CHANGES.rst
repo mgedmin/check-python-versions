@@ -4,7 +4,9 @@ Changelog
 0.21.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Ignore pyproject.toml that has no static metadata instead of
+  causing a mismatch error.  `GH #41
+  <https://github.com/mgedmin/check-python-versions/issues/#41>`_.
 
 
 0.21.1 (2023-02-08)

@@ -96,24 +96,33 @@ def _get_pyproject_toml_classifiers(
 
     if not isinstance(classifiers, list):
         warn(f'The value specified for {path}.classifiers is not an array')
-        return document, path, None
+        # Returning None means that pyproject.toml doesn't have metadata.
+        # Returning [] is likely to cause a mismatch with other
+        # metadata sources, making the problem more noticeable.
+        return document, path, []
 
     if not all(isinstance(s, str) for s in classifiers):
         warn(f'The value specified for {path}.classifiers'
              ' is not an array of strings')
-        return document, path, None
+        # Returning None means that pyproject.toml doesn't have metadata.
+        # Returning [] is likely to cause a mismatch with other
+        # metadata sources, making the problem more noticeable.
+        return document, path, []
 
     return document, path, classifiers
 
 
 def get_supported_python_versions(
     filename: FileOrFilename = PYPROJECT_TOML,
-) -> SortedVersionList:
+) -> Optional[SortedVersionList]:
     """Extract supported Python versions from classifiers in pyproject.toml."""
 
     _d, _p, classifiers = _get_pyproject_toml_classifiers(filename)
 
-    return get_versions_from_classifiers(classifiers or [])
+    if classifiers is None:
+        return None
+
+    return get_versions_from_classifiers(classifiers)
 
 
 def _get_pyproject_toml_requires_python(
