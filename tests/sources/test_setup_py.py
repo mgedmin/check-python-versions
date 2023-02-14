@@ -1,3 +1,4 @@
+import os
 import shutil
 import sys
 import textwrap
@@ -20,6 +21,18 @@ from check_python_versions.versions import Version
 
 def v(versions: List[str]) -> List[Version]:
     return [Version.from_string(v) for v in versions]
+
+
+def stderr(capsys, tmp_path=None) -> str:
+    err = capsys.readouterr().err
+    if tmp_path:
+        err = err.replace(str(tmp_path), '/tmp').replace(os.path.sep, '/')
+    return err
+
+
+def assert_stderr(message, capsys, tmp_path=None):
+    err = stderr(capsys, tmp_path)
+    assert message in err
 
 
 def test_get_supported_python_versions(tmp_path):
@@ -66,10 +79,10 @@ def test_get_supported_python_versions_string(tmp_path, capsys):
         )
     """))
     assert get_supported_python_versions(filename) == []
-    assert (
+    assert_stderr(
         "The value passed to setup(classifiers=...) in /tmp/setup.py"
-        " is not a list"
-        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
+        " is not a list",
+        capsys, tmp_path,
     )
 
 
@@ -102,9 +115,9 @@ def test_update_supported_python_versions_not_literal(tmp_path, capsys):
     """))
     assert update_supported_python_versions(filename,
                                             v(['3.7', '3.8'])) is None
-    assert (
-        'Non-literal classifiers= passed to setup() in /tmp/setup.py'
-        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
+    assert_stderr(
+        'Non-literal classifiers= passed to setup() in /tmp/setup.py',
+        capsys, tmp_path,
     )
 
 
@@ -122,10 +135,10 @@ def test_update_supported_python_versions_not_a_list(tmp_path, capsys):
     """))
     assert update_supported_python_versions(filename,
                                             v(['3.7', '3.8'])) is None
-    assert (
+    assert_stderr(
         'The value passed to setup(classifiers=...) in /tmp/setup.py'
-        ' is not a list'
-        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
+        ' is not a list',
+        capsys, tmp_path,
     )
 
 
@@ -168,10 +181,10 @@ def test_get_python_requires_not_a_string(tmp_path, capsys):
         )
     """))
     assert get_python_requires(setup_py) is None
-    assert (
+    assert_stderr(
         'The value passed to setup(python_requires=...) in /tmp/setup.py'
-        ' is not a string'
-        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
+        ' is not a string',
+        capsys, tmp_path,
     )
 
 
@@ -184,9 +197,9 @@ def test_get_setup_py_keyword_syntax_error(tmp_path, capsys):
         # uh do I need to close parens?  what if I forget? ;)
     """))
     assert get_setup_py_keyword(setup_py, 'name') is None
-    assert (
-        'Could not parse /tmp/setup.py'
-        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
+    assert_stderr(
+        'Could not parse /tmp/setup.py',
+        capsys, tmp_path,
     )
 
 
@@ -363,9 +376,9 @@ def test_update_python_requires_multiline_error(capsys):
     fp.name = "setup.py"
     result = update_python_requires(fp, v(['2.7', '3.2']))
     assert result == fp.getvalue().splitlines(True)
-    assert (
-        "Did not understand python_requires= formatting in setup() call"
-        in capsys.readouterr().err
+    assert_stderr(
+        "Did not understand python_requires= formatting in setup() call",
+        capsys,
     )
 
 

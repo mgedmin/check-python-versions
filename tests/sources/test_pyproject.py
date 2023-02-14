@@ -1,3 +1,4 @@
+import os
 import textwrap
 from typing import List, cast
 
@@ -19,6 +20,18 @@ from check_python_versions.versions import Version
 
 def v(versions: List[str]) -> List[Version]:
     return [Version.from_string(v) for v in versions]
+
+
+def stderr(capsys, tmp_path=None) -> str:
+    err = capsys.readouterr().err
+    if tmp_path:
+        err = err.replace(str(tmp_path), '/tmp').replace(os.path.sep, '/')
+    return err
+
+
+def assert_stderr(message, capsys, tmp_path=None):
+    err = stderr(capsys, tmp_path).splitlines()
+    assert message in err
 
 
 def test_traverse():
@@ -109,10 +122,10 @@ def test_get_supported_python_versions_bad_data_in_list(tmp_path, capsys):
         build-backend = "setuptools.build_meta"
     """))
     assert get_supported_python_versions(pyproject_toml) == []
-    assert (
+    assert_stderr(
         "The value specified for project.classifiers in /tmp/pyproject.toml"
-        " is not an array of strings"
-        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
+        " is not an array of strings",
+        capsys, tmp_path,
     )
 
 
@@ -128,10 +141,10 @@ def test_get_supported_python_versions_bad_data_type(tmp_path, capsys):
         build-backend = "setuptools.build_meta"
     """))
     assert get_supported_python_versions(pyproject_toml) == []
-    assert (
+    assert_stderr(
         "The value specified for project.classifiers in /tmp/pyproject.toml"
-        " is not an array"
-        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
+        " is not an array",
+        capsys, tmp_path,
     )
 
 
@@ -236,10 +249,10 @@ def test_get_python_requires_badly_specified(tmp_path, capsys):
         requires-python = []
     """))
     assert get_python_requires(pyproject_toml) is None
-    assert (
+    assert_stderr(
         "The value specified for project.requires-python in"
-        " /tmp/pyproject.toml is not a string"
-        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
+        " /tmp/pyproject.toml is not a string",
+        capsys, tmp_path,
     )
 
 
@@ -251,10 +264,10 @@ def test_get_python_requires_bad_format(tmp_path, capsys):
         requires-python = "something recentish"
     """))
     assert get_python_requires(pyproject_toml) is None
-    assert (
+    assert_stderr(
         "Bad project.requires-python specifier in /tmp/pyproject.toml:"
-        " something recentish"
-        in capsys.readouterr().err.replace(str(tmp_path), '/tmp')
+        " something recentish",
+        capsys, tmp_path,
     )
 
 
