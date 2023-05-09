@@ -106,6 +106,8 @@ def tox_env_to_py_version(env: str) -> Optional[Version]:
         return Version.from_string('PyPy' + env[4:])
     elif env.startswith('py') and len(env) >= 4 and env[2:].isdigit():
         return Version.from_string(f'{env[2]}.{env[3:]}')
+    elif env.startswith('py') and '.' in env:
+        return Version.from_string(f'{env[2:]}', has_dot=True)
     else:
         return None
 
@@ -223,7 +225,10 @@ def update_tox_envlist(envlist: str, new_versions: SortedVersionList) -> str:
 
 def toxenv_for_version(ver: Version) -> str:
     """Compute a tox environment name for a Python version."""
-    return f"py{ver.major}{ver.minor if ver.minor >= 0 else ''}"
+    _ret_str = f"py{ver.major}" \
+               f"{'.' if ver.has_dot else ''}" \
+               f"{ver.minor if ver.minor >= 0 else ''}"
+    return _ret_str
 
 
 def should_keep(env: str, new_versions: VersionList) -> bool:
@@ -236,7 +241,7 @@ def should_keep(env: str, new_versions: VersionList) -> bool:
     or 3.x version respectively in ``new_versions``.
 
     """
-    if not re.match(r'py(py)?\d*($|-)', env):
+    if not re.match(r'py(py)?(\d[.])?\d*($|-)', env):
         return True
     if env == 'pypy':
         return any(ver.major == 2 for ver in new_versions)

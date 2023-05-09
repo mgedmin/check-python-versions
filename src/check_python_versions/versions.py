@@ -43,9 +43,10 @@ class Version(NamedTuple):
     major: int = -1  # I'd've preferred to use None, but it complicates sorting
     minor: int = -1
     suffix: str = ''
+    has_dot: bool = False
 
     @classmethod
-    def from_string(cls, v: str) -> 'Version':
+    def from_string(cls, v: str, has_dot: bool = False) -> 'Version':
         m = VERSION_RX.match(v)
         assert m is not None
         prefix, major, minor, suffix = m.groups()
@@ -54,6 +55,7 @@ class Version(NamedTuple):
             int(major) if major else -1,
             int(minor[1:]) if minor else -1,
             suffix,
+            has_dot,
         )
 
     def __repr__(self) -> str:
@@ -62,6 +64,7 @@ class Version(NamedTuple):
             f'major={self.major!r}' if self.major != -1 else '',
             f'minor={self.minor!r}' if self.minor != -1 else '',
             f'suffix={self.suffix!r}' if self.suffix else '',
+            f'dot={self.has_dot!r}' if self.has_dot else '',
         ] if part))
 
     def __str__(self) -> str:

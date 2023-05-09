@@ -15,8 +15,11 @@ from check_python_versions.sources.tox import (
 from check_python_versions.versions import Version
 
 
-def v(versions: List[str]) -> List[Version]:
-    return [Version.from_string(v) for v in versions]
+def v(versions: List[str], has_dot: List[bool] = []) -> List[Version]:
+    if not has_dot:
+        has_dot = [False] * len(versions)
+    return [Version.from_string(v, has_dot=d)
+            for v, d in zip(versions, has_dot)]
 
 
 def test_get_tox_ini_python_versions(tmp_path):
@@ -26,6 +29,16 @@ def test_get_tox_ini_python_versions(tmp_path):
         envlist = py27,py36,py27-docs,pylint,py310
     """))
     assert get_tox_ini_python_versions(tox_ini) == v(['2.7', '3.6', '3.10'])
+
+
+def test_get_tox_ini_dotted_python_versions(tmp_path):
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        envlist = py2.7,py3.6,py2.7-docs,pylint,py3.10
+    """))
+    assert get_tox_ini_python_versions(tox_ini) == \
+           v(['2.7', '3.6', '3.10'], has_dot=[True, True, True])
 
 
 def test_get_tox_ini_python_versions_syntax_error(tmp_path):
@@ -107,6 +120,51 @@ def test_update_tox_ini_python_versions():
     """)
 
 
+def test_update_tox_ini_dotted_python_versions():
+    fp = StringIO(textwrap.dedent("""\
+        [tox]
+        envlist = py2.6, py2.7
+    """))
+    fp.name = 'tox.ini'
+    result = update_tox_ini_python_versions(fp,
+                                            v(['3.6', '3.7', '3.10'],
+                                              has_dot=[True, True, True]))
+    assert "".join(result) == textwrap.dedent("""\
+        [tox]
+        envlist = py3.6, py3.7, py3.10
+    """)
+
+
+def test_update_tox_ini_one_dotted_python_versions():
+    fp = StringIO(textwrap.dedent("""\
+        [tox]
+        envlist = py26, py2.7
+    """))
+    fp.name = 'tox.ini'
+    result = update_tox_ini_python_versions(fp,
+                                            v(['3.6', '3.7', '3.10'],
+                                              has_dot=[True, True, True]))
+    assert "".join(result) == textwrap.dedent("""\
+        [tox]
+        envlist = py3.6, py3.7, py3.10
+    """)
+
+
+def test_update_tox_ini_mixed_dotted_python_versions():
+    fp = StringIO(textwrap.dedent("""\
+        [tox]
+        envlist = py26, py2.7
+    """))
+    fp.name = 'tox.ini'
+    result = update_tox_ini_python_versions(fp,
+                                            v(['3.6', '3.7', '3.10'],
+                                              has_dot=[True, False, True]))
+    assert "".join(result) == textwrap.dedent("""\
+        [tox]
+        envlist = py3.6, py37, py3.10
+    """)
+
+
 def test_update_tox_ini_python_syntax_error(capsys):
     fp = StringIO(textwrap.dedent("""\
         [tox
@@ -152,6 +210,13 @@ def test_update_tox_envlist_with_spaces():
         'py27, py34, py35, pypy3',
         v(['3.6', '3.7']))
     assert result == 'py36, py37, pypy3'
+
+
+def test_update_tox_envlist_with_dots_and_spaces():
+    result = update_tox_envlist(
+        'py27, py34, py35',
+        v(['3.6', '3.7'], has_dot=[True, False]))
+    assert result == 'py3.6, py37'
 
 
 @pytest.mark.parametrize('s, expected', [
