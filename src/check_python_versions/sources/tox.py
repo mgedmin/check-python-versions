@@ -10,7 +10,7 @@ packages, and run the test commands you specified.
 The list of supported Python versions is extracted from ::
 
     [tox]
-    envlist = py27,py36,py37,py38
+    env_list = py27,py36,py37,py38
 
 """
 
@@ -35,7 +35,7 @@ def get_tox_ini_python_versions(
     try:
         with open_file(filename) as fp:
             conf.read_file(fp)
-        envlist = conf.get('tox', 'envlist')
+        envlist = conf.get('tox', 'env_list')
     except configparser.Error:
         return []
     return sorted({
@@ -124,7 +124,7 @@ def update_tox_ini_python_versions(
         conf = configparser.ConfigParser()
         try:
             conf.read_file(fp)
-            envlist = conf.get('tox', 'envlist')
+            envlist = conf.get('tox', 'env_list')
         except configparser.Error as error:
             warn(f"Could not parse {fp.name}: {error}")
             return orig_lines
@@ -132,7 +132,7 @@ def update_tox_ini_python_versions(
     new_envlist = update_tox_envlist(envlist, new_versions)
 
     new_lines = update_ini_setting(
-        orig_lines, 'tox', 'envlist', new_envlist, filename=fp.name,
+        orig_lines, 'tox', 'env_list', new_envlist, filename=fp.name,
     )
     return new_lines
 

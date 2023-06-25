@@ -23,7 +23,7 @@ def test_get_tox_ini_python_versions(tmp_path):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
         [tox]
-        envlist = py27,py36,py27-docs,pylint,py310
+        env_list = py27,py36,py27-docs,pylint,py310
     """))
     assert get_tox_ini_python_versions(tox_ini) == v(['2.7', '3.6', '3.10'])
 
@@ -97,26 +97,26 @@ def test_tox_env_to_py_version(s, expected):
 def test_update_tox_ini_python_versions():
     fp = StringIO(textwrap.dedent("""\
         [tox]
-        envlist = py26, py27
+        env_list = py26, py27
     """))
     fp.name = 'tox.ini'
     result = update_tox_ini_python_versions(fp, v(['3.6', '3.7', '3.10']))
     assert "".join(result) == textwrap.dedent("""\
         [tox]
-        envlist = py36, py37, py310
+        env_list = py36, py37, py310
     """)
 
 
 def test_update_tox_ini_python_syntax_error(capsys):
     fp = StringIO(textwrap.dedent("""\
         [tox
-        envlist = py26, py27
+        env_list = py26, py27
     """))
     fp.name = 'tox.ini'
     result = update_tox_ini_python_versions(fp, v(['3.6', '3.7']))
     assert "".join(result) == textwrap.dedent("""\
         [tox
-        envlist = py26, py27
+        env_list = py26, py27
     """)
     assert (
         "Could not parse tox.ini:"

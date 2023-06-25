@@ -148,7 +148,7 @@ def test_check_mismatch(tmp_path, capsys):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
         [tox]
-        envlist = py27
+        env_list = py27
     """))
     assert cpv.check_versions(tmp_path) is False
     assert capsys.readouterr().out == textwrap.dedent("""\
@@ -170,7 +170,7 @@ def test_check_poetry_mismatch(tmp_path, capsys):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
         [tox]
-        envlist = py27
+        env_list = py27
     """))
     assert cpv.check_versions(tmp_path) is False
     assert capsys.readouterr().out == textwrap.dedent("""\
@@ -195,7 +195,7 @@ def test_check_setuptools_mismatch(tmp_path, capsys):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
         [tox]
-        envlist = py27
+        env_list = py27
     """))
     assert cpv.check_versions(tmp_path) is False
     assert capsys.readouterr().out == textwrap.dedent("""\
@@ -220,7 +220,7 @@ def test_check_flit_mismatch(tmp_path, capsys):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
         [tox]
-        envlist = py27
+        env_list = py27
     """))
     assert cpv.check_versions(tmp_path) is False
     assert capsys.readouterr().out == textwrap.dedent("""\
@@ -245,7 +245,7 @@ def test_check_mismatch_pypy(tmp_path, capsys):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
         [tox]
-        envlist = py27, py36, pypy
+        env_list= py27, py36, pypy
     """))
     assert cpv.check_versions(tmp_path) is False
     assert capsys.readouterr().out == textwrap.dedent("""\
@@ -289,7 +289,7 @@ def test_check_only(tmp_path, capsys):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
         [tox]
-        envlist = py27
+        env_list = py27
     """))
     assert cpv.check_versions(tmp_path, only={'tox.ini'})
     assert capsys.readouterr().out == textwrap.dedent("""\
@@ -310,7 +310,7 @@ def test_poetry_check_only(tmp_path, capsys):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
         [tox]
-        envlist = py27
+        env_list = py27
     """))
     assert cpv.check_versions(tmp_path, only={'tox.ini'})
     assert capsys.readouterr().out == textwrap.dedent("""\
@@ -334,7 +334,7 @@ def test_setuptools_check_only(tmp_path, capsys):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
         [tox]
-        envlist = py27
+        env_list = py27
     """))
     assert cpv.check_versions(tmp_path, only={'tox.ini'})
     assert capsys.readouterr().out == textwrap.dedent("""\
@@ -358,7 +358,7 @@ def test_flit_check_only(tmp_path, capsys):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
         [tox]
-        envlist = py27
+        env_list = py27
     """))
     assert cpv.check_versions(tmp_path, only={'tox.ini'})
     assert capsys.readouterr().out == textwrap.dedent("""\
@@ -627,7 +627,7 @@ def test_update_versions_only(tmp_path):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
         [tox]
-        envlist = py27
+        env_list = py27
     """))
     replacements = cpv.update_versions(
         tmp_path, add=v(['3.6']), only='tox.ini', dry_run=True,
@@ -775,7 +775,7 @@ def test_main_only(monkeypatch, capsys, tmp_path):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
         [tox]
-        envlist = py27,py36
+        env_list = py27,py36
     """))
     travis_yml = tmp_path / ".travis.yml"
     travis_yml.write_text(textwrap.dedent("""\
