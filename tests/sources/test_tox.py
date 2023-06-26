@@ -28,6 +28,15 @@ def test_get_tox_ini_python_versions(tmp_path):
     assert get_tox_ini_python_versions(tox_ini) == v(['2.7', '3.6', '3.10'])
 
 
+def test_get_tox_ini_python_versions_new_spelling(tmp_path):
+    tox_ini = tmp_path / "tox.ini"
+    tox_ini.write_text(textwrap.dedent("""\
+        [tox]
+        env_list = py27,py36,py27-docs,pylint,py310
+    """))
+    assert get_tox_ini_python_versions(tox_ini) == v(['2.7', '3.6', '3.10'])
+
+
 def test_get_tox_ini_python_versions_syntax_error(tmp_path):
     tox_ini = tmp_path / "tox.ini"
     tox_ini.write_text(textwrap.dedent("""\
@@ -104,6 +113,19 @@ def test_update_tox_ini_python_versions():
     assert "".join(result) == textwrap.dedent("""\
         [tox]
         envlist = py36, py37, py310
+    """)
+
+
+def test_update_tox_ini_python_versions_new_spelling():
+    fp = StringIO(textwrap.dedent("""\
+        [tox]
+        env_list = py26, py27
+    """))
+    fp.name = 'tox.ini'
+    result = update_tox_ini_python_versions(fp, v(['3.6', '3.7', '3.10']))
+    assert "".join(result) == textwrap.dedent("""\
+        [tox]
+        env_list = py36, py37, py310
     """)
 
 

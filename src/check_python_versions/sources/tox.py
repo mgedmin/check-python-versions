@@ -35,7 +35,10 @@ def get_tox_ini_python_versions(
     try:
         with open_file(filename) as fp:
             conf.read_file(fp)
-        envlist = conf.get('tox', 'envlist')
+        if conf.has_option('tox', 'env_list'):
+            envlist = conf.get('tox', 'env_list')
+        else:
+            envlist = conf.get('tox', 'envlist')
     except configparser.Error:
         return []
     return sorted({
@@ -124,7 +127,11 @@ def update_tox_ini_python_versions(
         conf = configparser.ConfigParser()
         try:
             conf.read_file(fp)
-            envlist = conf.get('tox', 'envlist')
+            if conf.has_option('tox', 'env_list'):
+                conf_name = 'env_list'
+            else:
+                conf_name = 'envlist'
+            envlist = conf.get('tox', conf_name)
         except configparser.Error as error:
             warn(f"Could not parse {fp.name}: {error}")
             return orig_lines
@@ -132,7 +139,7 @@ def update_tox_ini_python_versions(
     new_envlist = update_tox_envlist(envlist, new_versions)
 
     new_lines = update_ini_setting(
-        orig_lines, 'tox', 'envlist', new_envlist, filename=fp.name,
+        orig_lines, 'tox', conf_name, new_envlist, filename=fp.name,
     )
     return new_lines
 
