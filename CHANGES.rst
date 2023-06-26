@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.21.3 (unreleased)
+0.21.3 (2023-06-26)
 -------------------
 
 - Support the ``env_list`` spelling in tox.ini  `GH #42
