@@ -4,7 +4,8 @@ Changelog
 0.21.3 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Support the ``env_list`` spelling in tox.ini  `GH #42
+  <https://github.com/mgedmin/check-python-versions/issues/42>`_
 
 
 0.21.2 (2023-02-14)
@@ -12,7 +13,7 @@ Changelog
 
 - Ignore pyproject.toml that has no static metadata instead of
   causing a mismatch error.  `GH #41
-  <https://github.com/mgedmin/check-python-versions/issues/#41>`_.
+  <https://github.com/mgedmin/check-python-versions/issues/41>`_.
 
 - Make sure all the error messages about parsing issues mention the name of the
   file that contains the error.
@@ -68,14 +69,14 @@ Changelog
 
 - Don't drop all PyPy builds when adding/dropping supported versions to GitHub
   Actions files that use a build matrix based on ``python-version``.  `GH #29
-  <https://github.com/mgedmin/check-python-versions/issues/#29>`_
+  <https://github.com/mgedmin/check-python-versions/issues/29>`_
 
 
 0.18.1 (2021-07-02)
 -------------------
 
 - Treat versions like ``3.10.0-beta.3`` as prerelease versions.  `GH #28
-  <https://github.com/mgedmin/check-python-versions/issues/#28>`_.
+  <https://github.com/mgedmin/check-python-versions/issues/28>`_.
 
 
 0.18.0 (2021-01-28)
@@ -85,7 +86,7 @@ Changelog
   support, you need to also run tests on PyPy in your primary CI systems (tox,
   GitHub Actions, Travis CI), and vice versa.  Secondary CI systems (Appveyor,
   manylinux.sh) are excluded from this check.  `GH #26
-  <https://github.com/mgedmin/check-python-versions/issues/#26>`_.
+  <https://github.com/mgedmin/check-python-versions/issues/26>`_.
 
 
 0.17.1 (2020-12-18)
@@ -196,11 +197,11 @@ Changelog
   - preserve multiline ``python_requires=', '.join([...])`` expressions
     (`GH #10 <https://github.com/mgedmin/check-python-versions/issues/10>`_)
   - preserve generative envlists (``envlist = py{27,36}``) in tox.ini
-    (`GH #13 <https://github.com/mgedmin/check-python-versions/issues/#13>`_)
+    (`GH #13 <https://github.com/mgedmin/check-python-versions/issues/13>`_)
   - accept ``envlist=...`` with no spaces around the ``=`` in tox.ini
   - preserve newline-separated envlists with no commas in tox.ini
   - drop PyPy when dropping all supported Python 2.x versions
-    (`GH #11 <https://github.com/mgedmin/check-python-versions/issues/ #11>`_)
+    (`GH #11 <https://github.com/mgedmin/check-python-versions/issues/11>`_)
 
 
 0.13.2 (2020-05-04)
