@@ -251,7 +251,7 @@ def eval_ast_node(
         left = eval_ast_node(node.left, keyword, filename=filename)
         right = eval_ast_node(node.right, keyword, filename=filename)
         if left is not None and right is not None:
-            if type(left) != type(right):
+            if type(left) is not type(right):
                 warn(f'{keyword}= in {filename} is computed by adding'
                      ' incompatible types:'
                      f' {type(left).__name__} and {type(right).__name__}')
