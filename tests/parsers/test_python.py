@@ -15,23 +15,23 @@ from check_python_versions.parsers.python import (
 def test_find_call_kwarg_in_ast():
     tree = ast.parse('foo(bar="foo")')
     node = find_call_kwarg_in_ast(tree, 'foo', 'bar', filename='setup.py')
-    assert isinstance(node, ast.Str)
-    assert node.s == "foo"
+    assert isinstance(node, ast.Constant)
+    assert node.value == "foo"
 
 
 def test_find_call_kwarg_in_ast_dotted():
     tree = ast.parse('mod.foo(bar="gronk")')
     node = find_call_kwarg_in_ast(tree, 'mod.foo', 'bar', filename='setup.py')
-    assert isinstance(node, ast.Str)
-    assert node.s == "gronk"
+    assert isinstance(node, ast.Constant)
+    assert node.value == "gronk"
 
 
 def test_find_call_kwarg_in_ast_alternatives():
     tree = ast.parse('mod.foo(bar="gronk")')
     node = find_call_kwarg_in_ast(tree, ['foo', 'mod.foo'], 'bar',
                                   filename='a.py')
-    assert isinstance(node, ast.Str)
-    assert node.s == "gronk"
+    assert isinstance(node, ast.Constant)
+    assert node.value == "gronk"
 
 
 def test_find_call_kwarg_in_ast_no_arg(capsys):

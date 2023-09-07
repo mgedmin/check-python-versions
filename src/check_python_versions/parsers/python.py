@@ -209,11 +209,8 @@ def eval_ast_node(
 
     ``keyword`` is used for error reporting.
     """
-    if isinstance(node, ast.Str):
-        # The assert is needed to placate mypy on Python 3.8
-        # https://github.com/python/mypy/issues/8837
-        assert isinstance(node.s, str)
-        return node.s
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
     if isinstance(node, (ast.List, ast.Tuple)):
         values: List[str] = []
         warned = False
@@ -238,13 +235,11 @@ def eval_ast_node(
             return tuple(values)
         return values
     if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
-            and isinstance(node.func.value, ast.Str)
+            and isinstance(node.func.value, ast.Constant)
+            and isinstance(node.func.value.value, str)
             and node.func.attr == 'join'):
         try:
-            # The assert is needed to placate mypy on Python 3.8
-            # https://github.com/python/mypy/issues/8837
-            assert isinstance(node.func.value.s, str)
-            return node.func.value.s.join(ast.literal_eval(node.args[0]))
+            return node.func.value.value.join(ast.literal_eval(node.args[0]))
         except ValueError:
             pass
     if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
