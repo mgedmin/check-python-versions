@@ -4,7 +4,7 @@ Changelog
 0.21.4 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Drop support for Python 3.7.
 
 
 0.21.3 (2023-06-26)
