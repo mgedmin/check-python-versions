@@ -23,6 +23,7 @@ install:
   - "set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - python --version
   - pip install -U virtualenv  # upgrade pip in tox's virtualenvs
+  - pip install setuptools  # the test suite needs the system python to have setuptools
   - pip install tox
 
 build: off
