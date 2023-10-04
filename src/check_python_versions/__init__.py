@@ -13,4 +13,4 @@ Makes sure the set of supported Python versions is consistent between
 """
 
 __author__ = 'Marius Gedminas <marius@gedmin.as>'
-__version__ = '0.22.0'
+__version__ = '0.22.1.dev0'
