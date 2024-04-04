@@ -231,7 +231,7 @@ def detect_poetry_version_spec_style(spec: str) -> VersionSpecStyle:
     """Determine how a python_requires string was formatted.
 
     The return value is a dict of kwargs that can be splatted
-    into compute_python_requires(..., **style).
+    into compute_poetry_spec(..., **style).
     """
     comma = ', '
     if ',' in spec and ', ' not in spec:
