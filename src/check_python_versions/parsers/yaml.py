@@ -111,7 +111,7 @@ def update_yaml_list(
             if kept_last:
                 if replacements and value in replacements:
                     lines_to_keep.append(
-                        f"{' '* indent}- {replacements[value]}\n"
+                        f"{' ' * indent}- {replacements[value]}\n"
                     )
                 else:
                     lines_to_keep.append(line)
