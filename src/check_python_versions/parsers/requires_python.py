@@ -2,7 +2,6 @@
 Tools for manipulating requires-python PyPI classifiers.
 """
 import re
-from functools import partial
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from ..utils import warn
@@ -58,7 +57,11 @@ def parse_python_requires(
     #
 
     handlers: Dict[str, HandlerFn] = {}
-    handler = partial(partial, handlers.__setitem__)
+
+    def handler(operator: str) -> Callable[[HandlerFn], None]:
+        def decorator(fn: HandlerFn) -> None:
+            handlers[operator] = fn
+        return decorator
 
     #
     # We are not doing a strict PEP-440 implementation here because if

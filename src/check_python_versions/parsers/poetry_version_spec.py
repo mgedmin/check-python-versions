@@ -6,7 +6,6 @@ https://python-poetry.org/docs/dependency-specification/#version-constraints
 """
 
 import re
-from functools import partial
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from ..utils import warn
@@ -61,7 +60,11 @@ def parse_poetry_version_constraint(
     #
 
     handlers: Dict[str, HandlerFn] = {}
-    handler = partial(partial, handlers.__setitem__)
+
+    def handler(operator: str) -> Callable[[HandlerFn], None]:
+        def decorator(fn: HandlerFn) -> None:
+            handlers[operator] = fn
+        return decorator
 
     #
     # We are not doing a strict version check here because if the spec says,
