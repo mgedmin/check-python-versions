@@ -4,7 +4,8 @@ Changelog
 0.22.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add support for Python 3.13: treat it as a released version, run CI tests on
+  3.13.
 
 
 0.22.0 (2023-10-04)
