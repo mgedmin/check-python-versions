@@ -59,7 +59,7 @@ jobs:
 
       - name: Check test coverage
         run: |
-          coverage report -m --fail-under=${{ (matrix.python-version == 'pypy-3.10') && 99 || 100 }}
+          coverage report -m --fail-under=${{ (matrix.python-version == 'pypy3.10') && 99 || 100 }}
           coverage xml
         # pypy3.10 thinks utils.py has one uncovered branch (140 -> 133), which
         # I think is just pypy's optimizer being too smart for coverage.py.
