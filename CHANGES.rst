@@ -1,10 +1,11 @@
 Changelog
 =========
 
-0.22.2 (unreleased)
+0.23.0 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- New option ``--allow-non-packages`` so you can automate tox.ini or GitHub
+  workflow updates in projects that are not Python packages.
 
 
 0.22.1 (2024-10-09)

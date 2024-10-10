@@ -739,6 +739,34 @@ def test_main_skip_non_packages(monkeypatch, capsys, tmp_path):
     assert capsys.readouterr().out == ''
 
 
+def test_main_allow_non_packages(monkeypatch, capsys, tmp_path):
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions', '--allow-non-packages', str(tmp_path),
+    ])
+    with pytest.raises(SystemExit) as exc_info:
+        cpv.main()
+    assert (
+        capsys.readouterr().out + str(exc_info.value) + '\n'
+    ).replace(str(tmp_path), 'tmp') == textwrap.dedent("""\
+        no file with version information found
+
+        mismatch!
+    """)
+
+
+def test_main_conflicting_non_packages_options(monkeypatch, capsys, tmp_path):
+    monkeypatch.setattr(sys, 'argv', [
+        'check-python-versions', '--skip-non-packages', '--allow-non-packages',
+        str(tmp_path),
+    ])
+    with pytest.raises(SystemExit):
+        cpv.main()
+    assert (
+        'use either --skip-non-packages or --allow-non-packages, not both'
+        in capsys.readouterr().err
+    )
+
+
 def test_main_single(monkeypatch, capsys, tmp_path):
     monkeypatch.setattr(sys, 'argv', [
         'check-python-versions',

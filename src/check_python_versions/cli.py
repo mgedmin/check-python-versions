@@ -370,6 +370,10 @@ def _main() -> None:
     parser.add_argument('--skip-non-packages', action='store_true',
                         help='skip arguments that are not Python packages'
                              ' without warning about them')
+    parser.add_argument('--allow-non-packages', action='store_true',
+                        help='try to work on directories that are not Python'
+                             ' packages but have a tox.ini'
+                             ' or .github/workflows')
     parser.add_argument('--only', metavar='FILES',
                         help='check only the specified files'
                              ' (comma-separated list, e.g.'
@@ -399,6 +403,9 @@ def _main() -> None:
         parser.error("argument --add: not allowed with argument --update")
     if args.update and args.drop:
         parser.error("argument --drop: not allowed with argument --update")
+    if args.skip_non_packages and args.allow_non_packages:
+        parser.error("use either --skip-non-packages or --allow-non-packages,"
+                     " not both")
     if args.diff and not (args.update or args.add or args.drop):
         parser.error(
             "argument --diff: not allowed without --update/--add/--drop")
@@ -431,9 +438,10 @@ def _main() -> None:
             if n:
                 print("\n")
             print(f"{path}:\n")
-        if not check_package(path):
-            mismatches.append(path)
-            continue
+        if not args.allow_non_packages:
+            if not check_package(path):
+                mismatches.append(path)
+                continue
         replacements = {}
         if args.add or args.drop or args.update:
             replacements = update_versions(
