@@ -9,7 +9,7 @@ check-python-versions
     :target: https://pypi.org/project/check-python-versions/
     :alt: Supported Python versions
 
-.. image:: https://github.com/mgedmin/check-python-versions/workflows/build/badge.svg?branch=master
+.. image:: https://github.com/mgedmin/check-python-versions/actions/workflows/build.yml/badge.svg?branch=master
     :target: https://github.com/mgedmin/check-python-versions/actions
     :alt: Build status
 
