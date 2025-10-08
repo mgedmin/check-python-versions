@@ -11,7 +11,7 @@ from typing import Collection, List, NamedTuple, Optional, Set, Union
 
 MAX_PYTHON_1_VERSION = 6  # i.e. 1.6
 MAX_PYTHON_2_VERSION = 7  # i.e. 2.7
-CURRENT_PYTHON_3_VERSION = 13  # i.e. 3.13
+CURRENT_PYTHON_3_VERSION = 14  # i.e. 3.14
 
 MAX_MINOR_FOR_MAJOR = {
     1: MAX_PYTHON_1_VERSION,
