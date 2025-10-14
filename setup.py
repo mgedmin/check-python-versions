@@ -73,7 +73,6 @@ setup(
     install_requires=[
         'pyyaml',
         'tomlkit',
-        'typing_extensions; python_version < "3.8"',
     ],
     zip_safe=False,
 )

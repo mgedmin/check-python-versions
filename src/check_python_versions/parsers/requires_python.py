@@ -2,7 +2,7 @@
 Tools for manipulating requires-python PyPI classifiers.
 """
 import re
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, TypedDict, Union
 
 from ..utils import warn
 from ..versions import (
@@ -11,12 +11,6 @@ from ..versions import (
     Version,
     VersionList,
 )
-
-
-try:
-    from typing import TypedDict
-except ImportError:  # pragma: nocover
-    from typing_extensions import TypedDict
 
 
 def parse_python_requires(
