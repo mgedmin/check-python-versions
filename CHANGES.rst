@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.23.0 (unreleased)
+0.23.0 (2025-10-14)
 -------------------
 
 - Add support for Python 3.14: treat it as a released version, run CI tests on
