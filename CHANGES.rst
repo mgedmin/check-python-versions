@@ -4,6 +4,9 @@ Changelog
 0.23.0 (unreleased)
 -------------------
 
+- Add support for Python 3.14: treat it as a released version, run CI tests on
+  3.14.
+
 - New option ``--allow-non-packages`` so you can automate tox.ini or GitHub
   workflow updates in projects that are not Python packages.
 
