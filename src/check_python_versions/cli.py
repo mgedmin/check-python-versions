@@ -127,7 +127,7 @@ def check_package(where: str = '.', *, print: PrintFn = print) -> bool:
 
     if not is_package(where):
         print("no setup.py or pyproject.toml -- not a Python package?")
-        print("you may want to try check-python-versions --allow-non-packages")
+        print("you may want to try --allow-non-packages")
         return False
 
     return True
