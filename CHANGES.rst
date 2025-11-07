@@ -6,6 +6,9 @@ Changelog
 
 - Drop support for Python 3.8 and 3.9.
 
+- Mention the ``--allow-non-packages`` option when showing the error message
+  that rejects non-packages.
+
 
 0.23.0 (2025-10-14)
 -------------------
