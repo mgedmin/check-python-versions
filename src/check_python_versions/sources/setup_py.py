@@ -15,7 +15,7 @@ import ast
 import os
 import shutil
 import sys
-from typing import List, Optional, TextIO, Union, cast
+from typing import TextIO, cast
 
 from .base import Source
 from ..parsers.classifiers import (
@@ -77,7 +77,7 @@ def get_supported_python_versions(
 
 def get_python_requires(
     setup_py: FileOrFilename = SETUP_PY,
-) -> Optional[SortedVersionList]:
+) -> SortedVersionList | None:
     """Extract supported Python versions from python_requires in setup.py."""
     python_requires = get_setup_py_keyword(setup_py, 'python_requires')
     if python_requires is None:
@@ -92,7 +92,7 @@ def get_python_requires(
 def update_supported_python_versions(
     filename: FileOrFilename,
     new_versions: SortedVersionList,
-) -> Optional[FileLines]:
+) -> FileLines | None:
     """Update classifiers in a setup.py.
 
     Does not touch the file but returns a list of lines with new file contents.
@@ -111,7 +111,7 @@ def update_supported_python_versions(
 def update_python_requires(
     filename: FileOrFilename,
     new_versions: SortedVersionList,
-) -> Optional[FileLines]:
+) -> FileLines | None:
     """Update python_requires in a setup.py, if it's defined there.
 
     Does not touch the file but returns a list of lines with new file contents.
@@ -132,7 +132,7 @@ def update_python_requires(
 def get_setup_py_keyword(
     setup_py: FileOrFilename,
     keyword: str,
-) -> Optional[AstValue]:
+) -> AstValue | None:
     """Extract a value passed to setup() in a setup.py.
 
     Parses the setup.py into an Abstact Syntax Tree and tries to figure out
@@ -156,7 +156,7 @@ def get_setup_py_keyword(
 def update_setup_py_keyword(
     setup_py: FileOrFilename,
     keyword: str,
-    new_value: Union[str, List[str]],
+    new_value: str | list[str],
 ) -> FileLines:
     """Update a value passed to setup() in a setup.py.
 

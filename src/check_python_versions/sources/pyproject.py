@@ -33,7 +33,7 @@ check-python-versions also supports old-style Flit and Poetry metadata::
     python = "^3.8"
 
 """
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 import tomlkit
 from tomlkit import TOMLDocument, dumps, load
@@ -68,7 +68,7 @@ if TYPE_CHECKING:
 
 
 def traverse(document: TOMLDocument, path: str, default: Any = None) -> Any:
-    obj: Union[Container, Item] = document
+    obj: Container | Item = document
     for step in path.split('.'):
         if not isinstance(obj, dict):
             # complain
@@ -81,7 +81,7 @@ def traverse(document: TOMLDocument, path: str, default: Any = None) -> Any:
 
 def _get_pyproject_toml_classifiers(
     filename: FileOrFilename = PYPROJECT_TOML,
-) -> Tuple[TOMLDocument, str, Optional[List[str]]]:
+) -> tuple[TOMLDocument, str, list[str] | None]:
     """Extract the list of PyPI classifiers from a pyproject.toml"""
 
     with open_file(filename) as fp:
@@ -116,7 +116,7 @@ def _get_pyproject_toml_classifiers(
 
 def get_supported_python_versions(
     filename: FileOrFilename = PYPROJECT_TOML,
-) -> Optional[SortedVersionList]:
+) -> SortedVersionList | None:
     """Extract supported Python versions from classifiers in pyproject.toml."""
 
     _d, _p, classifiers = _get_pyproject_toml_classifiers(filename)
@@ -129,7 +129,7 @@ def get_supported_python_versions(
 
 def _get_pyproject_toml_requires_python(
     filename: FileOrFilename = PYPROJECT_TOML,
-) -> Tuple[TOMLDocument, str, Optional[str]]:
+) -> tuple[TOMLDocument, str, str | None]:
 
     with open_file(filename) as fp:
         document = load(fp)
@@ -155,7 +155,7 @@ def _get_pyproject_toml_requires_python(
 
 def get_python_requires(
     filename: FileOrFilename = PYPROJECT_TOML,
-) -> Optional[SortedVersionList]:
+) -> SortedVersionList | None:
     """Extract Python versions from require-python in pyproject.toml."""
 
     _d, path, python_requires = _get_pyproject_toml_requires_python(filename)
@@ -174,7 +174,7 @@ def get_python_requires(
 def update_supported_python_versions(
     filename: FileOrFilename,
     new_versions: SortedVersionList,
-) -> Optional[FileLines]:
+) -> FileLines | None:
     """Update classifiers in a pyproject.toml.
 
     Does not touch the file but returns a list of lines with new file contents.
@@ -197,7 +197,7 @@ def update_supported_python_versions(
 def update_python_requires(
     filename: FileOrFilename,
     new_versions: SortedVersionList,
-) -> Optional[FileLines]:
+) -> FileLines | None:
     """Update python dependency in a pyproject.toml, if it's defined there.
 
     Does not touch the file but returns a list of lines with new file contents.

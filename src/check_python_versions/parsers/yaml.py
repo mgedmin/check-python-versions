@@ -6,7 +6,7 @@ YAML parser and serializer.
 """
 
 import string
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from ..utils import FileLines, OneOrMore, OneOrTuple, warn
 
@@ -34,11 +34,11 @@ def quote_string(value: str, quote_style: str = '') -> str:
 def update_yaml_list(
     orig_lines: FileLines,
     key: OneOrTuple[str],
-    new_value: List[Any],
+    new_value: list[Any],
     *,
     filename: str,
-    keep: Optional[Callable[[str], bool]] = None,
-    replacements: Optional[Dict[str, str]] = None,
+    keep: Callable[[str], bool] | None = None,
+    replacements: dict[str, str] | None = None,
 ) -> FileLines:
     """Update a list of values in a YAML document.
 
@@ -94,10 +94,10 @@ def update_yaml_list(
     end = n + 1
     indent = 2
     list_indent = None
-    keep_before: List[str] = []
-    keep_after: List[str] = []
+    keep_before: list[str] = []
+    keep_after: list[str] = []
     lines_to_keep = keep_before
-    kept_last: Optional[bool] = False
+    kept_last: bool | None = False
     for n, line in lines:
         stripped = line.lstrip()
         line_indent = len(line) - len(stripped)
@@ -187,7 +187,7 @@ def add_yaml_node(
     key: str,
     value: str,
     *,
-    before: Optional[OneOrMore[str]] = None,
+    before: OneOrMore[str] | None = None,
 ) -> FileLines:
     """Add a value to a YAML document.
 

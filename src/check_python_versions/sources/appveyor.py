@@ -24,7 +24,7 @@ of Tox environments (pyXY).
 
 import ast
 from io import StringIO
-from typing import Optional, Set, cast
+from typing import Set, cast
 
 import yaml
 
@@ -61,7 +61,7 @@ def get_appveyor_yml_python_versions(
     return sorted(cast(Set[Version], set(versions) - {None}))
 
 
-def appveyor_normalize_py_version(ver: str) -> Optional[Version]:
+def appveyor_normalize_py_version(ver: str) -> Version | None:
     """Determine Python version from PYTHON environment variable."""
     ver = str(ver).lower().replace('\\', '/')
     if ver.startswith('c:/python'):
@@ -78,7 +78,7 @@ def appveyor_normalize_py_version(ver: str) -> Optional[Version]:
         return None
 
 
-def appveyor_detect_py_version_pattern(ver: str) -> Optional[str]:
+def appveyor_detect_py_version_pattern(ver: str) -> str | None:
     """Determine the format of the PYTHON environment variable.
 
     Returns a format string suitable for formatting with placeholders
@@ -113,7 +113,7 @@ def escape(s: str) -> str:
 def update_appveyor_yml_python_versions(
     filename: FileOrFilename,
     new_versions: VersionList,
-) -> Optional[FileLines]:
+) -> FileLines | None:
     """Update supported Python versions in appveyor.yml.
 
     Does not touch the file but returns a list of lines with new file contents.

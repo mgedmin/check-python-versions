@@ -15,8 +15,6 @@ than others:
   the future)
 """
 
-from typing import Dict, List, Union
-
 import yaml
 
 from .base import Source
@@ -47,7 +45,7 @@ TRAVIS_YML = '.travis.yml'
 # and check-python-versions could upgrade your .travis.yml from the old version
 # to the new.  Happily, this is no longer necessary, because Travis supports
 # 'pypy' and 'pypy3' once again.
-XENIAL_SUPPORTED_PYPY_VERSIONS: Dict[str, str] = {
+XENIAL_SUPPORTED_PYPY_VERSIONS: dict[str, str] = {
     # e.g. 'pypy': 'pypy2.7-7.1.1',
 }
 
@@ -58,7 +56,7 @@ def get_travis_yml_python_versions(
     """Extract supported Python versions from .travis.yml."""
     with open_file(filename) as fp:
         conf = yaml.safe_load(fp)
-    versions: List[Version] = []
+    versions: list[Version] = []
     if conf.get('python'):
         if isinstance(conf['python'], list):
             versions += map(travis_normalize_py_version, conf['python'])
@@ -81,7 +79,7 @@ def get_travis_yml_python_versions(
     return sorted(set(versions))
 
 
-def travis_normalize_py_version(v: Union[str, float]) -> Version:
+def travis_normalize_py_version(v: str | float) -> Version:
     """Determine Python version from Travis ``python`` value."""
     v = str(v)
     if v.startswith('pypy3'):

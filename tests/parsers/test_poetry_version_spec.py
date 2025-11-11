@@ -1,5 +1,3 @@
-from typing import List
-
 import pytest
 
 from check_python_versions.parsers.poetry_version_spec import (
@@ -10,7 +8,7 @@ from check_python_versions.parsers.poetry_version_spec import (
 from check_python_versions.versions import Version
 
 
-def v(versions: List[str]) -> List[Version]:
+def v(versions: list[str]) -> list[Version]:
     return [Version.from_string(v) for v in versions]
 
 

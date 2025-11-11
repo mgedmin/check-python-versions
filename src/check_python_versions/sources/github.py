@@ -9,7 +9,7 @@ simplifying assumptions:
   - on 'config' that contains lists of [python_version, tox_env]
 """
 
-from typing import Optional, Set, Union
+from typing import Set
 
 import yaml
 
@@ -26,7 +26,7 @@ GHA_WORKFLOW_GLOB = '.github/workflows/*.yml'
 
 def get_gha_python_versions(
     filename: FileOrFilename = GHA_WORKFLOW_FILE,
-) -> Optional[SortedVersionList]:
+) -> SortedVersionList | None:
     """Extract supported Python versions from a GitHub workflow."""
     with open_file(filename) as fp:
         conf = yaml.safe_load(fp)
@@ -57,7 +57,7 @@ def get_gha_python_versions(
     return sorted(set(versions))
 
 
-def parse_gh_ver(v: Union[str, float]) -> Version:
+def parse_gh_ver(v: str | float) -> Version:
     """Parse Python versions used for actions/setup-python@v2.
 
     This format is not fully well documented.  There's support for

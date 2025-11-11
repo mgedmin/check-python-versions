@@ -16,7 +16,7 @@ The list of supported Python versions is extracted from ::
 
 import configparser
 import re
-from typing import Iterable, List, Optional
+from typing import Iterable
 
 from .base import Source
 from ..parsers.ini import update_ini_setting
@@ -62,7 +62,7 @@ def split_envlist(envlist: str) -> Iterable[str]:
             yield part
 
 
-def parse_envlist(envlist: str) -> List[str]:
+def parse_envlist(envlist: str) -> list[str]:
     """Parse an environment list.
 
     This function expands brace groups.
@@ -73,7 +73,7 @@ def parse_envlist(envlist: str) -> List[str]:
     return envs
 
 
-def brace_expand(s: str) -> List[str]:
+def brace_expand(s: str) -> list[str]:
     """Expand a braced group.
 
     E.g. brace_expand('a{1,2}{b,c}x') == ['a1bx', 'a1cx', 'a2bx', 'a2cx'].
@@ -92,7 +92,7 @@ def brace_expand(s: str) -> List[str]:
     return res
 
 
-def tox_env_to_py_version(env: str) -> Optional[Version]:
+def tox_env_to_py_version(env: str) -> Version | None:
     """Convert a Tox environment name to a Python version.
 
     E.g. py34 becomes '3.4', pypy3 becomes 'PyPy3'.
@@ -214,8 +214,8 @@ def update_tox_envlist(envlist: str, new_versions: SortedVersionList) -> str:
         return sep.join(parts)
 
     # Universal expansion, might destroy braced groups
-    keep_before: List[str] = []
-    keep_after: List[str] = []
+    keep_before: list[str] = []
+    keep_after: list[str] = []
     keep = keep_before
     for env in parse_envlist(envlist):
         if should_keep(env, new_versions):

@@ -1,6 +1,6 @@
 import os
 import textwrap
-from typing import List, cast
+from typing import cast
 
 import pytest
 from tomlkit.toml_document import TOMLDocument
@@ -18,7 +18,7 @@ from check_python_versions.sources.pyproject import (
 from check_python_versions.versions import Version
 
 
-def v(versions: List[str]) -> List[Version]:
+def v(versions: list[str]) -> list[Version]:
     return [Version.from_string(v) for v in versions]
 
 

@@ -6,7 +6,7 @@ https://python-poetry.org/docs/dependency-specification/#version-constraints
 """
 
 import re
-from typing import Callable, Dict, List, Optional, Tuple, TypedDict, Union
+from typing import Callable, TypedDict
 
 from ..utils import warn
 from ..versions import (
@@ -22,7 +22,7 @@ def parse_poetry_version_constraint(
     name: str = "tool.poetry.dependencies.python",
     *,
     filename: str = 'pyproject.toml',
-) -> Optional[SortedVersionList]:
+) -> SortedVersionList | None:
     """Compute Python versions allowed by Poetry version constraints."""
 
     rx = re.compile(r'^(|[~^]|==|!=|<=|>=|<|>)\s*(\d+(?:\.\d+)*(?:\.\*)?)$')
@@ -36,7 +36,7 @@ def parse_poetry_version_constraint(
     # with a possible trailing '*'.  PEP 440 calls them "clauses".
     #
 
-    Constraint = Tuple[Union[str, int], ...]
+    Constraint = tuple[str | int, ...]
 
     #
     # The we look up a handler for each operartor.  This handler takes a
@@ -45,7 +45,7 @@ def parse_poetry_version_constraint(
     # that version passes its constraint.
     #
 
-    VersionTuple = Tuple[int, int]
+    VersionTuple = tuple[int, int]
     CheckFn = Callable[[VersionTuple], bool]
     HandlerFn = Callable[[Constraint], CheckFn]
 
@@ -53,7 +53,7 @@ def parse_poetry_version_constraint(
     # Here we're defining the handlers for all the operators
     #
 
-    handlers: Dict[str, HandlerFn] = {}
+    handlers: dict[str, HandlerFn] = {}
 
     def handler(operator: str) -> Callable[[HandlerFn], None]:
         def decorator(fn: HandlerFn) -> None:
@@ -186,7 +186,7 @@ def parse_poetry_version_constraint(
     # into checkers (which I also call "constraints", for maximum confusion).
     #
 
-    constraints: List[CheckFn] = []
+    constraints: list[CheckFn] = []
     for specifier in map(str.strip, s.split(',')):
         m = rx.match(specifier)
         if not m:

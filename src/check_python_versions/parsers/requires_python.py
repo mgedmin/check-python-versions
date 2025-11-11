@@ -2,7 +2,7 @@
 Tools for manipulating requires-python PyPI classifiers.
 """
 import re
-from typing import Callable, Dict, List, Optional, Tuple, TypedDict, Union
+from typing import Callable, TypedDict
 
 from ..utils import warn
 from ..versions import (
@@ -18,7 +18,7 @@ def parse_python_requires(
     name: str = "python_requires",
     *,
     filename: str = "setup.py",
-) -> Optional[SortedVersionList]:
+) -> SortedVersionList | None:
     """Compute Python versions allowed by a python_requires expression."""
 
     # https://www.python.org/dev/peps/pep-0440/#version-specifiers
@@ -33,7 +33,7 @@ def parse_python_requires(
     # with a possible trailing '*'.  PEP 440 calls them "clauses".
     #
 
-    Constraint = Tuple[Union[str, int], ...]
+    Constraint = tuple[str | int, ...]
 
     #
     # The we look up a handler for each operartor.  This handler takes a
@@ -42,7 +42,7 @@ def parse_python_requires(
     # that version passes its constraint.
     #
 
-    VersionTuple = Tuple[int, int]
+    VersionTuple = tuple[int, int]
     CheckFn = Callable[[VersionTuple], bool]
     HandlerFn = Callable[[Constraint], CheckFn]
 
@@ -50,7 +50,7 @@ def parse_python_requires(
     # Here we're defining the handlers for all the operators
     #
 
-    handlers: Dict[str, HandlerFn] = {}
+    handlers: dict[str, HandlerFn] = {}
 
     def handler(operator: str) -> Callable[[HandlerFn], None]:
         def decorator(fn: HandlerFn) -> None:
@@ -166,7 +166,7 @@ def parse_python_requires(
     # into checkers (which I also call "constraints", for maximum confusion).
     #
 
-    constraints: List[CheckFn] = []
+    constraints: list[CheckFn] = []
     for specifier in map(str.strip, s.split(',')):
         m = rx.match(specifier)
         if not m:

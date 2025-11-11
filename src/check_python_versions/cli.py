@@ -12,7 +12,7 @@ import glob
 import os
 import sys
 from io import StringIO
-from typing import Callable, Collection, Dict, List, Optional, Tuple
+from typing import Callable, Collection
 
 from . import __version__
 from .sources.all import ALL_SOURCES
@@ -34,7 +34,7 @@ from .versions import (
 )
 
 
-def parse_version(v: str) -> Tuple[int, int]:
+def parse_version(v: str) -> tuple[int, int]:
     """Parse a Python version number.
 
     Expects 'MAJOR.MINOR', no more, no less.
@@ -148,11 +148,11 @@ def check_package(where: str = '.', *, print: PrintFn = print) -> bool:
 # results, to get back the final results.
 #
 
-ReplacementDict = Dict[str, FileLines]
+ReplacementDict = dict[str, FileLines]
 
 
 def filename_or_replacement(
-    pathname: str, replacements: Optional[ReplacementDict]
+    pathname: str, replacements: ReplacementDict | None
 ) -> FileOrFilename:
     """Look up a file in the replacement dict.
 
@@ -176,10 +176,10 @@ FilenameSet = Collection[str]
 def find_sources(
     where: str = '.',
     *,
-    replacements: Optional[ReplacementDict] = None,
-    only: Optional[FilenameSet] = None,
+    replacements: ReplacementDict | None = None,
+    only: FilenameSet | None = None,
     supports_update: bool = False,
-) -> List[SourceFile]:
+) -> list[SourceFile]:
     """Find all sources that exist in a given directory.
 
     ``replacements`` allows you to check the result of an update (see
@@ -212,9 +212,9 @@ def check_versions(
     *,
     print: PrintFn = print,
     min_width: int = 0,
-    expect: Optional[VersionList] = None,
-    replacements: Optional[ReplacementDict] = None,
-    only: Optional[FilenameSet] = None,
+    expect: VersionList | None = None,
+    replacements: ReplacementDict | None = None,
+    only: FilenameSet | None = None,
 ) -> bool:
     """Check Python versions for a single package, located in ``where``.
 
@@ -252,8 +252,8 @@ def check_versions(
 
 
 def supported_versions_match(
-    sources: List[SourceFile],
-    expect: Optional[VersionList] = None,
+    sources: list[SourceFile],
+    expect: VersionList | None = None,
 ) -> bool:
     version_sets = []
     pypy_version_sets = []
@@ -292,12 +292,12 @@ def supported_versions_match(
 def update_versions(
     where: str = '.',
     *,
-    add: Optional[VersionList] = None,
-    drop: Optional[VersionList] = None,
-    update: Optional[VersionList] = None,
+    add: VersionList | None = None,
+    drop: VersionList | None = None,
+    update: VersionList | None = None,
     diff: bool = False,
     dry_run: bool = False,
-    only: Optional[FilenameSet] = None,
+    only: FilenameSet | None = None,
 ) -> ReplacementDict:
     """Update Python versions for a single package, located in ``where``.
 

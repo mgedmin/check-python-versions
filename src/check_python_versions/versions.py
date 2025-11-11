@@ -1,7 +1,7 @@
 """Python version business logic."""
 
 import re
-from typing import Collection, List, NamedTuple, Optional, Set, Union
+from typing import Collection, NamedTuple, Set
 
 
 #
@@ -72,10 +72,10 @@ class Version(NamedTuple):
 
 VersionSet = Set[Version]
 VersionList = Collection[Version]
-SortedVersionList = List[Version]
+SortedVersionList = list[Version]
 
 
-def is_important(v: Union[Version, str]) -> bool:
+def is_important(v: Version | str) -> bool:
     """Is the version important for matching purposes?
 
     Different sources can express support for different versions, e.g.
@@ -139,9 +139,9 @@ def expand_pypy(versions: Collection[Version]) -> SortedVersionList:
 
 def update_version_list(
     versions: VersionList,
-    add: Optional[VersionList] = None,
-    drop: Optional[VersionList] = None,
-    update: Optional[VersionList] = None,
+    add: VersionList | None = None,
+    drop: VersionList | None = None,
+    update: VersionList | None = None,
 ) -> SortedVersionList:
     """Compute a new list of supported versions.
 

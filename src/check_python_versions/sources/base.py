@@ -1,11 +1,11 @@
-from typing import Callable, Optional
+from typing import Callable
 
 from ..utils import FileLines, FileOrFilename
 from ..versions import SortedVersionList
 
 
-ExtractorFn = Callable[[FileOrFilename], Optional[SortedVersionList]]
-UpdaterFn = Callable[[FileOrFilename, SortedVersionList], Optional[FileLines]]
+ExtractorFn = Callable[[FileOrFilename], SortedVersionList | None]
+UpdaterFn = Callable[[FileOrFilename, SortedVersionList], FileLines | None]
 
 
 class Source:
@@ -26,10 +26,10 @@ class Source:
     def __init__(
         self,
         *,
-        title: Optional[str] = None,
+        title: str | None = None,
         filename: str,
         extract: ExtractorFn,
-        update: Optional[UpdaterFn] = None,
+        update: UpdaterFn | None = None,
         check_pypy_consistency: bool,
         has_upper_bound: bool,
     ) -> None:
@@ -70,10 +70,10 @@ class SourceFile(Source):
     def __init__(
         self,
         *,
-        title: Optional[str] = None,
+        title: str | None = None,
         filename: str,
         extract: ExtractorFn,
-        update: Optional[UpdaterFn] = None,
+        update: UpdaterFn | None = None,
         check_pypy_consistency: bool,
         has_upper_bound: bool,
         pathname: str,

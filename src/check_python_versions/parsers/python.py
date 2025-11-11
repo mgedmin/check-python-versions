@@ -5,12 +5,11 @@ Tools for manipulating Python files.
 import ast
 import re
 import string
-from typing import List, Optional, Tuple, Union
 
 from ..utils import FileLines, OneOrMore, get_indent, warn
 
 
-AstValue = Union[str, List[str], Tuple[str, ...]]
+AstValue = str | list[str] | tuple[str, ...]
 
 
 def to_literal(value: str, quote_style: str = '"') -> str:
@@ -33,7 +32,7 @@ def update_call_arg_in_source(
     source_lines: FileLines,
     function: OneOrMore[str],
     keyword: str,
-    new_value: Union[str, List[str]],
+    new_value: str | list[str],
     *,
     filename: str = 'setup.py',
 ) -> FileLines:
@@ -169,7 +168,7 @@ def find_call_kwarg_in_ast(
     keyword: str,
     *,
     filename: str,
-) -> Optional[ast.AST]:
+) -> ast.AST | None:
     """Find the value passed to a function call.
 
     ``filename`` is used for error reporting.
@@ -204,7 +203,7 @@ def eval_ast_node(
     keyword: str,
     *,
     filename: str = 'setup.py',
-) -> Optional[AstValue]:
+) -> AstValue | None:
     """Partially evaluate an AST node.
 
     ``keyword`` is used for error reporting.
@@ -212,7 +211,7 @@ def eval_ast_node(
     if isinstance(node, ast.Constant) and isinstance(node.value, str):
         return node.value
     if isinstance(node, (ast.List, ast.Tuple)):
-        values: List[str] = []
+        values: list[str] = []
         warned = False
         for element in node.elts:
             try:

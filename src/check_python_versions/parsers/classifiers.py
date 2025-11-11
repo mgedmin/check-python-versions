@@ -1,7 +1,7 @@
 """
 Tools for manipulating PyPI classifiers.
 """
-from typing import List, Sequence
+from typing import Sequence
 
 from ..versions import SortedVersionList, Version, expand_pypy
 
@@ -52,7 +52,7 @@ def get_versions_from_classifiers(
 def update_classifiers(
     classifiers: Sequence[str],
     new_versions: SortedVersionList
-) -> List[str]:
+) -> list[str]:
     """Update a list of classifiers with new Python versions."""
     prefix = 'Programming Language :: Python :: '
 

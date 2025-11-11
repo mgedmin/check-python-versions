@@ -11,30 +11,20 @@ import stat
 import subprocess
 import sys
 from contextlib import contextmanager
-from typing import (
-    Any,
-    Iterator,
-    List,
-    Sequence,
-    TextIO,
-    Tuple,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, Iterator, Sequence, TextIO, TypeAlias, TypeVar, cast
 
 
 log = logging.getLogger('check-python-versions')
 
 
 T = TypeVar('T')
-OneOrMore = Union[T, Sequence[T]]
-OneOrTuple = Union[T, Tuple[T, ...]]
+OneOrMore: TypeAlias = T | Sequence[T]
+OneOrTuple: TypeAlias = T | tuple[T, ...]
 
 
 FileObjectWithName = TextIO  # also has a .name attribute
-FileOrFilename = Union[str, FileObjectWithName]
-FileLines = List[str]
+FileOrFilename = str | FileObjectWithName
+FileLines = list[str]
 
 
 def get_indent(line: str) -> str:
@@ -118,7 +108,7 @@ def show_diff(
     return old_lines != new_lines
 
 
-def print_diff(a: List[str], b: List[str], filename: str) -> None:
+def print_diff(a: list[str], b: list[str], filename: str) -> None:
     """Show the difference between two versions of a file."""
     print(''.join(difflib.unified_diff(
         a, b,
