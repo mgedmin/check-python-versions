@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.23.1 (unreleased)
+0.24.0 (2025-11-13)
 -------------------
 
 - Drop support for Python 3.8 and 3.9.
