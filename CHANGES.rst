@@ -9,6 +9,8 @@ Changelog
 - Mention the ``--allow-non-packages`` option when showing the error message
   that rejects non-packages.
 
+- Add ``--set`` as an alias for ``--update``.
+
 
 0.23.0 (2025-10-14)
 -------------------

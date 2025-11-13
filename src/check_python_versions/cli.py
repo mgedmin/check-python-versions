@@ -390,7 +390,8 @@ def _main() -> None:
     group.add_argument('--drop', metavar='VERSIONS', type=parse_version_list,
                        help='drop these versions from supported ones, e.g'
                             ' --drop 2.6,3.4')
-    group.add_argument('--update', metavar='VERSIONS', type=parse_version_list,
+    group.add_argument('--update', '--set', metavar='VERSIONS',
+                       type=parse_version_list,
                        help='update the set of supported versions, e.g.'
                             ' --update 2.7,3.5-3.7')
     group.add_argument('--diff', action='store_true',
