@@ -4,7 +4,10 @@ Changelog
 0.24.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Improve tox environment name parsing: accept dotted names (e.g. py3.14),
+  more specific pypy versions (pypy311).  `GH #38
+  <https://github.com/mgedmin/check-python-versions/issues/38>`_ and `GH #50
+  <https://github.com/mgedmin/check-python-versions/issues/50>`_.
 
 
 0.24.0 (2025-11-13)

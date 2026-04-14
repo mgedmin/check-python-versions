@@ -101,14 +101,18 @@ def tox_env_to_py_version(env: str) -> Version | None:
 
     If the environment name has dashes, only the first part is considered,
     e.g. py34-django20 becomes '3.4', and jython-docs becomes 'jython'.
+    (This is probably incorrect, I think tox itself allows the Python
+    factor to be in any position, e.g. orange-py3.11.)
     """
     if '-' in env:
         # e.g. py34-coverage, pypy-subunit
         env = env.partition('-')[0]
-    if env.startswith('pypy'):
-        return Version.from_string('PyPy' + env[4:])
-    elif env.startswith('py') and len(env) >= 4 and env[2:].isdigit():
-        return Version.from_string(f'{env[2]}.{env[3:]}')
+    if env.startswith('pypy3'):
+        return Version.from_string('PyPy3')
+    if env == 'pypy' or env.startswith('pypy2'):
+        return Version.from_string('PyPy')
+    elif m := re.match(r'^py([2-3])[.]?([0-9]+)t?$', env):
+        return Version.from_string(f'{m[1]}.{m[2]}')
     else:
         return None
 
