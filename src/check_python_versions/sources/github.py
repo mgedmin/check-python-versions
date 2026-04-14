@@ -80,7 +80,10 @@ def parse_gh_ver(v: str | float) -> Version:
     elif v.startswith(('pypy2', 'pypy-2')):
         return Version.from_string('PyPy')
     else:
-        return Version.from_string(v)
+        ver = Version.from_string(v)
+        if ver.suffix == 't':
+            return ver._replace(suffix='')
+        return ver
 
 
 def update_gha_python_versions(

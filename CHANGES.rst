@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.24.2 (2026-04-14)
+-------------------
+
+- Consider free-threaded builds (e.g. 3.14t) to be equivalent to regular builds
+  in GitHub Actions.  `#GH 51
+  <https://github.com/mgedmin/check-python-versions/issues/51>`_.
+
+
 0.24.1 (2026-04-14)
 -------------------
 

@@ -130,6 +130,7 @@ def test_get_gha_python_versions_no_version_matrix():
 @pytest.mark.parametrize('s, expected', [
     (3.6, '3.6'),
     ('3.7', '3.7'),
+    ('3.14t', '3.14'),
     ('pypy2', 'PyPy'),
     ('pypy3', 'PyPy3'),
     ('pypy-2.7', 'PyPy'),
