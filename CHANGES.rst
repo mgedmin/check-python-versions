@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.24.1 (unreleased)
+0.24.1 (2026-04-14)
 -------------------
 
 - Improve tox environment name parsing: accept dotted names (e.g. py3.14),
