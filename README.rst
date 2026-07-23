@@ -74,7 +74,6 @@ you if they don't match ::
 Installation
 ------------
 
-You need Python 3.6 or newer (f-strings!) to run check-python-versions.
 Install it with ::
 
     python3 -m pip install check-python-versions
