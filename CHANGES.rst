@@ -1,10 +1,10 @@
 Changelog
 =========
 
-0.24.3 (unreleased)
+0.25.0 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add support for Python 3.15.
 
 
 0.24.2 (2026-04-14)
