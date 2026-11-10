@@ -1,3 +1,5 @@
+import pytest
+
 from check_python_versions.parsers.classifiers import (
     get_versions_from_classifiers,
     update_classifiers,
@@ -150,4 +152,41 @@ def test_update_classifiers_none_were_present():
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.7',
+    ]
+
+
+@pytest.mark.parametrize(('current', 'versions', 'expected'), [
+    (
+        ['3', '3 :: Only', '3.10'],
+        ['3.10', '3.11'],
+        ['3', '3 :: Only', '3.10', '3.11'],
+    ),
+    (
+        ['2', '2 :: Only', '2.6', '2.7'],
+        ['2.7'],
+        ['2', '2 :: Only', '2.7'],
+    ),
+    (
+        ['3', '3 :: Only', '3.10'],
+        ['2.7', '3.10'],
+        ['2', '2.7', '3', '3.10'],
+    ),
+    (
+        ['3', '3 :: Only', '3.10'],
+        ['2.7'],
+        ['2', '2.7'],
+    ),
+    (['3', '3 :: Only', '3.10'], [], []),
+    (['3', '3.10'], ['3.10', '3.11'], ['3', '3.10', '3.11']),
+])
+def test_update_classifiers_exclusive_major(current, versions, expected):
+    prefix = 'Programming Language :: Python :: '
+    return_value = update_classifiers(
+        ['Environment :: Console', *(prefix + s for s in current),
+         prefix + 'Implementation :: CPython'],
+        v(versions),
+    )
+    assert return_value == [
+        'Environment :: Console', *(prefix + s for s in expected),
+        prefix + 'Implementation :: CPython',
     ]
