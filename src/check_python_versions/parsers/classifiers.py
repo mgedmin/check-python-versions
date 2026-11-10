@@ -63,12 +63,17 @@ def update_classifiers(
         pos = len(classifiers)
 
     if any(map(is_major_version_classifier, classifiers)):
-        new_versions = sorted(
-            set(new_versions).union(
-                v._replace(prefix='', minor=-1, suffix='')
-                for v in new_versions
-            )
-        )
+        majors = {
+            v._replace(prefix='', minor=-1, suffix='')
+            for v in new_versions
+        }
+        versions = set(new_versions) | majors
+        if len(majors) == 1:
+            major, = majors
+            only = major._replace(suffix=' :: Only')
+            if f'{prefix}{only}' in classifiers:
+                versions.add(only)
+        new_versions = sorted(versions)
 
     classifiers = [
         s for s in classifiers if not is_version_classifier(s)

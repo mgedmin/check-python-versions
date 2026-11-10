@@ -4,7 +4,9 @@ Changelog
 0.25.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Preserve an existing Python ``:: Only`` classifier when updating versions
+  within the same major version. `GH #32
+  <https://github.com/mgedmin/check-python-versions/issues/32>`_.
 
 
 0.25.0 (2026-10-12)
