@@ -68,6 +68,7 @@ def test_get_tox_ini_python_versions_no_tox_envlist(tmp_path):
     ('py36, py37', ['py36', 'py37']),
     ('\n  py36,\n  py37', ['py36', 'py37']),
     ('py3{6,7},pypy', ['py36', 'py37', 'pypy']),
+    ('py3{8-10,12},pypy3', ['py38', 'py39', 'py310', 'py312', 'pypy3']),
     ('py{35, 36, 37, 38, py3}', ['py35', 'py36', 'py37', 'py38', 'pypy3']),
 ])
 def test_parse_envlist(s, expected):
@@ -83,6 +84,21 @@ def test_parse_envlist(s, expected):
     ('py3{6, 7}', ['py36', 'py37']),
     ('py3{6 ,7}', ['py36', 'py37']),
     ('py3{6 , 7}', ['py36', 'py37']),
+    ('py3{8-10}', ['py38', 'py39', 'py310']),
+    ('py3{12-9}', ['py312', 'py311', 'py310', 'py39']),
+    ('py3{11-11}', ['py311']),
+    ('py3{08-10}', ['py38', 'py39', 'py310']),
+    ('py3{ 8-10}', ['py38', 'py39', 'py310']),
+    ('py3{8-10 }', ['py38-10']),
+    ('py3.{9-10}', ['py3.9', 'py3.10']),
+    ('py38-40', ['py38-40']),
+    ('{lint-1-2,docs}', ['lint-1-2', 'docs']),
+    (
+        'py3{9-10,12}-django{40-41,50}',
+        ['py39-django40', 'py39-django41', 'py39-django50',
+         'py310-django40', 'py310-django41', 'py310-django50',
+         'py312-django40', 'py312-django41', 'py312-django50'],
+    ),
 ])
 def test_brace_expand(s, expected):
     assert brace_expand(s) == expected
@@ -226,3 +242,17 @@ def test_update_tox_envlist_with_newlines(s, expected):
 def test_update_tox_envlist_with_braces(s, expected):
     result = update_tox_envlist(s, v(['3.6', '3.7']))
     assert result == expected
+
+
+@pytest.mark.parametrize('envlist, versions, expected', [
+    ('py3{8-11},pypy3,lint', ['3.8', '3.9', '3.10', '3.11', '3.12'],
+     'py38,py39,py310,py311,py312,pypy3,lint'),
+    ('py{38-39,310-311}-django{40-41},lint', ['3.9', '3.10', '3.12'],
+     'py{39,310,312}-django{40-41},lint'),
+    ('py{38-39, 310-311}-django{41-40,50},lint', ['3.9', '3.10', '3.12'],
+     'py{39,310,312}-django{41-40,50},lint'),
+    ('py{38 , 39, 310-311}-django{41-40,50},lint', ['3.9', '3.10', '3.12'],
+     'py{39,310,312}-django{41-40,50},lint'),
+])
+def test_update_tox_envlist_with_ranges(envlist, versions, expected):
+    assert update_tox_envlist(envlist, v(versions)) == expected

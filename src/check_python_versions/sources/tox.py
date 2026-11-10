@@ -74,7 +74,7 @@ def parse_envlist(envlist: str) -> list[str]:
 
 
 def brace_expand(s: str) -> list[str]:
-    """Expand a braced group.
+    """Expand a braced group, including closed numeric ranges.
 
     E.g. brace_expand('a{1,2}{b,c}x') == ['a1bx', 'a1cx', 'a2bx', 'a2cx'].
 
@@ -88,7 +88,13 @@ def brace_expand(s: str) -> list[str]:
     right = m.group(3)
     res = []
     for alt in m.group(2).split(','):
-        res += brace_expand(left + alt.strip() + right)
+        alternatives: Iterable[str] = (alt.strip(),)
+        if numeric_range := re.fullmatch(r'\s*(\d+)-(\d+)', alt):
+            first, last = map(int, numeric_range.groups())
+            step = 1 if first <= last else -1
+            alternatives = map(str, range(first, last + step, step))
+        for value in alternatives:
+            res += brace_expand(left + value + right)
     return res
 
 
@@ -177,11 +183,14 @@ def update_tox_envlist(envlist: str, new_versions: SortedVersionList) -> str:
         # Try to preserve braced groups
         parts = []
         added_vers = False
+        # Tox requires the range end to touch its comma or closing brace.
+        version_item = r'\s*(?:\d+-\d+|(?:\d+|py\d*)\s*)'
+        python_braces = (
+            r'(py[{]' + version_item + r'(?:,' + version_item
+            + r')*[}])(?P<rest>.*)'
+        )
         for part in split_envlist(envlist):
-            m = re.match(
-                r'(py[{](?:\d+|py\d*)(?:,(?:\d+|py\d*))*[}])(?P<rest>.*)',
-                part
-            )
+            m = re.match(python_braces, part)
             if m:
                 keep = [env for env in brace_expand(m.group(1))
                         if should_keep(env, new_versions)]
